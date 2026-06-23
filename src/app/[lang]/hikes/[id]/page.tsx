@@ -6,7 +6,7 @@ import JoinButton from '@/components/hikes/JoinButton'
 import SpotsCounter from '@/components/hikes/SpotsCounter'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
-import CarpoolSection from '@/components/hikes/CarpoolSection'
+import AttendeeSection from '@/components/hikes/AttendeeSection'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, ExternalLink, Navigation, Car, Layers, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -45,17 +45,6 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const isUpcoming = hike.status === 'upcoming'
   const entryFee = Number(hike.entryFee)
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
-
-  const drivers = hike.participants
-    .filter(p => p.bringsCar && p.carSeats !== null && (p.status === 'confirmed' || p.status === 'pending'))
-    .map(p => ({
-      participantId: p.id,
-      driverName: p.user.name ?? '?',
-      carSeats: p.carSeats!,
-      passengers: hike.participants
-        .filter(q => q.carDriverParticipantId === p.id)
-        .map(q => ({ participantId: q.id, name: q.user.name ?? '?' })),
-    }))
 
   const dd = d.hikeDetail
   const difficultyLabels = dd.difficulty as Record<string, string>
@@ -137,36 +126,20 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </InfoCard>
           </div>
 
-          <div>
-            <h2 className="text-2xl font-bold text-stone-900 mb-4">{dd.participantsSectionTitle}</h2>
-            {(() => {
-              const confirmed = hike.participants.filter(p => p.status === 'confirmed')
-              const pendingCount = hike.participants.filter(p => p.status === 'pending').length
-              const wlCount = hike.participants.filter(p => p.status === 'waitlist').length
-              return (
-                <>
-                  {confirmed.length === 0 ? (
-                    <p className="text-stone-400 text-sm">{dd.noConfirmedYet}</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 sm:gap-2">
-                      {confirmed.map((p, i) => (
-                        <span key={i} className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-medium px-3 py-1.5 rounded-full">
-                          {p.user.name}{p.guestName && <span className="text-emerald-600 font-normal"> + {p.guestName}</span>}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {(pendingCount > 0 || wlCount > 0) && (
-                    <p className="text-stone-400 text-xs mt-2">
-                      {pendingCount > 0 && `${pendingCount} ${dd.pendingCount}`}
-                      {pendingCount > 0 && wlCount > 0 && ' · '}
-                      {wlCount > 0 && `${wlCount} ${dd.waitlistCount}`}
-                    </p>
-                  )}
-                </>
-              )
-            })()}
-          </div>
+          <AttendeeSection
+            hikeId={hike.id}
+            participants={hike.participants as any}
+            userParticipantId={userParticipation?.id ?? null}
+            isUpcoming={isUpcoming}
+            dict={{
+              title: dd.participantsSectionTitle,
+              noConfirmedYet: dd.noConfirmedYet,
+              pendingCount: dd.pendingCount,
+              waitlistCount: dd.waitlistCount,
+              noCarAssigned: (dd as any).noCarAssigned,
+              ...(dd.carpool as any),
+            }}
+          />
 
           {hike.hasCamping && (hike.campingDetails || hike.campingPrice) && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-2">
@@ -218,17 +191,6 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </div>
           )}
 
-          {isUpcoming && drivers.length > 0 && (
-            <CarpoolSection
-              hikeId={hike.id}
-              drivers={drivers}
-              userParticipantId={userParticipation?.id ?? null}
-              userDriverParticipantId={userParticipation?.carDriverParticipantId ?? null}
-              userIsDiver={userParticipation?.bringsCar ?? false}
-              dict={dd.carpool as any}
-            />
-          )}
-
           <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
 
           {photos.length > 0 && (
@@ -266,6 +228,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 userId={session?.user?.id ?? null}
                 isFull={isFull}
                 participationStatus={userParticipation?.status ?? null}
+                currentBringsCar={userParticipation?.bringsCar ?? false}
+                currentCarSeats={userParticipation?.carSeats ?? null}
                 dict={d.joinButton}
                 lang={lang}
               />

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { joinHike, cancelRegistration } from '@/app/actions/hikes'
+import { joinHike, cancelRegistration, updateCarPreference } from '@/app/actions/hikes'
 import { X, UserPlus, Car } from 'lucide-react'
 
 type StatusEntry = { label: string; desc: string }
@@ -21,6 +21,9 @@ type JoinButtonDict = {
   friendNamePlaceholder: string
   bringingCar: string
   carSeatsLabel: string
+  saveCarPreference: string
+  savingCarPreference: string
+  carSaveError: string
   status: {
     pending: StatusEntry
     confirmed: StatusEntry
@@ -41,6 +44,8 @@ export default function JoinButton({
   userId,
   isFull,
   participationStatus,
+  currentBringsCar = false,
+  currentCarSeats = null,
   dict,
   lang,
 }: {
@@ -48,6 +53,8 @@ export default function JoinButton({
   userId: string | null
   isFull: boolean
   participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | null
+  currentBringsCar?: boolean
+  currentCarSeats?: number | null
   dict: JoinButtonDict
   lang: string
 }) {
@@ -59,7 +66,25 @@ export default function JoinButton({
   const [friendName, setFriendName] = useState('')
   const [bringingCar, setBringingCar] = useState(false)
   const [carSeats, setCarSeats] = useState(4)
+  const [editBringsCar, setEditBringsCar] = useState(currentBringsCar)
+  const [editCarSeats, setEditCarSeats] = useState(currentCarSeats ?? 4)
+  const [carSaveError, setCarSaveError] = useState('')
+  const [isSavingCar, startCarTransition] = useTransition()
   const router = useRouter()
+
+  const carChanged = editBringsCar !== currentBringsCar || (editBringsCar && editCarSeats !== (currentCarSeats ?? 4))
+
+  const handleSaveCar = () => {
+    setCarSaveError('')
+    startCarTransition(async () => {
+      try {
+        await updateCarPreference(hikeId, editBringsCar, editBringsCar ? editCarSeats : undefined)
+        router.refresh()
+      } catch {
+        setCarSaveError(dict.carSaveError)
+      }
+    })
+  }
 
   if (!userId) {
     return (
@@ -88,14 +113,53 @@ export default function JoinButton({
     const ui = dict.status[participationStatus]
     const canCancel = participationStatus === 'pending' || participationStatus === 'waitlist'
     return (
-      <div>
+      <div className="space-y-3">
         <div className={`border rounded-xl p-4 text-center ${STATUS_COLORS[participationStatus]}`}>
           <div className="font-bold">{ui.label}</div>
           <p className="text-sm mt-1 opacity-80">{ui.desc}</p>
         </div>
+
+        <div className="border border-stone-200 rounded-xl p-3 space-y-2">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={editBringsCar}
+              onChange={e => setEditBringsCar(e.target.checked)}
+              className="w-4 h-4 accent-emerald-600 shrink-0"
+            />
+            <span className="flex items-center gap-1.5 text-sm font-medium text-stone-600">
+              <Car size={15} className="text-emerald-600" />
+              {dict.bringingCar}
+            </span>
+          </label>
+          {editBringsCar && (
+            <div className="flex items-center gap-3 pl-6">
+              <label className="text-sm text-stone-500 shrink-0">{dict.carSeatsLabel}</label>
+              <input
+                type="number"
+                value={editCarSeats}
+                onChange={e => setEditCarSeats(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
+                min={1}
+                max={8}
+                className="w-20 border border-stone-200 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+          )}
+          {carChanged && (
+            <button
+              onClick={handleSaveCar}
+              disabled={isSavingCar}
+              className="w-full mt-1 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+            >
+              {isSavingCar ? dict.savingCarPreference : dict.saveCarPreference}
+            </button>
+          )}
+          {carSaveError && <p className="text-red-600 text-xs text-center">{carSaveError}</p>}
+        </div>
+
         {canCancel && (
           <button onClick={handleCancel} disabled={cancelling}
-            className="w-full mt-3 flex items-center justify-center gap-2 border-2 border-red-200 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-400 active:bg-red-100 transition-colors disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2 border-2 border-red-200 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-400 active:bg-red-100 transition-colors disabled:opacity-50">
             <X size={15} strokeWidth={2.5} />
             {cancelling ? dict.cancelling : dict.cancelRegistration}
           </button>

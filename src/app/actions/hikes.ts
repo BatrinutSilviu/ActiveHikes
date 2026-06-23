@@ -58,6 +58,27 @@ export async function cancelRegistration(hikeId: string) {
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
+export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number) {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error('Not authenticated')
+
+  const participation = await prisma.hikeParticipant.findUnique({
+    where: { hikeId_userId: { hikeId, userId: session.user.id } },
+    select: { id: true },
+  })
+  if (!participation) throw new Error('Registration not found')
+
+  await prisma.hikeParticipant.update({
+    where: { id: participation.id },
+    data: {
+      bringsCar,
+      carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+    },
+  })
+
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
 export async function assignCarDriver(hikeId: string, driverParticipantId: string | null) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')

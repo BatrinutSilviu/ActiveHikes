@@ -69,6 +69,7 @@
     "pendingCount": "pending confirmation",
     "waitlistCount": "on waitlist",
     "noConfirmedYet": "No confirmed participants yet.",
+    "noCarAssigned": "No car yet",
     "campingTitle": "Camping Area",
     "campingCost": "Cost per person",
     "accommodationTitle": "Accommodation Details",
@@ -122,6 +123,9 @@
     "cancelConfirm": "Are you sure you want to cancel your registration?",
     "cancelError": "Could not cancel. Please try again.",
     "joinError": "Something went wrong. Please try again.",
+    "saveCarPreference": "Save car preference",
+    "savingCarPreference": "Saving…",
+    "carSaveError": "Could not save. Please try again.",
     "status": {
       "pending": { "label": "Registration pending", "desc": "Waiting for payment confirmation." },
       "confirmed": { "label": "You're in!", "desc": "Your spot is confirmed. See you on the trail!" },

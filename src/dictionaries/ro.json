@@ -69,6 +69,7 @@
     "pendingCount": "în așteptare",
     "waitlistCount": "pe lista de așteptare",
     "noConfirmedYet": "Niciun participant confirmat încă.",
+    "noCarAssigned": "Fără mașină",
     "campingTitle": "Zonă de Camping",
     "campingCost": "Cost per persoană",
     "accommodationTitle": "Detalii Cazare",
@@ -122,6 +123,9 @@
     "cancelConfirm": "Ești sigur că vrei să anulezi înregistrarea?",
     "cancelError": "Nu s-a putut anula. Încearcă din nou.",
     "joinError": "A apărut o eroare. Încearcă din nou.",
+    "saveCarPreference": "Salvează preferința auto",
+    "savingCarPreference": "Se salvează…",
+    "carSaveError": "Nu s-a putut salva. Încearcă din nou.",
     "status": {
       "pending": { "label": "Înregistrare în așteptare", "desc": "Așteptăm confirmarea plății." },
       "confirmed": { "label": "Ești confirmat!", "desc": "Locul tău este rezervat. Ne vedem pe traseu!" },
