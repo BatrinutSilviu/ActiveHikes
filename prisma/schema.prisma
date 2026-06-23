@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  user
+  admin
+}
+
+enum Difficulty {
+  easy
+  moderate
+  hard
+  expert
+}
+
+enum HikeStatus {
+  upcoming
+  ongoing
+  completed
+  cancelled
+}
+
+enum ParticipantStatus {
+  pending
+  confirmed
+  rejected
+  waitlist
+}
+
+// ─── NextAuth required models ─────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── App models ───────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // null for Google OAuth users
+  phone         String?
+  role          Role      @default(user)
+  createdAt     DateTime  @default(now())
+
+  accounts       Account[]
+  sessions       Session[]
+  participations HikeParticipant[]
+  uploadedPhotos HikePhoto[]
+  createdHikes   Hike[]
+}
+
+model Hike {
+  id                   String      @id @default(cuid())
+  title                String
+  destination          String
+  description          String?
+  date                 DateTime    @db.Date
+  entryFee             Decimal     @default(0) @db.Decimal(10, 2)
+  maxParticipants      Int
+  mountainRange        String?
+  startingPoint        String?
+  meetingPoint         String?
+  durationHours        Decimal?    @db.Decimal(4, 1)
+  hasCamping           Boolean     @default(false)
+  campingDetails       String?
+  campingPrice         Decimal?    @db.Decimal(10, 2)
+  hasAccommodation     Boolean     @default(false)
+  peoplePerCar         Int         @default(5)
+  carsNeeded           Int?
+  accommodationDetails  String?
+  accommodationPrice    Decimal?    @db.Decimal(10, 2)
+  accommodationDeposit  Decimal?    @db.Decimal(10, 2)
+  meetingTime          String?
+  difficulty           Difficulty?
+  status               HikeStatus  @default(upcoming)
+  gpxApproximateUrl    String?
+  gpxActualUrl         String?
+  externalPhotosUrl    String?
+  whatsappGroupUrl     String?
+  coverImageUrl        String?
+  createdById          String?
+  createdAt            DateTime    @default(now())
+
+  createdBy    User?             @relation(fields: [createdById], references: [id])
+  participants HikeParticipant[]
+  photos       HikePhoto[]
+}
+
+model HikeParticipant {
+  id          String            @id @default(cuid())
+  hikeId      String
+  userId      String
+  status      ParticipantStatus @default(pending)
+  joinedAt    DateTime          @default(now())
+  confirmedAt DateTime?
+  adminNotes  String?
+  guestName              String?
+  bringsCar              Boolean @default(false)
+  carSeats               Int?
+  carDriverParticipantId String?
+
+  hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  carDriver    HikeParticipant? @relation("CarPassengers", fields: [carDriverParticipantId], references: [id], onDelete: SetNull)
+  carPassengers HikeParticipant[] @relation("CarPassengers")
+
+  @@unique([hikeId, userId])
+}
+
+model HikePhoto {
+  id           String   @id @default(cuid())
+  hikeId       String
+  url          String
+  caption      String?
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  hike       Hike  @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  uploadedBy User? @relation(fields: [uploadedById], references: [id])
+}
+
+model BankAccount {
+  id            String   @id @default(cuid())
+  bankName      String
+  accountHolder String
+  iban          String
+  currency      String   @default("RON")
+  notes         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}
