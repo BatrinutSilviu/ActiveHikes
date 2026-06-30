@@ -63,7 +63,7 @@ export default function AttendeeSection({
   }
 
   const drivers = confirmed.filter(p => p.bringsCar && p.carSeats !== null)
-  const hasCarpoolData = isUpcoming && drivers.length > 0
+  const hasCarpoolData = drivers.length > 0
 
   return (
     <div>
@@ -106,11 +106,13 @@ export default function AttendeeSection({
                   </div>
 
                   <div className="flex flex-col items-end gap-2 shrink-0">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isFull ? 'bg-stone-100 text-stone-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {isFull ? dict.full : `${left} ${dict.seatsLeft}`}
-                    </span>
+                    {isUpcoming && (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isFull ? 'bg-stone-100 text-stone-400' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {isFull ? dict.full : `${left} ${dict.seatsLeft}`}
+                      </span>
+                    )}
 
-                    {userParticipantId && !userIsDiver && !isMyOwnCar && (
+                    {isUpcoming && userParticipantId && !userIsDiver && !isMyOwnCar && (
                       isMyDriver ? (
                         <button onClick={() => assign(null)} disabled={isPending}
                           className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">

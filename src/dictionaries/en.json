@@ -91,9 +91,17 @@
     },
     "difficulty": {
       "easy": "Easy",
-      "moderate": "Moderate",
-      "hard": "Hard",
-      "expert": "Expert"
+      "easy_medium": "Easy to Medium",
+      "medium": "Medium",
+      "medium_hard": "Medium to Hard",
+      "hard": "Hard"
+    },
+    "difficultyDesc": {
+      "easy": "A short, gentle trail with minimal elevation. Suitable for all ages, including children and older adults.",
+      "easy_medium": "Slightly longer or a touch steeper than easy, but still very manageable for most people with basic fitness.",
+      "medium": "Either a long hike, a steep one, or a mix of both. A decent level of fitness is required.",
+      "medium_hard": "Not for everyone. Good fitness and some hiking experience are needed — expect real effort.",
+      "hard": "For experienced hikers with strong fitness only. A genuine physical challenge — come prepared."
     },
     "status": {
       "upcoming": "Upcoming",
@@ -126,6 +134,15 @@
     "saveCarPreference": "Save car preference",
     "savingCarPreference": "Saving…",
     "carSaveError": "Could not save. Please try again.",
+    "setPickupLocation": "Set pickup location",
+    "setDeparturePoint": "Set departure point",
+    "locationSet": "Location set",
+    "changeLocation": "Change",
+    "locationModalHint": "Tap or click on the map to drop a pin. Drag to reposition. Zoom in for accuracy.",
+    "locationPassengerTitle": "Where would you like to be picked up?",
+    "locationDriverTitle": "Where are you leaving from?",
+    "locationConfirm": "Confirm location",
+    "locationCancel": "Cancel",
     "status": {
       "pending": { "label": "Registration pending", "desc": "Waiting for payment confirmation." },
       "confirmed": { "label": "You're in!", "desc": "Your spot is confirmed. See you on the trail!" },
@@ -195,7 +212,9 @@
       "upcomingHikes": "Upcoming Hikes",
       "addNew": "+ Add new",
       "noUpcoming": "No upcoming hikes yet.",
-      "spots": "spots"
+      "spots": "spots",
+      "pastHikes": "Past Hikes",
+      "noPast": "No past hikes yet."
     },
     "newHike": {
       "title": "Create New Hike",
@@ -216,7 +235,7 @@
       "startingPoint": "Starting point (trailhead)",
       "duration": "Duration (hours)",
       "peoplePerCar": "People per car",
-      "carsNeeded": "Cars needed (override)",
+      "carsNeeded": "Cars needed",
       "camping": "Camping",
       "campingDetails": "Camping area details",
       "campingDetailsPlaceholder": "Campsite name, location, facilities…",
@@ -242,7 +261,7 @@
       "createHike": "Create hike",
       "creating": "Creating…",
       "clickToUpload": "Click to upload",
-      "difficulties": { "easy": "Easy", "moderate": "Moderate", "hard": "Hard", "expert": "Expert" },
+      "difficulties": { "easy": "Easy", "easy_medium": "Easy to Medium", "medium": "Medium", "medium_hard": "Medium to Hard", "hard": "Hard" },
       "titlePlaceholder": "e.g. Bucegi Traverse",
       "destinationPlaceholder": "e.g. Bucegi Mountains",
       "descriptionPlaceholder": "Describe the hike…",
@@ -277,7 +296,23 @@
         "waitlist": "Waitlist",
         "rejected": "Rejected"
       },
-      "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" }
+      "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
+      "carAllocator": {
+        "title": "Auto-allocate cars",
+        "previewBtn": "Preview allocation",
+        "previewing": "Calculating…",
+        "applyBtn": "Apply allocation",
+        "applying": "Applying…",
+        "cancelBtn": "Cancel",
+        "noDrivers": "No drivers with available seats.",
+        "noUnassigned": "All passengers are already assigned to a car.",
+        "allAssigned": "All passengers assigned.",
+        "unassignedTitle": "Could not assign (no seats left)",
+        "noLocationWarning": "{n} passenger(s) have no pickup pin — assigned by round-robin.",
+        "distanceKm": "km",
+        "roundRobin": "no pin",
+        "applied": "Car allocation applied successfully."
+      }
     },
     "bankAccounts": {
       "title": "Bank Accounts",
@@ -318,7 +353,7 @@
       "startingPoint": "Starting point (trailhead)",
       "startingPointPlaceholder": "e.g. Sinaia train station",
       "peoplePerCar": "People per car",
-      "carsNeeded": "Cars needed (override)",
+      "carsNeeded": "Cars needed",
       "camping": "Camping",
       "campingDetails": "Camping area details",
       "campingDetailsPlaceholder": "Campsite name, location, facilities…",
@@ -343,14 +378,17 @@
       "saveChanges": "Save changes",
       "saving": "Saving…",
       "statuses": { "upcoming": "Upcoming", "ongoing": "Ongoing", "completed": "Completed", "cancelled": "Cancelled" },
-      "difficulties": { "easy": "Easy", "moderate": "Moderate", "hard": "Hard", "expert": "Expert" }
+      "difficulties": { "easy": "Easy", "easy_medium": "Easy to Medium", "medium": "Medium", "medium_hard": "Medium to Hard", "hard": "Hard" }
     }
   },
   "gpx": {
-    "title": "GPX Route",
-    "approximateRoute": "Approximate route",
-    "approximateDesc": "Planned route before the hike",
-    "actualRoute": "Actual route",
-    "actualDesc": "GPS track recorded during the hike"
+    "title": "Route",
+    "approximateRoute": "Planned route",
+    "approximateDesc": "Estimated route before the hike",
+    "actualRoute": "Recorded route",
+    "actualDesc": "GPS track recorded during the hike",
+    "legendPlanned": "Planned route",
+    "legendRecorded": "Recorded route",
+    "download": "Download"
   }
 }

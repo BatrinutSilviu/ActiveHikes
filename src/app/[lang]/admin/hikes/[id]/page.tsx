@@ -5,6 +5,7 @@ import ParticipantManager from '@/components/admin/ParticipantManager'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import PhotoUploader from '@/components/admin/PhotoUploader'
 import JoinButton from '@/components/hikes/JoinButton'
+import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
 import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
@@ -52,6 +53,8 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     bringsCar: p.bringsCar,
     carSeats: p.carSeats,
     carDriverParticipantId: p.carDriverParticipantId,
+    pickupLat: p.pickupLat,
+    pickupLng: p.pickupLng,
     user: p.user,
   }))
 
@@ -119,6 +122,10 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               lang={lang}
             />
           </div>
+
+          {hike.status === 'upcoming' && (
+            <CarAllocatorPanel hikeId={hike.id} dict={da.carAllocator} />
+          )}
 
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.photosTitle}</h2>

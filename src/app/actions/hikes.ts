@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { Difficulty, HikeStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 
-export async function joinHike(hikeId: string, guestName?: string, bringsCar?: boolean, carSeats?: number) {
+export async function joinHike(hikeId: string, guestName?: string, bringsCar?: boolean, carSeats?: number, pickupLat?: number, pickupLng?: number) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
 
@@ -34,6 +34,8 @@ export async function joinHike(hikeId: string, guestName?: string, bringsCar?: b
         guestName: guestName?.trim() || null,
         bringsCar: bringsCar ?? false,
         carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+        pickupLat: pickupLat ?? null,
+        pickupLng: pickupLng ?? null,
       },
     })
   })
@@ -58,7 +60,7 @@ export async function cancelRegistration(hikeId: string) {
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
-export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number) {
+export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number, pickupLat?: number | null, pickupLng?: number | null) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
 
@@ -73,6 +75,8 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
     data: {
       bringsCar,
       carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+      ...(pickupLat !== undefined ? { pickupLat } : {}),
+      ...(pickupLng !== undefined ? { pickupLng } : {}),
     },
   })
 
@@ -217,6 +221,175 @@ export async function updateHike(
       ...(difficulty !== undefined ? { difficulty: (difficulty as Difficulty | null) } : {}),
     },
   })
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+export type AllocationPassenger = {
+  passengerId: string
+  passengerName: string
+  distanceKm: number | null
+}
+
+export type AllocationDriver = {
+  driverId: string
+  driverName: string
+  passengers: AllocationPassenger[]
+  remainingSeats: number
+}
+
+export type AllocationPreview = {
+  drivers: AllocationDriver[]
+  unassigned: { id: string; name: string }[]
+  noLocationCount: number
+}
+
+export async function previewCarAllocation(hikeId: string): Promise<AllocationPreview> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const participants = await prisma.hikeParticipant.findMany({
+    where: { hikeId, status: 'confirmed' },
+    select: {
+      id: true,
+      bringsCar: true,
+      carSeats: true,
+      carDriverParticipantId: true,
+      pickupLat: true,
+      pickupLng: true,
+      guestName: true,
+      user: { select: { name: true } },
+    },
+  })
+
+  const pName = (p: { user: { name: string | null }; guestName: string | null }) =>
+    p.user.name ?? '?'
+
+  const rawDrivers = participants.filter(p => p.bringsCar && p.carSeats != null)
+  const unassignedPassengers = participants.filter(p => !p.bringsCar && p.carDriverParticipantId === null)
+
+  // Track remaining seats per driver (pre-fill with already-assigned passengers not touched here)
+  const alreadyAssigned = participants.filter(p => !p.bringsCar && p.carDriverParticipantId !== null)
+  const seatsUsed = new Map<string, number>()
+  for (const p of alreadyAssigned) {
+    if (p.carDriverParticipantId) {
+      seatsUsed.set(p.carDriverParticipantId, (seatsUsed.get(p.carDriverParticipantId) ?? 0) + 1)
+    }
+  }
+
+  const drivers = rawDrivers.map(d => ({
+    id: d.id,
+    name: pName(d),
+    lat: d.pickupLat,
+    lng: d.pickupLng,
+    remaining: (d.carSeats ?? 0) - (seatsUsed.get(d.id) ?? 0),
+  })).filter(d => d.remaining > 0)
+
+  // Separate passengers into those with and without coordinates
+  const withCoords = unassignedPassengers.filter(p => p.pickupLat != null && p.pickupLng != null)
+  const withoutCoords = unassignedPassengers.filter(p => p.pickupLat == null || p.pickupLng == null)
+
+  const assignments = new Map<string, { driverId: string; distanceKm: number | null }>()
+
+  // For each passenger with coords, compute distance to each driver that also has coords
+  const driversWithCoords = drivers.filter(d => d.lat != null && d.lng != null)
+  const driversWithoutCoords = drivers.filter(d => d.lat == null || d.lng == null)
+
+  // Sort passengers by distance to nearest available driver (ascending) so closest pairs get priority
+  const scored = withCoords.map(p => {
+    const dists = driversWithCoords.map(d => ({
+      driverId: d.id,
+      dist: haversineKm(p.pickupLat!, p.pickupLng!, d.lat!, d.lng!),
+    })).sort((a, b) => a.dist - b.dist)
+    return { p, dists }
+  }).sort((a, b) => (a.dists[0]?.dist ?? Infinity) - (b.dists[0]?.dist ?? Infinity))
+
+  const remaining = new Map(drivers.map(d => [d.id, d.remaining]))
+
+  for (const { p, dists } of scored) {
+    for (const { driverId, dist } of dists) {
+      if ((remaining.get(driverId) ?? 0) > 0) {
+        assignments.set(p.id, { driverId, distanceKm: dist })
+        remaining.set(driverId, (remaining.get(driverId) ?? 1) - 1)
+        break
+      }
+    }
+    // If no driver with coords has seats, fall through to round-robin below
+  }
+
+  // Passengers with coords that weren't assigned (no seats in coord-drivers) + passengers without coords
+  // → round-robin into any remaining seats
+  const needsRoundRobin = [
+    ...withCoords.filter(p => !assignments.has(p.id)),
+    ...withoutCoords,
+  ]
+  const allDriversOrdered = [...driversWithoutCoords, ...driversWithCoords]
+  for (const p of needsRoundRobin) {
+    for (const d of allDriversOrdered) {
+      if ((remaining.get(d.id) ?? 0) > 0) {
+        assignments.set(p.id, { driverId: d.id, distanceKm: null })
+        remaining.set(d.id, (remaining.get(d.id) ?? 1) - 1)
+        break
+      }
+    }
+  }
+
+  // Build result grouped by driver
+  const resultDrivers: AllocationDriver[] = rawDrivers
+    .filter(d => (d.carSeats ?? 0) - (seatsUsed.get(d.id) ?? 0) > 0 || [...assignments.values()].some(a => a.driverId === d.id))
+    .map(d => {
+      const passengers = unassignedPassengers
+        .filter(p => assignments.get(p.id)?.driverId === d.id)
+        .map(p => ({
+          passengerId: p.id,
+          passengerName: pName(p),
+          distanceKm: assignments.get(p.id)?.distanceKm ?? null,
+        }))
+      return {
+        driverId: d.id,
+        driverName: pName(d),
+        passengers,
+        remainingSeats: remaining.get(d.id) ?? 0,
+      }
+    })
+
+  const unassigned = unassignedPassengers
+    .filter(p => !assignments.has(p.id))
+    .map(p => ({ id: p.id, name: pName(p) }))
+
+  return {
+    drivers: resultDrivers,
+    unassigned,
+    noLocationCount: withoutCoords.length,
+  }
+}
+
+export async function applyCarAllocation(
+  hikeId: string,
+  assignments: { passengerId: string; driverId: string }[]
+) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  await prisma.$transaction(
+    assignments.map(({ passengerId, driverId }) =>
+      prisma.hikeParticipant.update({
+        where: { id: passengerId },
+        data: { carDriverParticipantId: driverId },
+      })
+    )
+  )
+
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }

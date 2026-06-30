@@ -91,9 +91,17 @@
     },
     "difficulty": {
       "easy": "Ușor",
-      "moderate": "Moderat",
-      "hard": "Dificil",
-      "expert": "Expert"
+      "easy_medium": "Ușor spre Mediu",
+      "medium": "Mediu",
+      "medium_hard": "Mediu spre Greu",
+      "hard": "Greu"
+    },
+    "difficultyDesc": {
+      "easy": "Traseu scurt și lin, fără urcușuri semnificative. Accesibil la orice vârstă, inclusiv copii și persoane în vârstă.",
+      "easy_medium": "Puțin mai lung sau mai abrupt decât cel ușor, dar confortabil pentru cei cu o condiție fizică de bază.",
+      "medium": "Fie un traseu lung, fie unul abrupt, fie o combinație. Necesită o condiție fizică bună.",
+      "medium_hard": "Nu pentru oricine. Necesită condiție fizică bună și ceva experiență în drumeții — efort real garantat.",
+      "hard": "Doar pentru drumeți experimentați și cu condiție fizică excelentă. O provocare adevărată — vino pregătit."
     },
     "status": {
       "upcoming": "Viitoare",
@@ -126,6 +134,15 @@
     "saveCarPreference": "Salvează preferința auto",
     "savingCarPreference": "Se salvează…",
     "carSaveError": "Nu s-a putut salva. Încearcă din nou.",
+    "setPickupLocation": "Setează locul de preluare",
+    "setDeparturePoint": "Setează locul de plecare",
+    "locationSet": "Locație setată",
+    "changeLocation": "Modifică",
+    "locationModalHint": "Apasă sau dă click pe hartă pentru a plasa un pin. Trage-l pentru a-l repoziționa. Zoom pentru precizie.",
+    "locationPassengerTitle": "De unde vrei să fii preluat?",
+    "locationDriverTitle": "De unde pleci tu cu mașina?",
+    "locationConfirm": "Confirmă locația",
+    "locationCancel": "Anulează",
     "status": {
       "pending": { "label": "Înregistrare în așteptare", "desc": "Așteptăm confirmarea plății." },
       "confirmed": { "label": "Ești confirmat!", "desc": "Locul tău este rezervat. Ne vedem pe traseu!" },
@@ -195,7 +212,9 @@
       "upcomingHikes": "Drumeții Viitoare",
       "addNew": "+ Adaugă",
       "noUpcoming": "Nu există drumeții viitoare.",
-      "spots": "locuri"
+      "spots": "locuri",
+      "pastHikes": "Drumeții Trecute",
+      "noPast": "Nu există drumeții trecute."
     },
     "newHike": {
       "title": "Creare Drumeție Nouă",
@@ -216,7 +235,7 @@
       "startingPoint": "Punct de plecare pe traseu",
       "duration": "Durată (ore)",
       "peoplePerCar": "Persoane per mașină",
-      "carsNeeded": "Mașini necesare (override)",
+      "carsNeeded": "Mașini necesare",
       "camping": "Camping",
       "campingDetails": "Detalii zonă camping",
       "campingDetailsPlaceholder": "Numele campingului, locație, facilități…",
@@ -242,7 +261,7 @@
       "createHike": "Creare drumeție",
       "creating": "Se creează…",
       "clickToUpload": "Click pentru încărcare",
-      "difficulties": { "easy": "Ușor", "moderate": "Moderat", "hard": "Dificil", "expert": "Expert" },
+      "difficulties": { "easy": "Ușor", "easy_medium": "Ușor spre Mediu", "medium": "Mediu", "medium_hard": "Mediu spre Greu", "hard": "Greu" },
       "titlePlaceholder": "ex. Traversarea Bucegi",
       "destinationPlaceholder": "ex. Munții Bucegi",
       "descriptionPlaceholder": "Descrie drumeția…",
@@ -277,7 +296,23 @@
         "waitlist": "Listă de așteptare",
         "rejected": "Respins"
       },
-      "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" }
+      "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
+      "carAllocator": {
+        "title": "Alocare automată mașini",
+        "previewBtn": "Previzualizare alocare",
+        "previewing": "Se calculează…",
+        "applyBtn": "Aplică alocarea",
+        "applying": "Se aplică…",
+        "cancelBtn": "Anulează",
+        "noDrivers": "Niciun șofer cu locuri disponibile.",
+        "noUnassigned": "Toți pasagerii sunt deja alocați unei mașini.",
+        "allAssigned": "Toți pasagerii alocați.",
+        "unassignedTitle": "Nu s-au putut aloca (locuri insuficiente)",
+        "noLocationWarning": "{n} pasager(i) fără pin de preluare — alocați prin rotație.",
+        "distanceKm": "km",
+        "roundRobin": "fără pin",
+        "applied": "Alocarea mașinilor a fost aplicată cu succes."
+      }
     },
     "bankAccounts": {
       "title": "Conturi Bancare",
@@ -318,7 +353,7 @@
       "startingPoint": "Punct de plecare pe traseu",
       "startingPointPlaceholder": "ex. Gara Sinaia",
       "peoplePerCar": "Persoane per mașină",
-      "carsNeeded": "Mașini necesare (override)",
+      "carsNeeded": "Mașini necesare",
       "camping": "Camping",
       "campingDetails": "Detalii zonă camping",
       "campingDetailsPlaceholder": "Numele campingului, locație, facilități…",
@@ -343,14 +378,17 @@
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…",
       "statuses": { "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" },
-      "difficulties": { "easy": "Ușor", "moderate": "Moderat", "hard": "Dificil", "expert": "Expert" }
+      "difficulties": { "easy": "Ușor", "easy_medium": "Ușor spre Mediu", "medium": "Mediu", "medium_hard": "Mediu spre Greu", "hard": "Greu" }
     }
   },
   "gpx": {
-    "title": "Traseu GPX",
-    "approximateRoute": "Traseu aproximativ",
-    "approximateDesc": "Traseul planificat înainte de drumeție",
-    "actualRoute": "Traseu real",
-    "actualDesc": "Traseul GPS înregistrat în timpul drumeției"
+    "title": "Traseu",
+    "approximateRoute": "Traseu planificat",
+    "approximateDesc": "Traseul estimat înainte de drumeție",
+    "actualRoute": "Traseu înregistrat",
+    "actualDesc": "Traseul GPS înregistrat în timpul drumeției",
+    "legendPlanned": "Traseu planificat",
+    "legendRecorded": "Traseu înregistrat",
+    "download": "Descarcă"
   }
 }

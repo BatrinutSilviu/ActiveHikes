@@ -8,7 +8,7 @@ import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import AttendeeSection from '@/components/hikes/AttendeeSection'
 import Link from 'next/link'
-import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, ExternalLink, Navigation, Car, Layers, MessageCircle } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
 export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -48,41 +48,47 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
   const dd = d.hikeDetail
   const difficultyLabels = dd.difficulty as Record<string, string>
+  const difficultyDescs = dd.difficultyDesc as Record<string, string>
   const statusLabels = dd.status as Record<string, string>
   const dateLocale = d.locale
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <div className="w-full h-72 sm:h-96 rounded-2xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-800 to-stone-700 relative">
+      <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
         {hike.coverImageUrl ? (
           <img src={hike.coverImageUrl} alt={hike.title} className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Mountain size={64} className="text-white/20" />
+            <Mountain size={72} className="text-white/10" />
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6 sm:pb-8">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-1 leading-tight drop-shadow">{hike.title}</h1>
+          <p className="text-stone-300 flex items-center gap-1.5 text-base">
+            <MapPin size={15} /> {hike.destination}
+          </p>
+          {hike.mountainRange && (
+            <p className="text-stone-400 flex items-center gap-1 mt-0.5 text-sm">
+              <MountainSnow size={13} /> {hike.mountainRange}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold text-stone-900 mb-2">{hike.title}</h1>
-            <p className="text-xl text-stone-500 flex items-center gap-1">
-              <MapPin size={18} /> {hike.destination}
-            </p>
-            {hike.mountainRange && (
-              <p className="text-stone-400 flex items-center gap-1 mt-1">
-                <Layers size={15} /> {hike.mountainRange}
-              </p>
-            )}
-          </div>
-
           {hike.description && <p className="text-stone-700 leading-relaxed text-lg">{hike.description}</p>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard icon={<Mountain size={18} />} label={dd.difficultyLabel}>
               {hike.difficulty
-                ? <span className={difficultyColor(hike.difficulty) + ' px-2 py-0.5 rounded-full text-xs font-semibold'}>{difficultyLabels[hike.difficulty] ?? hike.difficulty}</span>
+                ? <>
+                    <span className={difficultyColor(hike.difficulty) + ' px-2 py-0.5 rounded-full text-xs font-semibold'}>{difficultyLabels[hike.difficulty] ?? hike.difficulty}</span>
+                    {difficultyDescs[hike.difficulty] && (
+                      <p className="text-stone-400 text-xs font-normal mt-2 leading-relaxed">{difficultyDescs[hike.difficulty]}</p>
+                    )}
+                  </>
                 : dd.notSet}
             </InfoCard>
             <InfoCard icon={<Calendar size={18} />} label={dd.dateLabel}>
@@ -209,12 +215,12 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
         <div className="space-y-4">
           {isUpcoming && (
-            <div className="bg-white border border-stone-200 rounded-2xl p-6 shadow-sm">
-              <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-emerald-700">
+            <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
+              <div className="text-center mb-5">
+                <div className="text-4xl font-black tracking-tight text-stone-900">
                   {entryFee > 0 ? `${entryFee} RON` : dd.free}
                 </div>
-                {entryFee > 0 && <p className="text-stone-400 text-sm">{dd.perPerson}</p>}
+                {entryFee > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
               </div>
 
               <SpotsCounter
@@ -230,6 +236,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 participationStatus={userParticipation?.status ?? null}
                 currentBringsCar={userParticipation?.bringsCar ?? false}
                 currentCarSeats={userParticipation?.carSeats ?? null}
+                currentPickupLat={userParticipation?.pickupLat ?? null}
+                currentPickupLng={userParticipation?.pickupLng ?? null}
                 dict={d.joinButton}
                 lang={lang}
               />
@@ -277,18 +285,19 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 function difficultyColor(d: string) {
   const m: Record<string, string> = {
     easy: 'text-green-700 bg-green-100',
-    moderate: 'text-yellow-700 bg-yellow-100',
-    hard: 'text-orange-700 bg-orange-100',
-    expert: 'text-red-700 bg-red-100',
+    easy_medium: 'text-lime-700 bg-lime-100',
+    medium: 'text-yellow-700 bg-yellow-100',
+    medium_hard: 'text-orange-700 bg-orange-100',
+    hard: 'text-red-700 bg-red-100',
   }
   return m[d] ?? ''
 }
 
 function InfoCard({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-stone-100 rounded-xl p-4">
-      <div className="flex items-center gap-2 text-stone-400 text-xs font-medium uppercase tracking-wide mb-1">{icon} {label}</div>
-      <div className="text-stone-800 font-medium">{children}</div>
+    <div className="bg-white rounded-2xl p-4 shadow-sm ring-1 ring-stone-950/[0.04]">
+      <div className="flex items-center gap-1.5 text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2">{icon} {label}</div>
+      <div className="text-stone-900 font-semibold text-sm leading-snug">{children}</div>
     </div>
   )
 }

@@ -16,9 +16,10 @@ enum Role {
 
 enum Difficulty {
   easy
-  moderate
+  easy_medium
+  medium
+  medium_hard
   hard
-  expert
 }
 
 enum HikeStatus {
@@ -141,6 +142,8 @@ model HikeParticipant {
   bringsCar              Boolean @default(false)
   carSeats               Int?
   carDriverParticipantId String?
+  pickupLat              Float?
+  pickupLng              Float?
 
   hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
