@@ -34,6 +34,7 @@ enum ParticipantStatus {
   confirmed
   rejected
   waitlist
+  expired
 }
 
 // ─── NextAuth required models ─────────────────────────────────────────────────
@@ -119,6 +120,7 @@ model Hike {
   status               HikeStatus  @default(upcoming)
   gpxApproximateUrl    String?
   gpxActualUrl         String?
+  essentials           String[]    @default([])
   externalPhotosUrl    String?
   whatsappGroupUrl     String?
   coverImageUrl        String?
@@ -137,6 +139,7 @@ model HikeParticipant {
   status      ParticipantStatus @default(pending)
   joinedAt    DateTime          @default(now())
   confirmedAt DateTime?
+  paymentDeadline DateTime?
   adminNotes  String?
   guestName              String?
   bringsCar              Boolean @default(false)

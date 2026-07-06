@@ -10,10 +10,13 @@ import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { expireOverduePending } from '@/lib/expireParticipants'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
+
+  await expireOverduePending()
 
   const [d, session, hike] = await Promise.all([
     getDictionary(lang),
@@ -40,6 +43,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     pending: hike.participants.filter(p => p.status === 'pending').length,
     waitlist: hike.participants.filter(p => p.status === 'waitlist').length,
     rejected: hike.participants.filter(p => p.status === 'rejected').length,
+    expired: hike.participants.filter(p => p.status === 'expired').length,
   }
 
   const participants = hike.participants.map(p => ({
@@ -48,6 +52,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     hikeId: p.hikeId,
     status: p.status,
     joinedAt: p.joinedAt.toISOString(),
+    paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
     adminNotes: p.adminNotes,
     guestName: p.guestName,
     bringsCar: p.bringsCar,

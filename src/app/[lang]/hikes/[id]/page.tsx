@@ -6,14 +6,18 @@ import JoinButton from '@/components/hikes/JoinButton'
 import SpotsCounter from '@/components/hikes/SpotsCounter'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
+import EssentialsSection from '@/components/hikes/EssentialsSection'
 import AttendeeSection from '@/components/hikes/AttendeeSection'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
+import { expireOverduePending } from '@/lib/expireParticipants'
 
 export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
+
+  await expireOverduePending()
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
@@ -197,6 +201,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </div>
           )}
 
+          <EssentialsSection items={hike.essentials} title={dd.essentialsTitle} />
+
           <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
 
           {photos.length > 0 && (
@@ -238,6 +244,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 currentCarSeats={userParticipation?.carSeats ?? null}
                 currentPickupLat={userParticipation?.pickupLat ?? null}
                 currentPickupLng={userParticipation?.pickupLng ?? null}
+                paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
                 dict={d.joinButton}
                 lang={lang}
               />

@@ -13,17 +13,36 @@ export default function NewHikePage() {
   const [error, setError] = useState('')
   const d = useDict().admin.newHike
 
-  const [form, setForm] = useState({
-    title: '', destination: '', description: '', date: '', meeting_time: '',
-    entry_fee: '0', max_participants: '20', mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
-    people_per_car: '5', cars_needed: '',
-    has_camping: false, camping_details: '', camping_price: '', has_accommodation: false, accommodation_details: '',
-    accommodation_price: '', accommodation_deposit: '',
-    difficulty: '', external_photos_url: '', whatsapp_group_url: '',
+  const computeCars = (participants: string, perCar: string) => {
+    const p = parseInt(participants)
+    const c = parseInt(perCar) || 5
+    return (p > 0 && c > 0) ? String(Math.ceil(p / c)) : ''
+  }
+
+  const [form, setForm] = useState(() => {
+    const max_participants = '20'
+    const people_per_car = '5'
+    return {
+      title: '', destination: '', description: '', date: '', meeting_time: '',
+      entry_fee: '0', max_participants, mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
+      people_per_car, cars_needed: computeCars(max_participants, people_per_car),
+      has_camping: false, camping_details: '', camping_price: '', has_accommodation: false, accommodation_details: '',
+      accommodation_price: '', accommodation_deposit: '',
+      difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
+    }
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
-  const set = (field: string, value: string | boolean) => setForm(f => ({ ...f, [field]: value }))
+  const set = (field: string, value: string | boolean) => setForm(f => {
+    const next = { ...f, [field]: value }
+    if (field === 'max_participants' || field === 'people_per_car') {
+      next.cars_needed = computeCars(
+        field === 'max_participants' ? value as string : f.max_participants,
+        field === 'people_per_car' ? value as string : f.people_per_car,
+      )
+    }
+    return next
+  })
 
   const uploadFile = async (file: File, bucket: string) => {
     const fd = new FormData()
@@ -60,6 +79,7 @@ export default function NewHikePage() {
           accommodationPrice: form.accommodation_price ? parseFloat(form.accommodation_price) : undefined,
           accommodationDeposit: form.accommodation_deposit ? parseFloat(form.accommodation_deposit) : undefined,
           difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
+          essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
           externalPhotosUrl: form.external_photos_url || undefined,
           whatsappGroupUrl: form.whatsapp_group_url || undefined,
         })
@@ -99,11 +119,22 @@ export default function NewHikePage() {
           <Field label={d.difficulty}>
             <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} className={input}>
               <option value="">{d.selectDifficulty}</option>
-              {(['easy','moderate','hard','expert'] as const).map(k => (
+              {(['easy','easy_medium','medium','medium_hard','hard'] as const).map(k => (
                 <option key={k} value={k}>{diffs[k]}</option>
               ))}
             </select>
           </Field>
+        </Section>
+
+        <Section title={d.participantsPayment}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label={d.maxParticipants} required>
+              <input type="number" value={form.max_participants} onChange={e => set('max_participants', e.target.value)} required min="1" className={input} />
+            </Field>
+            <Field label={d.entryFee}>
+              <input type="number" value={form.entry_fee} onChange={e => set('entry_fee', e.target.value)} min="0" step="0.5" className={input} />
+            </Field>
+          </div>
         </Section>
 
         <Section title={d.logistics}>
@@ -124,7 +155,7 @@ export default function NewHikePage() {
               <input type="number" value={form.people_per_car} onChange={e => set('people_per_car', e.target.value)} min="1" className={input} />
             </Field>
             <Field label={d.carsNeeded}>
-              <input type="number" value={form.cars_needed} onChange={e => set('cars_needed', e.target.value)} min="0" placeholder="—" className={input} />
+              <input type="number" value={form.cars_needed} onChange={e => set('cars_needed', e.target.value)} min="0" className={input} />
             </Field>
           </div>
           <div className="flex gap-6">
@@ -164,15 +195,12 @@ export default function NewHikePage() {
           )}
         </Section>
 
-        <Section title={d.participantsPayment}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label={d.maxParticipants} required>
-              <input type="number" value={form.max_participants} onChange={e => set('max_participants', e.target.value)} required min="1" className={input} />
-            </Field>
-            <Field label={d.entryFee}>
-              <input type="number" value={form.entry_fee} onChange={e => set('entry_fee', e.target.value)} min="0" step="0.5" className={input} />
-            </Field>
-          </div>
+        <Section title={d.essentials}>
+          <Field label={d.essentialsLabel}>
+            <textarea value={form.essentials} onChange={e => set('essentials', e.target.value)} rows={5}
+              placeholder={d.essentialsPlaceholder} className={input} />
+            <p className="text-xs text-stone-400 mt-1.5">{d.essentialsHint}</p>
+          </Field>
         </Section>
 
         <Section title={d.mediaRoutes}>

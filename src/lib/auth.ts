@@ -7,7 +7,11 @@ import { prisma } from './db'
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
-  session: { strategy: 'jwt' },
+  session: {
+    strategy: 'jwt',
+    maxAge: 60 * 60 * 24 * 365, // 1 year — keep users logged in across visits
+    updateAge: 60 * 60 * 24 * 7, // refresh the session on any visit within a week
+  },
   pages: {
     signIn: '/auth/login',
     error: '/auth/login',

@@ -34,6 +34,7 @@ type HikeData = {
   hasAccommodation: boolean
   peoplePerCar: number
   carsNeeded: number | null
+  essentials: string[]
 }
 
 type HikeEditDict = {
@@ -69,6 +70,9 @@ type HikeEditDict = {
   accommodationDetailsPlaceholder: string
   accommodationPrice: string
   accommodationDeposit: string
+  essentials: string
+  essentialsPlaceholder: string
+  essentialsHint: string
   coverPhoto: string
   coverPhotoSet: string
   changeCoverPhoto: string
@@ -87,7 +91,7 @@ type HikeEditDict = {
   difficulties: Record<string, string>
 }
 
-const DIFFICULTIES = ['easy', 'moderate', 'hard', 'expert'] as const
+const DIFFICULTIES = ['easy', 'easy_medium', 'medium', 'medium_hard', 'hard'] as const
 
 export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: HikeEditDict }) {
   const [form, setForm] = useState({
@@ -115,6 +119,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     hasAccommodation: hike.hasAccommodation,
     peoplePerCar: String(hike.peoplePerCar),
     carsNeeded: hike.carsNeeded != null ? String(hike.carsNeeded) : '',
+    essentials: hike.essentials.join('\n'),
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
@@ -180,6 +185,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         hasAccommodation: form.hasAccommodation,
         peoplePerCar: parseInt(form.peoplePerCar) || 5,
         carsNeeded: form.carsNeeded ? parseInt(form.carsNeeded) : null,
+        essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
         gpxActualUrl,
         gpxApproximateUrl,
         coverImageUrl,
@@ -328,6 +334,14 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
           </div>
         </>
       )}
+
+      {/* Essentials */}
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.essentials}</label>
+        <textarea value={form.essentials} onChange={e => set('essentials', e.target.value)}
+          rows={5} placeholder={dict.essentialsPlaceholder} className={cls} />
+        <p className="text-xs text-stone-400 mt-1.5">{dict.essentialsHint}</p>
+      </div>
 
       {/* Cover photo */}
       <div>

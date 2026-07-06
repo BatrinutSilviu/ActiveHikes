@@ -35,7 +35,7 @@ export default function SpotsCounter({
         const res = await fetch(`/api/hikes/${hikeId}/spots`, { cache: 'no-store' })
         if (res.ok) setSpots(await res.json())
       } catch {
-        // silent — stale data is fine, we'll retry
+        // silent
       }
     }, 5000)
     return () => clearInterval(interval)
@@ -45,16 +45,16 @@ export default function SpotsCounter({
   const spotsLabel = spots.spotsLeft === 1 ? dict.oneSpotLeft : `${spots.spotsLeft} ${dict.spotsLeft}`
 
   return (
-    <div className="mb-4">
-      <div className="flex justify-between text-sm mb-1">
-        <span className="text-stone-600">{spots.confirmedCount} {dict.confirmed}</span>
-        <span className={spots.isFull ? 'text-red-600 font-medium' : 'text-stone-600'}>
+    <div className="mb-5">
+      <div className="flex justify-between text-sm font-medium mb-2">
+        <span className="text-stone-600">{spots.confirmedCount} / {spots.maxParticipants} {dict.confirmed}</span>
+        <span className={spots.isFull ? 'text-red-500 font-semibold' : 'text-stone-400'}>
           {spots.isFull ? dict.full : spotsLabel}
         </span>
       </div>
-      <div className="w-full bg-stone-100 rounded-full h-2">
+      <div className="w-full bg-stone-100 rounded-full h-1.5">
         <div
-          className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+          className={`h-1.5 rounded-full transition-all duration-500 ${spots.isFull ? 'bg-red-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-400'}`}
           style={{ width: `${pct}%` }}
         />
       </div>

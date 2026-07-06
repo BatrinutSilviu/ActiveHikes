@@ -2,15 +2,16 @@
 
 import { useState, useTransition } from 'react'
 import { updateParticipantStatus, confirmAllPending } from '@/app/actions/participants'
-import { Check, X, List, CheckCheck, Car } from 'lucide-react'
+import { Check, X, List, CheckCheck, Car, Timer } from 'lucide-react'
 
-type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist'
+type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
 
 type Participant = {
   id: string
   hikeId: string
   status: ParticipantStatus
   joinedAt: string
+  paymentDeadline?: string | null
   guestName?: string | null
   bringsCar?: boolean
   carSeats?: number | null
@@ -26,6 +27,7 @@ type ParticipantManagerDict = {
   noSpotsAlert: string
   joined: string
   bringsCar: string
+  payBy: string
   status: Record<string, string>
   actions: { confirm: string; waitlist: string; reject: string }
 }
@@ -35,6 +37,7 @@ const STATUS_BADGE_CLASSES: Record<ParticipantStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
   waitlist: 'bg-blue-100 text-blue-700',
   rejected: 'bg-red-100 text-red-600',
+  expired: 'bg-stone-200 text-stone-500',
 }
 
 export default function ParticipantManager({
@@ -86,7 +89,7 @@ export default function ParticipantManager({
     setBulkLoading(false)
   }
 
-  const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected']
+  const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected', 'expired']
   const filtered = filter === 'all' ? items : items.filter(p => p.status === filter)
 
   if (items.length === 0) {
@@ -129,8 +132,13 @@ export default function ParticipantManager({
                   <a href={`https://wa.me/${p.user.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
                     className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
                 )}
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-stone-400 text-xs">{dict.joined} {new Date(p.joinedAt).toLocaleDateString()}</span>
+                  {p.status === 'pending' && p.paymentDeadline && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
+                      <Timer size={11} /> {dict.payBy} {new Date(p.paymentDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                   {p.bringsCar && (
                     <span className="inline-flex items-center gap-1 text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full">
                       <Car size={11} /> {dict.bringsCar}{p.carSeats != null ? ` (${p.carSeats})` : ''}

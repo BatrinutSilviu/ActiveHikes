@@ -3,17 +3,21 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
+import { expireOverduePending } from '@/lib/expireParticipants'
 
 const STATUS_BADGE: Record<string, string> = {
   confirmed: 'bg-emerald-100 text-emerald-700',
   pending: 'bg-yellow-100 text-yellow-700',
   waitlist: 'bg-blue-100 text-blue-700',
   rejected: 'bg-red-100 text-red-600',
+  expired: 'bg-stone-200 text-stone-500',
 }
 
 export default async function AllParticipantsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
+
+  await expireOverduePending()
 
   const [d, participants] = await Promise.all([
     getDictionary(lang),

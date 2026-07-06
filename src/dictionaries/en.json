@@ -80,6 +80,7 @@
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "viewFullAlbum": "View full album",
     "photosTitle": "Photos",
+    "essentialsTitle": "What to Bring",
     "carpool": {
       "title": "Carpools",
       "seatsLeft": "seats left",
@@ -127,9 +128,12 @@
     "joinWaitlist": "Join waitlist",
     "registering": "Registering…",
     "cancelRegistration": "Cancel registration",
+    "registerAgain": "Register again",
     "cancelling": "Cancelling…",
     "cancelConfirm": "Are you sure you want to cancel your registration?",
     "cancelError": "Could not cancel. Please try again.",
+    "payWithin": "Pay within",
+    "paymentWindowExpired": "Payment window elapsed.",
     "joinError": "Something went wrong. Please try again.",
     "saveCarPreference": "Save car preference",
     "savingCarPreference": "Saving…",
@@ -144,10 +148,11 @@
     "locationConfirm": "Confirm location",
     "locationCancel": "Cancel",
     "status": {
-      "pending": { "label": "Registration pending", "desc": "Waiting for payment confirmation." },
+      "pending": { "label": "Registration pending", "desc": "Transfer the entry fee to confirm your spot." },
       "confirmed": { "label": "You're in!", "desc": "Your spot is confirmed. See you on the trail!" },
       "rejected": { "label": "Registration rejected", "desc": "Your registration was not accepted." },
-      "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." }
+      "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." },
+      "expired": { "label": "Registration expired", "desc": "You didn't pay in time. Please register again." }
     }
   },
   "profile": {
@@ -160,7 +165,16 @@
       "confirmed": "Confirmed",
       "pending": "Pending",
       "waitlist": "Waitlist",
-      "rejected": "Not accepted"
+      "rejected": "Not accepted",
+      "expired": "Expired"
+    },
+    "nameEditor": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "edit": "Edit name",
+      "save": "Save",
+      "cancel": "Cancel",
+      "error": "Couldn't save your name. Please try again."
     }
   },
   "auth": {
@@ -257,6 +271,10 @@
       "whatsappGroupUrl": "WhatsApp group link",
       "whatsappGroupUrlPlaceholder": "https://chat.whatsapp.com/…",
       "externalAlbum": "External photo album link",
+      "essentials": "Essentials",
+      "essentialsLabel": "What to bring",
+      "essentialsPlaceholder": "Hiking boots\nWater (2L+)\nRain jacket\nSunscreen",
+      "essentialsHint": "One item per line — shown as a checklist on the hike page.",
       "cancel": "Cancel",
       "createHike": "Create hike",
       "creating": "Creating…",
@@ -290,11 +308,13 @@
       "myRegistration": "My Registration",
       "joined": "Joined",
       "bringsCar": "Driving",
+      "payBy": "Pay by",
       "status": {
         "confirmed": "Confirmed",
         "pending": "Pending",
         "waitlist": "Waitlist",
-        "rejected": "Rejected"
+        "rejected": "Rejected",
+        "expired": "Expired"
       },
       "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
       "carAllocator": {
@@ -363,6 +383,9 @@
       "accommodationDetailsPlaceholder": "Name of pension/hostel, address…",
       "accommodationPrice": "Accommodation cost (RON/person)",
       "accommodationDeposit": "Deposit (RON/person)",
+      "essentials": "What to bring",
+      "essentialsPlaceholder": "Hiking boots\nWater (2L+)\nRain jacket\nSunscreen",
+      "essentialsHint": "One item per line — shown as a checklist on the hike page.",
       "coverPhoto": "Cover photo",
       "coverPhotoSet": "✓ Cover photo already set",
       "changeCoverPhoto": "Click to change cover photo",

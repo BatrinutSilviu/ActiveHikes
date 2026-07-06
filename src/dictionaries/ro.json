@@ -80,6 +80,7 @@
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "viewFullAlbum": "Vezi albumul complet",
     "photosTitle": "Fotografii",
+    "essentialsTitle": "Ce Trebuie Să Iei",
     "carpool": {
       "title": "Mașini",
       "seatsLeft": "locuri libere",
@@ -127,9 +128,12 @@
     "joinWaitlist": "Listă de așteptare",
     "registering": "Se înregistrează…",
     "cancelRegistration": "Anulează înregistrarea",
+    "registerAgain": "Înscrie-te din nou",
     "cancelling": "Se anulează…",
     "cancelConfirm": "Ești sigur că vrei să anulezi înregistrarea?",
     "cancelError": "Nu s-a putut anula. Încearcă din nou.",
+    "payWithin": "Plătește în",
+    "paymentWindowExpired": "Timpul de plată a expirat.",
     "joinError": "A apărut o eroare. Încearcă din nou.",
     "saveCarPreference": "Salvează preferința auto",
     "savingCarPreference": "Se salvează…",
@@ -144,10 +148,11 @@
     "locationConfirm": "Confirmă locația",
     "locationCancel": "Anulează",
     "status": {
-      "pending": { "label": "Înregistrare în așteptare", "desc": "Așteptăm confirmarea plății." },
+      "pending": { "label": "Înregistrare în așteptare", "desc": "Transferă taxa de participare pentru a-ți confirma locul." },
       "confirmed": { "label": "Ești confirmat!", "desc": "Locul tău este rezervat. Ne vedem pe traseu!" },
       "rejected": { "label": "Înregistrare respinsă", "desc": "Înregistrarea ta nu a fost acceptată." },
-      "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." }
+      "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." },
+      "expired": { "label": "Înregistrare expirată", "desc": "Nu ai plătit la timp. Te rugăm să te înscrii din nou." }
     }
   },
   "profile": {
@@ -160,7 +165,16 @@
       "confirmed": "Confirmat",
       "pending": "În așteptare",
       "waitlist": "Listă de așteptare",
-      "rejected": "Neacceptat"
+      "rejected": "Neacceptat",
+      "expired": "Expirat"
+    },
+    "nameEditor": {
+      "firstName": "Prenume",
+      "lastName": "Nume",
+      "edit": "Editează numele",
+      "save": "Salvează",
+      "cancel": "Anulează",
+      "error": "Numele nu a putut fi salvat. Încearcă din nou."
     }
   },
   "auth": {
@@ -257,6 +271,10 @@
       "whatsappGroupUrl": "Link grup WhatsApp",
       "whatsappGroupUrlPlaceholder": "https://chat.whatsapp.com/…",
       "externalAlbum": "Link album foto extern",
+      "essentials": "Ce trebuie luat",
+      "essentialsLabel": "Ce trebuie luat",
+      "essentialsPlaceholder": "Bocanci de munte\nApă (2L+)\nJachetă de ploaie\nCremă cu protecție solară",
+      "essentialsHint": "Un articol pe linie — afișat ca listă pe pagina drumeției.",
       "cancel": "Anulare",
       "createHike": "Creare drumeție",
       "creating": "Se creează…",
@@ -290,11 +308,13 @@
       "myRegistration": "Înscrierea Mea",
       "joined": "Înscris",
       "bringsCar": "Conduce",
+      "payBy": "Plătește până la",
       "status": {
         "confirmed": "Confirmat",
         "pending": "În așteptare",
         "waitlist": "Listă de așteptare",
-        "rejected": "Respins"
+        "rejected": "Respins",
+        "expired": "Expirat"
       },
       "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
       "carAllocator": {
@@ -363,6 +383,9 @@
       "accommodationDetailsPlaceholder": "Numele pensiunii/hostelului, adresă…",
       "accommodationPrice": "Cost cazare (RON/persoană)",
       "accommodationDeposit": "Avans (RON/persoană)",
+      "essentials": "Ce trebuie luat",
+      "essentialsPlaceholder": "Bocanci de munte\nApă (2L+)\nJachetă de ploaie\nCremă cu protecție solară",
+      "essentialsHint": "Un articol pe linie — afișat ca listă pe pagina drumeției.",
       "coverPhoto": "Fotografie de copertă",
       "coverPhotoSet": "✓ Fotografia de copertă este setată",
       "changeCoverPhoto": "Click pentru a schimba fotografia de copertă",

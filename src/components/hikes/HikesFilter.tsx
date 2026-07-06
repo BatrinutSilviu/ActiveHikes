@@ -36,26 +36,28 @@ export default function HikesFilter({
     new Date(2000, month - 1, 1).toLocaleDateString(locale, { month: 'long' })
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-6">
+    <div className="flex flex-wrap items-center gap-2 mb-8">
       <button
         onClick={() => navigate(null, null)}
-        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
           !selectedYear
-            ? 'bg-stone-800 text-white'
-            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            ? 'bg-stone-900 text-white shadow-sm'
+            : 'bg-white border border-stone-200 text-stone-600 hover:border-stone-300 hover:text-stone-900'
         }`}
       >
         {dict.filterAll}
       </button>
 
+      <div className="w-px h-5 bg-stone-200 mx-1" />
+
       {availableYears.map(year => (
         <button
           key={year}
           onClick={() => navigate(year, null)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
             selectedYear === year && !selectedMonth
-              ? 'bg-stone-800 text-white'
-              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+              ? 'bg-stone-900 text-white shadow-sm'
+              : 'bg-white border border-stone-200 text-stone-600 hover:border-stone-300 hover:text-stone-900'
           }`}
         >
           {year}
@@ -64,15 +66,15 @@ export default function HikesFilter({
 
       {selectedYear && availableMonths.length > 0 && (
         <>
-          <span className="text-stone-300 select-none">·</span>
+          <div className="w-px h-5 bg-stone-200 mx-1" />
           {availableMonths.map(month => (
             <button
               key={month}
               onClick={() => navigate(selectedYear, month)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
+              className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${
                 selectedMonth === month
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
+                  : 'bg-white border border-stone-200 text-stone-600 hover:border-emerald-300 hover:text-emerald-700'
               }`}
             >
               {monthName(month)}

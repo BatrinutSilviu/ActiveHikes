@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { Difficulty, HikeStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 
 export async function joinHike(hikeId: string, guestName?: string, bringsCar?: boolean, carSeats?: number, pickupLat?: number, pickupLng?: number) {
   const session = await getServerSession(authOptions)
@@ -24,13 +25,15 @@ export async function joinHike(hikeId: string, guestName?: string, bringsCar?: b
 
     const isAdmin = session.user.role === 'admin'
     const isFull = confirmed >= hikes[0].maxParticipants
+    const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending'
 
     await tx.hikeParticipant.create({
       data: {
         hikeId,
         userId: session.user.id,
-        status: isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending',
+        status,
         confirmedAt: isAdmin ? new Date() : undefined,
+        paymentDeadline: status === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
         guestName: guestName?.trim() || null,
         bringsCar: bringsCar ?? false,
         carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
@@ -136,6 +139,7 @@ export async function createHike(data: {
   difficulty?: string
   coverImageUrl?: string
   gpxApproximateUrl?: string
+  essentials?: string[]
   externalPhotosUrl?: string
   whatsappGroupUrl?: string
 }) {
@@ -167,6 +171,7 @@ export async function createHike(data: {
       difficulty: (data.difficulty as Difficulty) || null,
       coverImageUrl: data.coverImageUrl || null,
       gpxApproximateUrl: data.gpxApproximateUrl || null,
+      essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
       status: 'upcoming',
@@ -207,6 +212,7 @@ export async function updateHike(
     hasAccommodation?: boolean
     peoplePerCar?: number
     carsNeeded?: number | null
+    essentials?: string[]
   }
 ) {
   const session = await getServerSession(authOptions)

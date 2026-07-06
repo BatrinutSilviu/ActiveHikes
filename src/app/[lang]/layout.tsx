@@ -23,8 +23,12 @@ export default async function LocaleLayout({
     <Providers>
       <Navbar />
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-stone-200 py-6 text-center text-sm text-stone-500">
-        © {new Date().getFullYear()} ActiveHikes · {lang === 'ro' ? 'Cu ❤️ pentru munți' : 'Made with ❤️ for the mountains'}
+      <footer className="border-t border-stone-200/60 py-8 text-center">
+        <div className="text-sm text-stone-400">
+          © {new Date().getFullYear()} <span className="font-semibold text-stone-600">ActiveHikes</span>
+          {' · '}
+          {lang === 'ro' ? 'Cu dragoste pentru munți' : 'Made with love for the mountains'}
+        </div>
       </footer>
     </Providers>
   )

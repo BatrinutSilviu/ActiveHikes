@@ -66,9 +66,17 @@ export default async function HikesPage({
   }
 
   return (
+    <div>
+      {/* Dark hero band */}
+      <div className="relative bg-stone-950 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_-20%,rgba(16,185,129,0.12),transparent)]" />
+        <div className="relative max-w-6xl mx-auto px-4 py-12">
+          <h1 className="text-4xl font-black tracking-tight text-white mb-2">{d.hikes.title}</h1>
+          <p className="text-stone-400">{d.hikes.subtitle}</p>
+        </div>
+      </div>
+
     <div className="max-w-6xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-stone-900 mb-2">{d.hikes.title}</h1>
-      <p className="text-stone-500 mb-10">{d.hikes.subtitle}</p>
 
       <section className="mb-16">
         <h2 className="text-2xl font-bold text-stone-800 mb-6 flex items-center gap-2">
@@ -108,6 +116,7 @@ export default async function HikesPage({
           )}
         </section>
       )}
+    </div>
     </div>
   )
 }

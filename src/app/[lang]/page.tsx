@@ -31,49 +31,78 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
   return (
     <div>
-      <section className="relative bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-800 text-white py-24 px-4 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-96 h-96 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-64 h-64 rounded-full bg-emerald-300 blur-3xl" />
-        </div>
+      {/* Hero */}
+      <section className="relative min-h-[88vh] flex items-center justify-center bg-stone-950 text-white overflow-hidden px-4 py-20">
+        {/* Background texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(16,185,129,0.15),transparent)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_80%_80%,rgba(6,78,59,0.2),transparent)]" />
+
+        {/* Subtle grid */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
+
         <div className="relative max-w-4xl mx-auto text-center">
-          <div className="flex justify-center mb-6">
-            <Mountain size={56} className="text-emerald-300" />
+          {/* Label */}
+          <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold px-4 py-2 rounded-full mb-8 tracking-widest uppercase">
+            <Mountain size={12} /> {lang === 'ro' ? 'Comunitate de drumeție' : 'Hiking community'}
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold mb-4 tracking-tight whitespace-pre-line">{d.home.heroTitle}</h1>
-          <p className="text-base sm:text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">{d.home.heroSubtitle}</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href={`/${lang}/hikes`} className="bg-white text-emerald-800 px-8 py-3 rounded-xl font-semibold hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2">
+
+          <h1 className="text-5xl sm:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
+            {d.home.heroTitle}
+          </h1>
+
+          <p className="text-lg sm:text-xl text-stone-400 mb-12 max-w-xl mx-auto leading-relaxed">
+            {d.home.heroSubtitle}
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href={`/${lang}/hikes`}
+              className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-2xl font-bold text-base shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
               {d.home.seeAllHikes} <ArrowRight size={18} />
             </Link>
-            <Link href={`/${lang}/auth/signup`} className="border-2 border-white/40 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors">
+            <Link href={`/${lang}/auth/signup`}
+              className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-semibold text-base hover:bg-white/10 transition-all backdrop-blur-sm">
               {d.home.createAccount}
             </Link>
           </div>
+
         </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f7f6f3] to-transparent" />
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 py-16">
-        <div className="flex items-center justify-between mb-8">
+      {/* Upcoming hikes */}
+      <section className="max-w-6xl mx-auto px-4 py-20">
+        <div className="flex items-end justify-between mb-10">
           <div>
-            <h2 className="text-3xl font-bold text-stone-900">{d.home.upcomingTitle}</h2>
-            <p className="text-stone-500 mt-1">{d.home.upcomingSubtitle}</p>
+            <p className="text-emerald-600 text-sm font-semibold uppercase tracking-widest mb-2">{lang === 'ro' ? 'Planificate' : 'Scheduled'}</p>
+            <h2 className="text-4xl font-black tracking-tight text-stone-900">{d.home.upcomingTitle}</h2>
           </div>
-          <Link href={`/${lang}/hikes`} className="text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1">
-            {d.home.viewAll} <ArrowRight size={16} />
+          <Link href={`/${lang}/hikes`}
+            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-stone-500 hover:text-emerald-600 transition-colors group">
+            {d.home.viewAll}
+            <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
 
         {upcomingHikes.length === 0 ? (
-          <div className="text-center py-20 text-stone-400">
-            <Mountain size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-lg">{d.home.noHikes}</p>
+          <div className="text-center py-24 text-stone-400">
+            <Mountain size={48} className="mx-auto mb-4 opacity-20" />
+            <p className="text-lg font-medium">{d.home.noHikes}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {upcomingHikes.map(hike => <HikeCard key={hike.id} hike={hike as any} lang={lang} dict={d.hikeCard} />)}
           </div>
         )}
+
+        <div className="sm:hidden mt-8 text-center">
+          <Link href={`/${lang}/hikes`}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+            {d.home.viewAll} <ArrowRight size={15} />
+          </Link>
+        </div>
       </section>
     </div>
   )

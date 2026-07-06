@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { joinHike, cancelRegistration, updateCarPreference } from '@/app/actions/hikes'
-import { X, UserPlus, Car, MapPin, Pencil } from 'lucide-react'
+import { X, UserPlus, Car, MapPin, Pencil, Timer } from 'lucide-react'
 import LocationPickerModal from './LocationPickerModalWrapper'
 
 type StatusEntry = { label: string; desc: string }
@@ -14,6 +14,7 @@ type JoinButtonDict = {
   joinWaitlist: string
   registering: string
   cancelRegistration: string
+  registerAgain: string
   cancelling: string
   cancelConfirm: string
   cancelError: string
@@ -34,11 +35,14 @@ type JoinButtonDict = {
   locationDriverTitle: string
   locationConfirm: string
   locationCancel: string
+  payWithin: string
+  paymentWindowExpired: string
   status: {
     pending: StatusEntry
     confirmed: StatusEntry
     rejected: StatusEntry
     waitlist: StatusEntry
+    expired: StatusEntry
   }
 }
 
@@ -47,6 +51,33 @@ const STATUS_COLORS = {
   confirmed: 'bg-emerald-50 border-emerald-200 text-emerald-800',
   rejected: 'bg-red-50 border-red-200 text-red-800',
   waitlist: 'bg-blue-50 border-blue-200 text-blue-800',
+  expired: 'bg-stone-100 border-stone-300 text-stone-600',
+}
+
+function PaymentCountdown({ deadline, dict }: { deadline: string; dict: JoinButtonDict }) {
+  const [remainingMs, setRemainingMs] = useState(() => new Date(deadline).getTime() - Date.now())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRemainingMs(new Date(deadline).getTime() - Date.now())
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [deadline])
+
+  if (remainingMs <= 0) return <p className="text-sm mt-2 font-semibold">{dict.paymentWindowExpired}</p>
+
+  const totalSeconds = Math.floor(remainingMs / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const urgent = remainingMs < 15 * 60 * 1000
+
+  return (
+    <p className={`text-sm mt-2 font-semibold flex items-center justify-center gap-1.5 ${urgent ? 'text-red-600' : ''}`}>
+      <Timer size={14} />
+      {dict.payWithin} {hours}h {String(minutes).padStart(2, '0')}m {String(seconds).padStart(2, '0')}s
+    </p>
+  )
 }
 
 function LocationButton({
@@ -98,17 +129,19 @@ export default function JoinButton({
   currentCarSeats = null,
   currentPickupLat = null,
   currentPickupLng = null,
+  paymentDeadline = null,
   dict,
   lang,
 }: {
   hikeId: string
   userId: string | null
   isFull: boolean
-  participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | null
+  participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired' | null
   currentBringsCar?: boolean
   currentCarSeats?: number | null
   currentPickupLat?: number | null
   currentPickupLng?: number | null
+  paymentDeadline?: string | null
   dict: JoinButtonDict
   lang: string
 }) {
@@ -192,7 +225,7 @@ export default function JoinButton({
   }
 
   const handleCancel = () => {
-    if (!confirm(dict.cancelConfirm)) return
+    if (participationStatus !== 'expired' && !confirm(dict.cancelConfirm)) return
     setCancelling(true)
     setCancelError('')
     startTransition(async () => {
@@ -246,6 +279,9 @@ export default function JoinButton({
           <div className={`border rounded-xl p-4 text-center ${STATUS_COLORS[participationStatus]}`}>
             <div className="font-bold">{dict.status[participationStatus].label}</div>
             <p className="text-sm mt-1 opacity-80">{dict.status[participationStatus].desc}</p>
+            {participationStatus === 'pending' && paymentDeadline && (
+              <PaymentCountdown deadline={paymentDeadline} dict={dict} />
+            )}
           </div>
 
           <div className="border border-stone-200 rounded-xl p-3 space-y-3">
@@ -296,11 +332,11 @@ export default function JoinButton({
             {carSaveError && <p className="text-red-600 text-xs text-center">{carSaveError}</p>}
           </div>
 
-          {(participationStatus === 'pending' || participationStatus === 'waitlist') && (
+          {(participationStatus === 'pending' || participationStatus === 'waitlist' || participationStatus === 'expired') && (
             <button onClick={handleCancel} disabled={cancelling}
               className="w-full flex items-center justify-center gap-2 border-2 border-red-200 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-400 active:bg-red-100 transition-colors disabled:opacity-50">
               <X size={15} strokeWidth={2.5} />
-              {cancelling ? dict.cancelling : dict.cancelRegistration}
+              {cancelling ? dict.cancelling : (participationStatus === 'expired' ? dict.registerAgain : dict.cancelRegistration)}
             </button>
           )}
           {cancelError && <p className="text-red-600 text-xs text-center mt-1">{cancelError}</p>}

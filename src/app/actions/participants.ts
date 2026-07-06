@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { ParticipantStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 
 export async function updateParticipantStatus(
   participantId: string,
@@ -20,6 +21,7 @@ export async function updateParticipantStatus(
     data: {
       status: newStatus,
       confirmedAt: newStatus === 'confirmed' ? new Date() : undefined,
+      paymentDeadline: newStatus === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
     },
   })
 
