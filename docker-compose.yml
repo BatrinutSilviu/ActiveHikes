@@ -28,19 +28,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
-    depends_on:
-      - app
+    networks:
+      - default
+      - traefik-shared
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-shared"
+      - "traefik.http.routers.activehikes.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.activehikes.entrypoints=websecure"
+      - "traefik.http.routers.activehikes.tls.certresolver=le"
+      - "traefik.http.services.activehikes.loadbalancer.server.port=3000"
 
 volumes:
   postgres_data:
   uploads_data:
+
+networks:
+  traefik-shared:
+    external: true

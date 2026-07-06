@@ -91,5 +91,6 @@ Short version:
 docker compose up -d --build
 ```
 
-Three containers: `postgres` + `app` (Next.js) + `nginx` (reverse proxy on port 80/443).
+Two containers: `postgres` + `app` (Next.js). No reverse proxy of its own — it joins an
+existing Traefik instance on the VPS via a shared Docker network and routing labels.
 Uploads and DB data persist via Docker volumes.

@@ -44,57 +44,85 @@ Open [http://localhost:5555](http://localhost:5555) → User table → find your
 
 ## VPS deployment (Docker)
 
-### 1. On your VPS, create an environment file
+This app has no reverse proxy of its own — it expects an existing **Traefik** instance on the
+VPS to route to it and terminate TLS. If your VPS doesn't already run Traefik for another
+project, see "First time setting up Traefik on this VPS" below before step 1.
+
+### 1. Share the Traefik network
+
+ActiveHikes' `app` container needs to sit on the same Docker network as your existing Traefik
+container so Traefik can reach it. Create a network for this (once, VPS-wide):
 
 ```bash
-# /home/youruser/activehikes/.env
+docker network create traefik-shared
+```
+
+Then attach your existing Traefik service to it. In its compose file (e.g.
+`~/Projects/active-padel-backend/docker-compose.prod.yml`), add to the `traefik` service:
+
+```yaml
+  traefik:
+    ...
+    networks:
+      - default
+      - traefik-shared
+```
+
+and at the bottom of the file:
+
+```yaml
+networks:
+  traefik-shared:
+    external: true
+```
+
+Apply with (only recreates the `traefik` container, no impact on other services):
+
+```bash
+docker compose -f docker-compose.prod.yml up -d traefik
+```
+
+### 2. Clone the project to your VPS
+
+```bash
+git clone https://github.com/BatrinutSilviu/ActiveHikes.git ~/Projects/ActiveHikes
+cd ~/Projects/ActiveHikes
+```
+
+### 3. Create an environment file
+
+```bash
+# ~/Projects/ActiveHikes/.env
 POSTGRES_PASSWORD=choose-a-strong-password-here
-NEXTAUTH_URL=https://yourdomain.com
+DOMAIN=hikes.yourdomain.com
+NEXTAUTH_URL=https://hikes.yourdomain.com
 NEXTAUTH_SECRET=run-openssl-rand-base64-32-and-paste-here
 GOOGLE_CLIENT_ID=          # optional
 GOOGLE_CLIENT_SECRET=      # optional
 ```
 
-### 2. Copy the project to your VPS
+`DOMAIN` must be a hostname pointing at this VPS (a DNS A/AAAA record) — it's used in the
+Traefik routing label in `docker-compose.yml`. It can be a subdomain distinct from any other
+project already running behind the same Traefik.
+
+### 4. Build and start
 
 ```bash
-rsync -avz --exclude node_modules --exclude .next . youruser@yourserver:/home/youruser/activehikes/
-```
-
-### 3. Build and start
-
-```bash
-cd /home/youruser/activehikes
 docker compose up -d --build
 ```
 
 The app will:
 1. Build the Next.js image
-2. Start PostgreSQL
+2. Start PostgreSQL (internal only, not exposed to the host)
 3. Run `prisma migrate deploy` automatically
-4. Start the app on port 3000 behind nginx on port 80
+4. Join `traefik-shared` — Traefik picks it up via its container labels, routes
+   `https://$DOMAIN` to it on port 3000, and handles the Let's Encrypt cert automatically
 
-### 4. Make yourself admin on VPS
+### 5. Make yourself admin on VPS
 
 ```bash
 docker compose exec app npx prisma db execute --stdin <<< \
   "UPDATE \"User\" SET role = 'admin' WHERE email = 'your@email.com';"
-```
-
-### 5. SSL with Let's Encrypt (optional)
-
-```bash
-# On VPS
-apt install certbot
-certbot certonly --standalone -d yourdomain.com
-
-# Copy certs
-cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/certs/
-cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/certs/
-
-# Uncomment the HTTPS block in nginx/nginx.conf and comment the HTTP block
-# Then restart nginx
-docker compose restart nginx
 ```
 
 ### 6. Google OAuth (optional)
