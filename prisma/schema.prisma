@@ -43,6 +43,12 @@ enum PaymentMethodType {
   btpay
 }
 
+enum RoomType {
+  double
+  triple
+  quadruple
+}
+
 // ─── NextAuth required models ─────────────────────────────────────────────────
 
 model Account {
@@ -124,6 +130,9 @@ model Hike {
   accommodationUrl      String?
   accommodationPrice    Decimal?    @db.Decimal(10, 2)
   accommodationDeposit  Decimal?    @db.Decimal(10, 2)
+  doubleRoomCount       Int         @default(0)
+  tripleRoomCount       Int         @default(0)
+  quadrupleRoomCount    Int         @default(0)
   breakfastTime         String?
   dinnerTime            String?
   meetingTime          String?
@@ -141,6 +150,7 @@ model Hike {
   createdBy    User?             @relation(fields: [createdById], references: [id])
   participants HikeParticipant[]
   photos       HikePhoto[]
+  rooms        HikeRoom[]
 }
 
 model HikeParticipant {
@@ -158,13 +168,27 @@ model HikeParticipant {
   carDriverParticipantId String?
   pickupLat              Float?
   pickupLng              Float?
+  roomId                 String?
 
   hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
   user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   carDriver    HikeParticipant? @relation("CarPassengers", fields: [carDriverParticipantId], references: [id], onDelete: SetNull)
   carPassengers HikeParticipant[] @relation("CarPassengers")
+  room         HikeRoom?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
 
   @@unique([hikeId, userId])
+}
+
+model HikeRoom {
+  id        String   @id @default(cuid())
+  hikeId    String
+  type      RoomType
+  label     String
+  capacity  Int
+  createdAt DateTime @default(now())
+
+  hike      Hike              @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  occupants HikeParticipant[]
 }
 
 model HikePhoto {

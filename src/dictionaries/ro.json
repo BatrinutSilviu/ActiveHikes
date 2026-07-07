@@ -94,6 +94,15 @@
     "accommodationRemaining": "Rest de plată",
     "breakfastTime": "Mic dejun",
     "dinnerTime": "Cină",
+    "roomsTitle": "Configurație camere",
+    "roomColumn": "Cameră",
+    "roomCapacityColumn": "Capacitate",
+    "roomOccupancyColumn": "Ocupare",
+    "roomTypes": {
+      "double": "Dublă",
+      "triple": "Triplă",
+      "quadruple": "Cvadruplă"
+    },
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "feeBreakdown": "{entryFee} RON taxă participare + {deposit} RON avans cazare",
@@ -177,6 +186,20 @@
       "rejected": { "label": "Înregistrare respinsă", "desc": "Înregistrarea ta nu a fost acceptată." },
       "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." },
       "expired": { "label": "Înregistrare expirată", "desc": "Nu ai plătit la timp. Te rugăm să te înscrii din nou." }
+    }
+  },
+  "roomPicker": {
+    "title": "Preferință cameră",
+    "choose": "Alege o cameră",
+    "none": "Fără preferință",
+    "full": "ocupată",
+    "save": "Salvează preferința",
+    "saving": "Se salvează…",
+    "error": "Nu s-a putut salva. Încearcă din nou.",
+    "typeLabels": {
+      "double": "Dublă",
+      "triple": "Triplă",
+      "quadruple": "Cvadruplă"
     }
   },
   "profile": {
@@ -291,6 +314,9 @@
       "accommodationDepositPlaceholder": "ex. 80",
       "breakfastTime": "Ora micului dejun",
       "dinnerTime": "Ora cinei",
+      "doubleRoomCount": "Camere duble",
+      "tripleRoomCount": "Camere triple",
+      "quadrupleRoomCount": "Camere cvadruple",
       "participantsPayment": "Participanți și Plată",
       "maxParticipants": "Număr maxim participanți",
       "entryFee": "Taxă de participare (RON)",
@@ -426,6 +452,9 @@
       "accommodationDeposit": "Avans (RON/persoană)",
       "breakfastTime": "Ora micului dejun",
       "dinnerTime": "Ora cinei",
+      "doubleRoomCount": "Camere duble",
+      "tripleRoomCount": "Camere triple",
+      "quadrupleRoomCount": "Camere cvadruple",
       "essentials": "Ce trebuie luat",
       "essentialsPlaceholder": "Bocanci de munte\nApă (2L+)\nJachetă de ploaie\nCremă cu protecție solară",
       "essentialsHint": "Un articol pe linie — afișat ca listă pe pagina drumeției.",

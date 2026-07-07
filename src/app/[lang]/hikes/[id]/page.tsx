@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import JoinButton from '@/components/hikes/JoinButton'
+import RoomPicker from '@/components/hikes/RoomPicker'
 import SpotsCounter from '@/components/hikes/SpotsCounter'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
@@ -30,9 +31,21 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         orderBy: { joinedAt: 'asc' },
       },
       photos: { orderBy: { createdAt: 'asc' } },
+      rooms: {
+        orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+        include: { occupants: { select: { id: true } } },
+      },
     },
   })
   if (!hike) notFound()
+
+  const rooms = hike.rooms.map(r => ({
+    id: r.id,
+    type: r.type,
+    label: r.label,
+    capacity: r.capacity,
+    occupied: r.occupants.length,
+  }))
 
   const bankAccounts = await prisma.bankAccount.findMany({ where: { isActive: true } })
 
@@ -189,7 +202,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </div>
           )}
 
-          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime) && (
+          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime || rooms.length > 0) && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
               <h3 className="font-semibold text-blue-800 flex items-center gap-2">
                 <Hotel size={16} /> {dd.accommodationTitle}
@@ -243,6 +256,33 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                       <Clock size={14} /> {dd.dinnerTime}: {hike.dinnerTime}
                     </span>
                   )}
+                </div>
+              )}
+              {rooms.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1.5">{dd.roomsTitle}</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-collapse">
+                      <thead>
+                        <tr className="text-left text-blue-500 text-xs uppercase tracking-wide">
+                          <th className="py-1.5 pr-4 font-semibold">{dd.roomColumn}</th>
+                          <th className="py-1.5 pr-4 font-semibold">{dd.roomCapacityColumn}</th>
+                          <th className="py-1.5 font-semibold">{dd.roomOccupancyColumn}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rooms.map(room => (
+                          <tr key={room.id} className="border-t border-blue-100">
+                            <td className="py-1.5 pr-4 text-blue-800 font-medium">
+                              {(dd.roomTypes as Record<string, string>)[room.type]} {room.label}
+                            </td>
+                            <td className="py-1.5 pr-4 text-blue-700">{room.capacity}</td>
+                            <td className="py-1.5 text-blue-700">{room.occupied}/{room.capacity}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </div>
@@ -322,6 +362,17 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 dict={d.joinButton}
                 lang={lang}
               />
+
+              {hike.hasAccommodation && rooms.length > 0 && userParticipation && userParticipation.status !== 'rejected' && (
+                <div className="mt-3">
+                  <RoomPicker
+                    hikeId={hike.id}
+                    rooms={rooms}
+                    currentRoomId={userParticipation.roomId}
+                    dict={d.roomPicker}
+                  />
+                </div>
+              )}
             </div>
           )}
 

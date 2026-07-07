@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { Difficulty, HikeStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
+import { syncHikeRooms } from '@/lib/rooms'
 
 export async function joinHike(hikeId: string, guestName?: string, bringsCar?: boolean, carSeats?: number, pickupLat?: number, pickupLng?: number) {
   const session = await getServerSession(authOptions)
@@ -115,6 +116,34 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
+export async function assignRoom(hikeId: string, roomId: string | null) {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error('Not authenticated')
+
+  const participation = await prisma.hikeParticipant.findUnique({
+    where: { hikeId_userId: { hikeId, userId: session.user.id } },
+    select: { id: true },
+  })
+  if (!participation) throw new Error('Not registered for this hike')
+
+  if (roomId !== null) {
+    const room = await prisma.hikeRoom.findUnique({
+      where: { id: roomId },
+      select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
+    })
+    if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
+    const taken = room.occupants.filter(o => o.id !== participation.id).length
+    if (taken >= room.capacity) throw new Error('Room is full')
+  }
+
+  await prisma.hikeParticipant.update({
+    where: { id: participation.id },
+    data: { roomId },
+  })
+
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
 export async function createHike(data: {
   title: string
   destination: string
@@ -139,6 +168,9 @@ export async function createHike(data: {
   accommodationUrl?: string
   accommodationPrice?: number
   accommodationDeposit?: number
+  doubleRoomCount?: number
+  tripleRoomCount?: number
+  quadrupleRoomCount?: number
   breakfastTime?: string
   dinnerTime?: string
   difficulty?: string
@@ -176,6 +208,9 @@ export async function createHike(data: {
       accommodationUrl: data.accommodationUrl || null,
       accommodationPrice: data.accommodationPrice ?? null,
       accommodationDeposit: data.accommodationDeposit ?? null,
+      doubleRoomCount: data.doubleRoomCount ?? 0,
+      tripleRoomCount: data.tripleRoomCount ?? 0,
+      quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
       breakfastTime: data.breakfastTime || null,
       dinnerTime: data.dinnerTime || null,
       difficulty: (data.difficulty as Difficulty) || null,
@@ -187,6 +222,12 @@ export async function createHike(data: {
       status: 'upcoming',
       createdById: session.user.id,
     },
+  })
+
+  await syncHikeRooms(hike.id, {
+    doubleRoomCount: data.doubleRoomCount ?? 0,
+    tripleRoomCount: data.tripleRoomCount ?? 0,
+    quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
   })
 
   return hike.id
@@ -218,6 +259,9 @@ export async function updateHike(
     startingPoint?: string | null
     accommodationPrice?: number | null
     accommodationDeposit?: number | null
+    doubleRoomCount?: number
+    tripleRoomCount?: number
+    quadrupleRoomCount?: number
     breakfastTime?: string | null
     dinnerTime?: string | null
     hasCamping?: boolean
@@ -234,7 +278,7 @@ export async function updateHike(
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
   const { date, endDate, difficulty, ...rest } = data
-  await prisma.hike.update({
+  const updated = await prisma.hike.update({
     where: { id: hikeId },
     data: {
       ...rest,
@@ -243,6 +287,15 @@ export async function updateHike(
       ...(difficulty !== undefined ? { difficulty: (difficulty as Difficulty | null) } : {}),
     },
   })
+
+  if (data.doubleRoomCount !== undefined || data.tripleRoomCount !== undefined || data.quadrupleRoomCount !== undefined) {
+    await syncHikeRooms(hikeId, {
+      doubleRoomCount: updated.doubleRoomCount,
+      tripleRoomCount: updated.tripleRoomCount,
+      quadrupleRoomCount: updated.quadrupleRoomCount,
+    })
+  }
+
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }

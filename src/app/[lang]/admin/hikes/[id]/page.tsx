@@ -5,6 +5,7 @@ import ParticipantManager from '@/components/admin/ParticipantManager'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import PhotoUploader from '@/components/admin/PhotoUploader'
 import JoinButton from '@/components/hikes/JoinButton'
+import RoomPicker from '@/components/hikes/RoomPicker'
 import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
 import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -27,11 +28,23 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       include: {
         participants: { include: { user: { select: { id: true, name: true, email: true, phone: true } } }, orderBy: { joinedAt: 'asc' } },
         photos: { orderBy: { createdAt: 'asc' } },
+        rooms: {
+          orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
+          include: { occupants: { select: { id: true } } },
+        },
       },
     }),
   ])
 
   if (!hike) notFound()
+
+  const rooms = hike.rooms.map(r => ({
+    id: r.id,
+    type: r.type,
+    label: r.label,
+    capacity: r.capacity,
+    occupied: r.occupants.length,
+  }))
 
   const da = d.admin.hike
 
@@ -87,6 +100,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     accommodationDeposit: hike.accommodationDeposit ? Number(hike.accommodationDeposit) : null,
     participants: undefined,
     photos: undefined,
+    rooms: undefined,
   }
 
   return (
@@ -145,6 +159,17 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               dict={d.joinButton}
               lang={lang}
             />
+
+            {hike.hasAccommodation && rooms.length > 0 && adminParticipation && adminParticipation.status !== 'rejected' && (
+              <div className="mt-3">
+                <RoomPicker
+                  hikeId={hike.id}
+                  rooms={rooms}
+                  currentRoomId={adminParticipation.roomId}
+                  dict={d.roomPicker}
+                />
+              </div>
+            )}
           </div>
 
           {hike.status === 'upcoming' && (

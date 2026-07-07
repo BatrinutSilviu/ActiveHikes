@@ -23,6 +23,9 @@ type HikeData = {
   accommodationUrl: string | null
   accommodationPrice: number | null
   accommodationDeposit: number | null
+  doubleRoomCount: number
+  tripleRoomCount: number
+  quadrupleRoomCount: number
   breakfastTime: string | null
   dinnerTime: string | null
   entryFee: number
@@ -80,6 +83,9 @@ type HikeEditDict = {
   accommodationUrlPlaceholder: string
   accommodationPrice: string
   accommodationDeposit: string
+  doubleRoomCount: string
+  tripleRoomCount: string
+  quadrupleRoomCount: string
   breakfastTime: string
   dinnerTime: string
   essentials: string
@@ -122,6 +128,9 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     accommodationUrl: hike.accommodationUrl ?? '',
     accommodationPrice: hike.accommodationPrice != null ? String(hike.accommodationPrice) : '',
     accommodationDeposit: hike.accommodationDeposit != null ? String(hike.accommodationDeposit) : '',
+    doubleRoomCount: String(hike.doubleRoomCount),
+    tripleRoomCount: String(hike.tripleRoomCount),
+    quadrupleRoomCount: String(hike.quadrupleRoomCount),
     breakfastTime: hike.breakfastTime ?? '',
     dinnerTime: hike.dinnerTime ?? '',
     entryFee: String(hike.entryFee),
@@ -193,6 +202,9 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         accommodationUrl: form.accommodationUrl || null,
         accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
         accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
+        doubleRoomCount: parseInt(form.doubleRoomCount) || 0,
+        tripleRoomCount: parseInt(form.tripleRoomCount) || 0,
+        quadrupleRoomCount: parseInt(form.quadrupleRoomCount) || 0,
         breakfastTime: form.breakfastTime || null,
         dinnerTime: form.dinnerTime || null,
         entryFee: parseFloat(form.entryFee),
@@ -376,6 +388,20 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.dinnerTime}</label>
               <input type="time" value={form.dinnerTime} onChange={e => set('dinnerTime', e.target.value)} className={cls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.doubleRoomCount}</label>
+              <input type="number" value={form.doubleRoomCount} onChange={e => set('doubleRoomCount', e.target.value)} min="0" step="1" className={cls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.tripleRoomCount}</label>
+              <input type="number" value={form.tripleRoomCount} onChange={e => set('tripleRoomCount', e.target.value)} min="0" step="1" className={cls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.quadrupleRoomCount}</label>
+              <input type="number" value={form.quadrupleRoomCount} onChange={e => set('quadrupleRoomCount', e.target.value)} min="0" step="1" className={cls} />
             </div>
           </div>
         </>

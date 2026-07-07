@@ -94,6 +94,15 @@
     "accommodationRemaining": "Remaining",
     "breakfastTime": "Breakfast",
     "dinnerTime": "Dinner",
+    "roomsTitle": "Room configuration",
+    "roomColumn": "Room",
+    "roomCapacityColumn": "Capacity",
+    "roomOccupancyColumn": "Occupancy",
+    "roomTypes": {
+      "double": "Double",
+      "triple": "Triple",
+      "quadruple": "Quadruple"
+    },
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "feeBreakdown": "{entryFee} RON entry fee + {deposit} RON accommodation deposit",
@@ -177,6 +186,20 @@
       "rejected": { "label": "Registration rejected", "desc": "Your registration was not accepted." },
       "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." },
       "expired": { "label": "Registration expired", "desc": "You didn't pay in time. Please register again." }
+    }
+  },
+  "roomPicker": {
+    "title": "Room preference",
+    "choose": "Choose a room",
+    "none": "No preference",
+    "full": "full",
+    "save": "Save room preference",
+    "saving": "Saving…",
+    "error": "Could not save. Please try again.",
+    "typeLabels": {
+      "double": "Double",
+      "triple": "Triple",
+      "quadruple": "Quadruple"
     }
   },
   "profile": {
@@ -291,6 +314,9 @@
       "accommodationDepositPlaceholder": "e.g. 80",
       "breakfastTime": "Breakfast time",
       "dinnerTime": "Dinner time",
+      "doubleRoomCount": "Double rooms",
+      "tripleRoomCount": "Triple rooms",
+      "quadrupleRoomCount": "Quadruple rooms",
       "participantsPayment": "Participants & Payment",
       "maxParticipants": "Max participants",
       "entryFee": "Entry fee (RON)",
@@ -426,6 +452,9 @@
       "accommodationDeposit": "Deposit (RON/person)",
       "breakfastTime": "Breakfast time",
       "dinnerTime": "Dinner time",
+      "doubleRoomCount": "Double rooms",
+      "tripleRoomCount": "Triple rooms",
+      "quadrupleRoomCount": "Quadruple rooms",
       "essentials": "What to bring",
       "essentialsPlaceholder": "Hiking boots\nWater (2L+)\nRain jacket\nSunscreen",
       "essentialsHint": "One item per line — shown as a checklist on the hike page.",

@@ -28,6 +28,7 @@ export default function NewHikePage() {
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
       has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
       accommodation_url: '', accommodation_price: '', accommodation_deposit: '', breakfast_time: '', dinner_time: '',
+      double_room_count: '0', triple_room_count: '0', quadruple_room_count: '0',
       difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
     }
   })
@@ -81,6 +82,9 @@ export default function NewHikePage() {
           accommodationUrl: form.accommodation_url || undefined,
           accommodationPrice: form.accommodation_price ? parseFloat(form.accommodation_price) : undefined,
           accommodationDeposit: form.accommodation_deposit ? parseFloat(form.accommodation_deposit) : undefined,
+          doubleRoomCount: form.double_room_count ? parseInt(form.double_room_count) : undefined,
+          tripleRoomCount: form.triple_room_count ? parseInt(form.triple_room_count) : undefined,
+          quadrupleRoomCount: form.quadruple_room_count ? parseInt(form.quadruple_room_count) : undefined,
           breakfastTime: form.breakfast_time || undefined,
           dinnerTime: form.dinner_time || undefined,
           difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
@@ -216,6 +220,19 @@ export default function NewHikePage() {
               </Field>
               <Field label={d.dinnerTime}>
                 <input type="time" value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
+              </Field>
+            </div>
+          )}
+          {form.has_accommodation && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label={d.doubleRoomCount}>
+                <input type="number" value={form.double_room_count} onChange={e => set('double_room_count', e.target.value)} min="0" step="1" className={input} />
+              </Field>
+              <Field label={d.tripleRoomCount}>
+                <input type="number" value={form.triple_room_count} onChange={e => set('triple_room_count', e.target.value)} min="0" step="1" className={input} />
+              </Field>
+              <Field label={d.quadrupleRoomCount}>
+                <input type="number" value={form.quadruple_room_count} onChange={e => set('quadruple_room_count', e.target.value)} min="0" step="1" className={input} />
               </Field>
             </div>
           )}
