@@ -80,6 +80,7 @@
     "accommodationRemaining": "Rest de plată",
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
+    "feeBreakdown": "{entryFee} RON taxă participare + {deposit} RON avans cazare",
     "viewFullAlbum": "Vezi albumul complet",
     "photosTitle": "Fotografii",
     "essentialsTitle": "Ce Trebuie Să Iei",

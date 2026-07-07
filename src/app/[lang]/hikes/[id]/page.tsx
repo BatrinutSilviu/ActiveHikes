@@ -48,6 +48,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const isFull = spotsLeft <= 0
   const isUpcoming = hike.status === 'upcoming'
   const entryFee = Number(hike.entryFee)
+  const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
+  const totalDue = entryFee + accommodationDeposit
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
   const dd = d.hikeDetail
@@ -246,9 +248,16 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
               <div className="text-center mb-5">
                 <div className="text-4xl font-black tracking-tight text-stone-900">
-                  {entryFee > 0 ? `${entryFee} RON` : dd.free}
+                  {totalDue > 0 ? `${totalDue} RON` : dd.free}
                 </div>
-                {entryFee > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                {totalDue > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                {accommodationDeposit > 0 && (
+                  <p className="text-stone-400 text-xs mt-2 leading-relaxed">
+                    {dd.feeBreakdown
+                      .replace('{entryFee}', String(entryFee))
+                      .replace('{deposit}', String(accommodationDeposit))}
+                  </p>
+                )}
               </div>
 
               <SpotsCounter
@@ -280,14 +289,21 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </a>
           )}
 
-          {entryFee > 0 && bankAccounts.length > 0 && (
+          {totalDue > 0 && bankAccounts.length > 0 && (
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
               <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
                 <DollarSign size={16} /> {dd.paymentTitle}
               </h3>
               <p className="text-amber-700 text-sm mb-4">
-                {dd.paymentDesc.replace('{fee}', String(entryFee))}
+                {dd.paymentDesc.replace('{fee}', String(totalDue))}
               </p>
+              {accommodationDeposit > 0 && (
+                <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
+                  {dd.feeBreakdown
+                    .replace('{entryFee}', String(entryFee))
+                    .replace('{deposit}', String(accommodationDeposit))}
+                </p>
+              )}
               {bankAccounts.map(account => (
                 <div key={account.id} className="bg-white rounded-xl p-4 mb-3 last:mb-0 border border-amber-100">
                   <div className="font-semibold text-stone-800">{account.bankName}</div>
