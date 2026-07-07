@@ -8,6 +8,7 @@ import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import AttendeeSection from '@/components/hikes/AttendeeSection'
+import { LinkifiedText } from '@/components/ui/LinkifiedText'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -156,7 +157,11 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               <h3 className="font-semibold text-amber-800 flex items-center gap-2">
                 <Tent size={16} /> {dd.campingTitle}
               </h3>
-              {hike.campingDetails && <p className="text-amber-700 text-sm">{hike.campingDetails}</p>}
+              {hike.campingDetails && (
+                <p className="text-amber-700 text-sm break-words">
+                  <LinkifiedText text={hike.campingDetails} />
+                </p>
+              )}
               {hike.campingPrice && (
                 <div className="bg-white rounded-lg p-3 inline-block text-center">
                   <div className="text-lg font-bold text-amber-800">{Number(hike.campingPrice)} RON</div>
@@ -172,7 +177,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 <Hotel size={16} /> {dd.accommodationTitle}
               </h3>
               {hike.accommodationDetails && (
-                <p className="text-blue-700 text-sm">{hike.accommodationDetails}</p>
+                <p className="text-blue-700 text-sm break-words">
+                  <LinkifiedText text={hike.accommodationDetails} />
+                </p>
               )}
               {hike.accommodationPrice && (() => {
                 const price = Number(hike.accommodationPrice)
