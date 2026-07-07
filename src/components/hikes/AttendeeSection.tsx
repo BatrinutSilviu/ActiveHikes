@@ -1,7 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, useTransition } from 'react'
 import { assignCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
 
@@ -34,7 +33,7 @@ function pName(p: Participant) {
 
 export default function AttendeeSection({
   hikeId,
-  participants,
+  participants: initialParticipants,
   userParticipantId,
   isUpcoming,
   dict,
@@ -45,8 +44,23 @@ export default function AttendeeSection({
   isUpcoming: boolean
   dict: AttendeeSectionDict
 }) {
-  const router = useRouter()
+  const [participants, setParticipants] = useState(initialParticipants)
   const [isPending, startTransition] = useTransition()
+
+  const refetch = async () => {
+    try {
+      const res = await fetch(`/api/hikes/${hikeId}/carpool`, { cache: 'no-store' })
+      if (res.ok) setParticipants((await res.json()).participants)
+    } catch {
+      // silent
+    }
+  }
+
+  useEffect(() => {
+    if (!isUpcoming) return
+    const interval = setInterval(refetch, 5000)
+    return () => clearInterval(interval)
+  }, [hikeId, isUpcoming])
 
   const confirmed = participants.filter(p => p.status === 'confirmed')
   const pendingCount = participants.filter(p => p.status === 'pending').length
@@ -58,7 +72,7 @@ export default function AttendeeSection({
   const assign = (driverParticipantId: string | null) => {
     startTransition(async () => {
       await assignCarDriver(hikeId, driverParticipantId)
-      router.refresh()
+      await refetch()
     })
   }
 
