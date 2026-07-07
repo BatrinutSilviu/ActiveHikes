@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import JoinButton from '@/components/hikes/JoinButton'
 import RoomPicker from '@/components/hikes/RoomPicker'
 import SpotsCounter from '@/components/hikes/SpotsCounter'
+import ParticipantsCount from '@/components/hikes/ParticipantsCount'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
@@ -135,8 +136,18 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               {hike.durationHours ? `${Number(hike.durationHours)} ${dd.durationUnit}` : dd.notSet}
             </InfoCard>
             <InfoCard icon={<Users size={18} />} label={dd.participantsLabel}>
-              {confirmedCount}/{hike.maxParticipants} {dd.confirmed}
-              {waitlistCount > 0 && <span className="text-stone-400 text-sm ml-1">· {waitlistCount} {dd.onWaitlist}</span>}
+              {isUpcoming ? (
+                <ParticipantsCount
+                  hikeId={hike.id}
+                  initial={{ confirmedCount, maxParticipants: hike.maxParticipants, waitlistCount }}
+                  dict={{ confirmed: dd.confirmed, onWaitlist: dd.onWaitlist }}
+                />
+              ) : (
+                <>
+                  {confirmedCount}/{hike.maxParticipants} {dd.confirmed}
+                  {waitlistCount > 0 && <span className="text-stone-400 text-sm ml-1">· {waitlistCount} {dd.onWaitlist}</span>}
+                </>
+              )}
             </InfoCard>
             <InfoCard icon={<DollarSign size={18} />} label={dd.entryFeeLabel}>
               {entryFee > 0 ? `${entryFee} RON` : dd.free}
