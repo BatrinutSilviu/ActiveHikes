@@ -417,8 +417,12 @@
       "saving": "Saving…",
       "saved": "Saved",
       "occupantsTitle": "Who's in each room",
+      "assignTitle": "Assign rooms",
       "unassignedTitle": "Not assigned to a room",
       "empty": "Empty",
+      "noRoom": "No room",
+      "full": "full",
+      "error": "Could not save. Please try again.",
       "noRooms": "No rooms configured yet."
     },
     "bankAccounts": {

@@ -144,6 +144,35 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
+export async function adminAssignRoom(hikeId: string, participantId: string, roomId: string | null) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const participant = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: { hikeId: true },
+  })
+  if (!participant || participant.hikeId !== hikeId) throw new Error('Invalid participant')
+
+  if (roomId !== null) {
+    const room = await prisma.hikeRoom.findUnique({
+      where: { id: roomId },
+      select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
+    })
+    if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
+    const taken = room.occupants.filter(o => o.id !== participantId).length
+    if (taken >= room.capacity) throw new Error('Room is full')
+  }
+
+  await prisma.hikeParticipant.update({
+    where: { id: participantId },
+    data: { roomId },
+  })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
 export async function createHike(data: {
   title: string
   destination: string

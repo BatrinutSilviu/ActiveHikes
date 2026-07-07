@@ -2,7 +2,8 @@ import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import RoomConfigForm from '@/components/admin/RoomConfigForm'
-import { ArrowLeft, BedDouble, UserCheck } from 'lucide-react'
+import RoomAssignmentList from '@/components/admin/RoomAssignmentList'
+import { ArrowLeft, BedDouble, UserCheck, Users } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
 export default async function AdminHikeRoomsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -28,8 +29,8 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
           },
         },
         participants: {
-          where: { roomId: null, status: { in: ['confirmed', 'pending', 'waitlist'] } },
-          select: { id: true, guestName: true, user: { select: { name: true } } },
+          where: { status: { in: ['confirmed', 'pending', 'waitlist'] } },
+          select: { id: true, guestName: true, roomId: true, user: { select: { name: true } } },
         },
       },
     }),
@@ -97,16 +98,18 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
           )}
         </div>
 
-        {hike.participants.length > 0 && (
+        {hike.rooms.length > 0 && hike.participants.length > 0 && (
           <div>
-            <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-2">{dr.unassignedTitle}</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {hike.participants.map(p => (
-                <span key={p.id} className="text-xs bg-stone-50 border border-stone-200 text-stone-700 px-2.5 py-1 rounded-full">
-                  {p.user.name ?? '?'}{p.guestName && ` +${p.guestName}`}
-                </span>
-              ))}
-            </div>
+            <h2 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
+              <Users size={18} className="text-emerald-600" /> {dr.assignTitle}
+            </h2>
+            <RoomAssignmentList
+              hikeId={hike.id}
+              participants={hike.participants}
+              rooms={hike.rooms.map(r => ({ id: r.id, type: r.type, label: r.label, capacity: r.capacity, occupied: r.occupants.length }))}
+              roomTypeLabels={roomTypeLabels}
+              dict={dr}
+            />
           </div>
         )}
       </div>

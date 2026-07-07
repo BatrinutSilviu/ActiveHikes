@@ -417,8 +417,12 @@
       "saving": "Se salvează…",
       "saved": "Salvat",
       "occupantsTitle": "Cine e în fiecare cameră",
+      "assignTitle": "Alocă camere",
       "unassignedTitle": "Nealocați unei camere",
       "empty": "Goală",
+      "noRoom": "Fără cameră",
+      "full": "plină",
+      "error": "Nu s-a putut salva. Încearcă din nou.",
       "noRooms": "Nu există camere configurate încă."
     },
     "bankAccounts": {
