@@ -7,11 +7,11 @@ import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
 
 export async function createBankAccount(data: {
-  type: 'bank' | 'revolut'
+  type: 'bank' | 'revolut' | 'btpay'
   bankName?: string
   accountHolder: string
   iban?: string
-  revolutHandle?: string
+  paymentHandle?: string
   currency: string
   notes?: string
 }) {
@@ -24,7 +24,7 @@ export async function createBankAccount(data: {
       bankName: data.type === 'bank' ? data.bankName || null : null,
       accountHolder: data.accountHolder,
       iban: data.type === 'bank' ? data.iban || null : null,
-      revolutHandle: data.type === 'revolut' ? data.revolutHandle || null : null,
+      paymentHandle: data.type !== 'bank' ? data.paymentHandle || null : null,
       currency: data.currency,
       notes: data.notes || null,
       isActive: true,

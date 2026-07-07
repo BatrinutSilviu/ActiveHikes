@@ -305,16 +305,16 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 </p>
               )}
               {bankAccounts.map(account => {
-                const isRevolut = account.type === 'revolut'
-                const revolutTag = isRevolut && account.revolutHandle?.startsWith('@')
-                  ? account.revolutHandle.slice(1)
+                const methodLabel = account.type === 'revolut' ? 'Revolut' : account.type === 'btpay' ? 'BT Pay' : account.bankName
+                const revolutTag = account.type === 'revolut' && account.paymentHandle?.startsWith('@')
+                  ? account.paymentHandle.slice(1)
                   : null
                 return (
                   <div key={account.id} className="bg-white rounded-xl p-4 mb-3 last:mb-0 border border-amber-100">
-                    <div className="font-semibold text-stone-800">{isRevolut ? 'Revolut' : account.bankName}</div>
+                    <div className="font-semibold text-stone-800">{methodLabel}</div>
                     <div className="text-stone-600 text-sm">{account.accountHolder}</div>
                     <div className="font-mono text-sm mt-1 text-stone-700 break-all">
-                      {isRevolut ? account.revolutHandle : account.iban}
+                      {account.type === 'bank' ? account.iban : account.paymentHandle}
                     </div>
                     {revolutTag && (
                       <a

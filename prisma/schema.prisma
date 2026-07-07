@@ -40,6 +40,7 @@ enum ParticipantStatus {
 enum PaymentMethodType {
   bank
   revolut
+  btpay
 }
 
 // ─── NextAuth required models ─────────────────────────────────────────────────
@@ -181,7 +182,7 @@ model BankAccount {
   bankName      String?
   accountHolder String
   iban          String?
-  revolutHandle String?
+  paymentHandle String?
   currency      String             @default("RON")
   notes         String?
   isActive      Boolean            @default(true)
