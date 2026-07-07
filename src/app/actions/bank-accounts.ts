@@ -7,16 +7,29 @@ import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
 
 export async function createBankAccount(data: {
-  bankName: string
+  type: 'bank' | 'revolut'
+  bankName?: string
   accountHolder: string
-  iban: string
+  iban?: string
+  revolutHandle?: string
   currency: string
   notes?: string
 }) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  await prisma.bankAccount.create({ data: { ...data, isActive: true } })
+  await prisma.bankAccount.create({
+    data: {
+      type: data.type,
+      bankName: data.type === 'bank' ? data.bankName || null : null,
+      accountHolder: data.accountHolder,
+      iban: data.type === 'bank' ? data.iban || null : null,
+      revolutHandle: data.type === 'revolut' ? data.revolutHandle || null : null,
+      currency: data.currency,
+      notes: data.notes || null,
+      isActive: true,
+    },
+  })
   revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
 }
 

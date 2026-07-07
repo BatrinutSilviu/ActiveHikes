@@ -37,6 +37,11 @@ enum ParticipantStatus {
   expired
 }
 
+enum PaymentMethodType {
+  bank
+  revolut
+}
+
 // ─── NextAuth required models ─────────────────────────────────────────────────
 
 model Account {
@@ -171,12 +176,14 @@ model HikePhoto {
 }
 
 model BankAccount {
-  id            String   @id @default(cuid())
-  bankName      String
+  id            String             @id @default(cuid())
+  type          PaymentMethodType  @default(bank)
+  bankName      String?
   accountHolder String
-  iban          String
-  currency      String   @default("RON")
+  iban          String?
+  revolutHandle String?
+  currency      String             @default("RON")
   notes         String?
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
 }

@@ -304,14 +304,32 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                     .replace('{deposit}', String(accommodationDeposit))}
                 </p>
               )}
-              {bankAccounts.map(account => (
-                <div key={account.id} className="bg-white rounded-xl p-4 mb-3 last:mb-0 border border-amber-100">
-                  <div className="font-semibold text-stone-800">{account.bankName}</div>
-                  <div className="text-stone-600 text-sm">{account.accountHolder}</div>
-                  <div className="font-mono text-sm mt-1 text-stone-700 break-all">{account.iban}</div>
-                  {account.notes && <p className="text-stone-400 text-xs mt-1">{account.notes}</p>}
-                </div>
-              ))}
+              {bankAccounts.map(account => {
+                const isRevolut = account.type === 'revolut'
+                const revolutTag = isRevolut && account.revolutHandle?.startsWith('@')
+                  ? account.revolutHandle.slice(1)
+                  : null
+                return (
+                  <div key={account.id} className="bg-white rounded-xl p-4 mb-3 last:mb-0 border border-amber-100">
+                    <div className="font-semibold text-stone-800">{isRevolut ? 'Revolut' : account.bankName}</div>
+                    <div className="text-stone-600 text-sm">{account.accountHolder}</div>
+                    <div className="font-mono text-sm mt-1 text-stone-700 break-all">
+                      {isRevolut ? account.revolutHandle : account.iban}
+                    </div>
+                    {revolutTag && (
+                      <a
+                        href={`https://revolut.me/${revolutTag}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-2.5 bg-stone-900 hover:bg-stone-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        <ExternalLink size={12} /> {dd.payWithRevolut}
+                      </a>
+                    )}
+                    {account.notes && <p className="text-stone-400 text-xs mt-1">{account.notes}</p>}
+                  </div>
+                )
+              })}
             </div>
           )}
 
