@@ -128,6 +128,11 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               userId={session?.user?.id ?? null}
               isFull={isFull}
               participationStatus={adminParticipation?.status ?? null}
+              currentBringsCar={adminParticipation?.bringsCar ?? false}
+              currentCarSeats={adminParticipation?.carSeats ?? null}
+              currentPickupLat={adminParticipation?.pickupLat ?? null}
+              currentPickupLng={adminParticipation?.pickupLng ?? null}
+              paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
               dict={d.joinButton}
               lang={lang}
             />
