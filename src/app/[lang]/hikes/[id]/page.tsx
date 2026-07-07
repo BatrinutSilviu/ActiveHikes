@@ -283,7 +283,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                   href={hike.accommodationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+                  className="flex w-full items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
                 >
                   <ExternalLink size={15} /> {dd.accommodationBookingLink}
                 </a>
@@ -339,7 +339,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               {rooms.length > 0 && (
                 <Link
                   href={`/${lang}/hikes/${hike.id}/rooms`}
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+                  className="flex w-full items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
                 >
                   <ExternalLink size={15} /> {dd.roomsTitle}
                 </Link>
