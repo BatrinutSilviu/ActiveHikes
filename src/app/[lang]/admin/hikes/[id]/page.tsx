@@ -5,7 +5,7 @@ import ParticipantManager from '@/components/admin/ParticipantManager'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import PhotoUploader from '@/components/admin/PhotoUploader'
 import JoinButton from '@/components/hikes/JoinButton'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Car, BedDouble, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -148,13 +148,21 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Link href={`/${lang}/admin/hikes/${hike.id}/cars`}
-              className="flex-1 flex items-center justify-center gap-2 bg-white border border-stone-100 rounded-2xl p-4 font-semibold text-stone-700 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
-              {da.manageCars}
+              className="flex-1 group flex items-center gap-3 bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl p-4 shadow-md shadow-sky-200 hover:shadow-lg hover:shadow-sky-300 hover:-translate-y-0.5 transition-all">
+              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Car size={20} />
+              </span>
+              <span className="font-bold flex-1">{da.manageCars}</span>
+              <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
             </Link>
             {hike.hasAccommodation && (
               <Link href={`/${lang}/admin/hikes/${hike.id}/rooms`}
-                className="flex-1 flex items-center justify-center gap-2 bg-white border border-stone-100 rounded-2xl p-4 font-semibold text-stone-700 hover:border-emerald-300 hover:text-emerald-700 transition-colors">
-                {da.manageRooms}
+                className="flex-1 group flex items-center gap-3 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl p-4 shadow-md shadow-violet-200 hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
+                <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                  <BedDouble size={20} />
+                </span>
+                <span className="font-bold flex-1">{da.manageRooms}</span>
+                <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             )}
           </div>
