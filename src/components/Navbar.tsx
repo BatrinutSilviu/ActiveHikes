@@ -24,7 +24,7 @@ export default function Navbar() {
 
           <Link href={pfx} className="flex items-center gap-0.5 group">
             <Image src="/logo.png" alt="Active Hikes" width={120} height={40} className="h-9 w-auto" priority />
-            <span className="relative flex items-center leading-none translate-y-[1px]">
+            <span className="relative flex items-center leading-none translate-y-[4px]">
               <Mountain
                 size={20}
                 strokeWidth={2.5}
