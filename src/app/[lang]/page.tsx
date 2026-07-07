@@ -18,6 +18,8 @@ async function getUpcomingHikes() {
     endDate: h.endDate ? h.endDate.toISOString() : null,
     entryFee: Number(h.entryFee),
     durationHours: h.durationHours ? Number(h.durationHours) : null,
+    accommodationPrice: h.accommodationPrice ? Number(h.accommodationPrice) : null,
+    accommodationDeposit: h.accommodationDeposit ? Number(h.accommodationDeposit) : null,
     confirmedCount: h.participants.filter(p => p.status === 'confirmed').length,
     waitlistCount: h.participants.filter(p => p.status === 'waitlist').length,
     participants: undefined,

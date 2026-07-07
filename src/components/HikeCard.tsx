@@ -16,6 +16,8 @@ type HikeCardData = {
   durationHours: number | null
   hasCamping: boolean
   hasAccommodation: boolean
+  accommodationPrice: number | null
+  accommodationDeposit: number | null
   difficulty: string | null
   status: string
   coverImageUrl: string | null
@@ -33,6 +35,7 @@ type HikeCardDict = {
   camping: string
   accommodation: string
   onWaitlist: string
+  totalPriceShort: string
   difficulty: Record<string, string>
   status: Record<string, string>
 }
@@ -56,7 +59,11 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
   const spotsLeft = hike.maxParticipants - hike.confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = hike.status === 'upcoming'
-  const priceLabel = hike.entryFee > 0 ? `${hike.entryFee} RON` : dict.free
+  const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? hike.accommodationPrice : 0
+  const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? hike.accommodationDeposit : 0
+  const confirmationPrice = hike.entryFee + accommodationDeposit
+  const totalPrice = hike.entryFee + accommodationPrice
+  const priceLabel = confirmationPrice > 0 ? `${confirmationPrice} RON` : dict.free
 
   return (
     <Link href={`/${lang}/hikes/${hike.id}`}
@@ -123,30 +130,37 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
       </div>
 
       {/* Bottom info strip */}
-      <div className="px-5 py-3.5 flex items-center justify-between">
-        <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
-          <span className="flex items-center gap-1">
-            <Calendar size={12} />
-            {formatHikeDate(hike.date, hike.endDate, LOCALE_MAP[lang] ?? 'ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </span>
-          {hike.durationHours && (
-            <span className="flex items-center gap-1"><Clock size={12} /> {hike.durationHours}h</span>
-          )}
-          <span className="flex items-center gap-1">
-            <Users size={12} />
-            {isUpcoming ? (
-              isFull
-                ? <span className="text-red-500 font-semibold">{dict.full}</span>
-                : <span>{hike.confirmedCount}/{hike.maxParticipants}</span>
-            ) : (
-              <span>{hike.confirmedCount} {dict.went}</span>
+      <div className="px-5 py-3.5">
+        {hike.hasAccommodation && totalPrice > confirmationPrice && (
+          <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
+            <Hotel size={12} /> {dict.totalPriceShort}: {totalPrice} RON
+          </div>
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
+            <span className="flex items-center gap-1">
+              <Calendar size={12} />
+              {formatHikeDate(hike.date, hike.endDate, LOCALE_MAP[lang] ?? 'ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </span>
+            {hike.durationHours && (
+              <span className="flex items-center gap-1"><Clock size={12} /> {hike.durationHours}h</span>
             )}
-            {isUpcoming && hike.waitlistCount > 0 && (
-              <span className="text-stone-400">· {hike.waitlistCount} {dict.onWaitlist}</span>
-            )}
-          </span>
+            <span className="flex items-center gap-1">
+              <Users size={12} />
+              {isUpcoming ? (
+                isFull
+                  ? <span className="text-red-500 font-semibold">{dict.full}</span>
+                  : <span>{hike.confirmedCount}/{hike.maxParticipants}</span>
+              ) : (
+                <span>{hike.confirmedCount} {dict.went}</span>
+              )}
+              {isUpcoming && hike.waitlistCount > 0 && (
+                <span className="text-stone-400">· {hike.waitlistCount} {dict.onWaitlist}</span>
+              )}
+            </span>
+          </div>
+          <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
         </div>
-        <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
       </div>
     </Link>
   )
