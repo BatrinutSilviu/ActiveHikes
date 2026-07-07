@@ -104,7 +104,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+        {/* General details — mobile order 1, desktop left column top */}
+        <div className="order-1 lg:order-1 lg:col-span-2 space-y-8">
           {hike.description && <p className="text-stone-700 leading-relaxed text-lg whitespace-pre-wrap">{hike.description}</p>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -170,7 +171,80 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               </span>
             </InfoCard>
           </div>
+        </div>
 
+        {/* Confirmation panel — mobile order 2 (right after general details), desktop right column top */}
+        {isUpcoming && (
+          <div className="order-2 lg:order-5 self-start bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
+            <div className="text-center mb-5">
+              {totalPrice > confirmationPrice ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{totalPrice} RON</div>
+                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.totalPriceLabel}</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{confirmationPrice} RON</div>
+                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.confirmationPriceLabel}</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-4xl font-black tracking-tight text-stone-900">
+                    {confirmationPrice > 0 ? `${confirmationPrice} RON` : dd.free}
+                  </div>
+                  {confirmationPrice > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                </>
+              )}
+              {accommodationDeposit > 0 && (
+                <p className="text-stone-400 text-xs mt-2 leading-relaxed">
+                  {dd.feeBreakdown
+                    .replace('{entryFee}', String(entryFee))
+                    .replace('{deposit}', String(accommodationDeposit))}
+                </p>
+              )}
+              <p className="flex items-center justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed">
+                <Car size={13} className="shrink-0" /> {dd.gasNotIncluded}
+              </p>
+            </div>
+
+            <SpotsCounter
+              hikeId={hike.id}
+              initial={{ confirmedCount, maxParticipants: hike.maxParticipants, spotsLeft, isFull, waitlistCount }}
+              dict={d.spots}
+            />
+
+            <JoinButton
+              hikeId={hike.id}
+              userId={session?.user?.id ?? null}
+              isFull={isFull}
+              participationStatus={userParticipation?.status ?? null}
+              currentBringsCar={userParticipation?.bringsCar ?? false}
+              currentCarSeats={userParticipation?.carSeats ?? null}
+              currentPickupLat={userParticipation?.pickupLat ?? null}
+              currentPickupLng={userParticipation?.pickupLng ?? null}
+              paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
+              waitlistPosition={userWaitlistPosition}
+              waitlistCount={waitlistCount}
+              dict={d.joinButton}
+              lang={lang}
+            />
+
+            {hike.hasAccommodation && rooms.length > 0 && userParticipation && userParticipation.status !== 'rejected' && (
+              <div className="mt-3">
+                <RoomPicker
+                  hikeId={hike.id}
+                  rooms={rooms}
+                  currentRoomId={userParticipation.roomId}
+                  dict={d.roomPicker}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rest of left column content — mobile order 4, desktop left column (after general details) */}
+        <div className="order-4 lg:order-2 lg:col-span-2 space-y-8">
           <AttendeeSection
             hikeId={hike.id}
             participants={hike.participants as any}
@@ -300,93 +374,29 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
           )}
 
           <EssentialsSection items={hike.essentials} title={dd.essentialsTitle} />
-
-          <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
-
-          {photos.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-stone-900 mb-4">{dd.photosTitle}</h2>
-              <PhotoGallery photos={photos} />
-              {hike.externalPhotosUrl && (
-                <a href={hike.externalPhotosUrl} target="_blank" rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors">
-                  <ExternalLink size={15} /> {dd.viewFullAlbum}
-                </a>
-              )}
-            </div>
-          )}
         </div>
 
-        <div className="space-y-4">
-          {isUpcoming && (
-            <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
-              <div className="text-center mb-5">
-                {totalPrice > confirmationPrice ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{totalPrice} RON</div>
-                      <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.totalPriceLabel}</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{confirmationPrice} RON</div>
-                      <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.confirmationPriceLabel}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-4xl font-black tracking-tight text-stone-900">
-                      {confirmationPrice > 0 ? `${confirmationPrice} RON` : dd.free}
-                    </div>
-                    {confirmationPrice > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
-                  </>
-                )}
-                {accommodationDeposit > 0 && (
-                  <p className="text-stone-400 text-xs mt-2 leading-relaxed">
-                    {dd.feeBreakdown
-                      .replace('{entryFee}', String(entryFee))
-                      .replace('{deposit}', String(accommodationDeposit))}
-                  </p>
-                )}
-                <p className="flex items-center justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed">
-                  <Car size={13} className="shrink-0" /> {dd.gasNotIncluded}
-                </p>
-              </div>
+        {/* Route — mobile order last, desktop left column (unchanged position) */}
+        <div className="order-6 lg:order-3 lg:col-span-2">
+          <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
+        </div>
 
-              <SpotsCounter
-                hikeId={hike.id}
-                initial={{ confirmedCount, maxParticipants: hike.maxParticipants, spotsLeft, isFull, waitlistCount }}
-                dict={d.spots}
-              />
+        {/* Photos — mobile order 5, desktop left column (unchanged position) */}
+        {photos.length > 0 && (
+          <div className="order-5 lg:order-4 lg:col-span-2">
+            <h2 className="text-2xl font-bold text-stone-900 mb-4">{dd.photosTitle}</h2>
+            <PhotoGallery photos={photos} />
+            {hike.externalPhotosUrl && (
+              <a href={hike.externalPhotosUrl} target="_blank" rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors">
+                <ExternalLink size={15} /> {dd.viewFullAlbum}
+              </a>
+            )}
+          </div>
+        )}
 
-              <JoinButton
-                hikeId={hike.id}
-                userId={session?.user?.id ?? null}
-                isFull={isFull}
-                participationStatus={userParticipation?.status ?? null}
-                currentBringsCar={userParticipation?.bringsCar ?? false}
-                currentCarSeats={userParticipation?.carSeats ?? null}
-                currentPickupLat={userParticipation?.pickupLat ?? null}
-                currentPickupLng={userParticipation?.pickupLng ?? null}
-                paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
-                waitlistPosition={userWaitlistPosition}
-                waitlistCount={waitlistCount}
-                dict={d.joinButton}
-                lang={lang}
-              />
-
-              {hike.hasAccommodation && rooms.length > 0 && userParticipation && userParticipation.status !== 'rejected' && (
-                <div className="mt-3">
-                  <RoomPicker
-                    hikeId={hike.id}
-                    rooms={rooms}
-                    currentRoomId={userParticipation.roomId}
-                    dict={d.roomPicker}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
+        {/* Rest of sidebar content — mobile order 3, desktop right column (after confirmation panel) */}
+        <div className="order-3 lg:order-6 self-start space-y-4">
           {hike.whatsappGroupUrl && userParticipation?.status === 'confirmed' && (
             <a href={hike.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
