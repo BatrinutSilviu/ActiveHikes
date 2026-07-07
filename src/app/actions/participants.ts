@@ -28,6 +28,39 @@ export async function updateParticipantStatus(
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
 }
 
+export async function adminAddParticipant(hikeId: string, email: string): Promise<{ status: ParticipantStatus }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const user = await prisma.user.findFirst({ where: { email: { equals: email.trim(), mode: 'insensitive' } } })
+  if (!user) throw new Error('No account found with that email')
+
+  const existing = await prisma.hikeParticipant.findUnique({
+    where: { hikeId_userId: { hikeId, userId: user.id } },
+  })
+  if (existing) throw new Error('This user is already registered for this hike')
+
+  const hike = await prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } })
+  if (!hike) throw new Error('Hike not found')
+
+  const confirmedCount = await prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } })
+  const status: ParticipantStatus = confirmedCount < hike.maxParticipants ? 'confirmed' : 'waitlist'
+
+  await prisma.hikeParticipant.create({
+    data: {
+      hikeId,
+      userId: user.id,
+      status,
+      confirmedAt: status === 'confirmed' ? new Date() : undefined,
+    },
+  })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+
+  return { status }
+}
+
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')

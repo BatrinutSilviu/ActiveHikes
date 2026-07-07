@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateParticipantStatus, confirmAllPending } from '@/app/actions/participants'
-import { Check, X, List, CheckCheck, Car, Timer } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { updateParticipantStatus, confirmAllPending, adminAddParticipant } from '@/app/actions/participants'
+import { Check, X, List, CheckCheck, Car, Timer, UserPlus } from 'lucide-react'
 
 type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
 
@@ -30,6 +31,10 @@ type ParticipantManagerDict = {
   payBy: string
   status: Record<string, string>
   actions: { confirm: string; waitlist: string; reject: string }
+  addParticipant: string
+  addParticipantPlaceholder: string
+  add: string
+  adding: string
 }
 
 const STATUS_BADGE_CLASSES: Record<ParticipantStatus, string> = {
@@ -51,11 +56,31 @@ export default function ParticipantManager({
   maxParticipants: number
   dict: ParticipantManagerDict
 }) {
+  const router = useRouter()
   const [items, setItems] = useState(participants)
   const [filter, setFilter] = useState('all')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState(false)
   const [, startTransition] = useTransition()
+  const [newEmail, setNewEmail] = useState('')
+  const [addError, setAddError] = useState('')
+  const [isAdding, setIsAdding] = useState(false)
+
+  const handleAddParticipant = (e: React.FormEvent) => {
+    e.preventDefault()
+    setAddError('')
+    setIsAdding(true)
+    startTransition(async () => {
+      try {
+        await adminAddParticipant(hikeId, newEmail)
+        setNewEmail('')
+        router.refresh()
+      } catch (err: unknown) {
+        setAddError(err instanceof Error ? err.message : 'Something went wrong')
+      }
+      setIsAdding(false)
+    })
+  }
 
   const confirmedCount = items.filter(p => p.status === 'confirmed').length
 
@@ -92,12 +117,39 @@ export default function ParticipantManager({
   const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected', 'expired']
   const filtered = filter === 'all' ? items : items.filter(p => p.status === filter)
 
+  const addForm = (
+    <form onSubmit={handleAddParticipant} className="bg-white border border-stone-100 rounded-2xl p-4">
+      <label className="block text-sm font-medium text-stone-700 mb-1.5">{dict.addParticipant}</label>
+      <div className="flex gap-2">
+        <input
+          type="email"
+          required
+          value={newEmail}
+          onChange={e => setNewEmail(e.target.value)}
+          placeholder={dict.addParticipantPlaceholder}
+          className="flex-1 border border-stone-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+        <button type="submit" disabled={isAdding}
+          className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
+          <UserPlus size={14} /> {isAdding ? dict.adding : dict.add}
+        </button>
+      </div>
+      {addError && <p className="text-red-600 text-xs mt-2">{addError}</p>}
+    </form>
+  )
+
   if (items.length === 0) {
-    return <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400">{dict.noRegistrations}</div>
+    return (
+      <div className="space-y-3">
+        {addForm}
+        <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400">{dict.noRegistrations}</div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-3">
+      {addForm}
       {pendingCount > 0 && (
         <button onClick={handleConfirmAll} disabled={bulkLoading}
           className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm">
