@@ -235,12 +235,12 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
           <Link
             href={`/${lang}/hikes/${hike.id}/carpool`}
-            className="flex items-center justify-between gap-2 bg-white border border-stone-200 rounded-xl p-4 hover:border-emerald-300 transition-colors"
+            className="flex items-center justify-between gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl p-4 font-semibold shadow-sm transition-colors"
           >
-            <span className="flex items-center gap-2 font-semibold text-stone-800">
-              <Car size={18} className="text-emerald-600" /> {dd.participantsSectionTitle}
+            <span className="flex items-center gap-2">
+              <Car size={18} /> {dd.participantsSectionTitle}
             </span>
-            <ExternalLink size={15} className="text-stone-300" />
+            <ExternalLink size={15} className="text-white/70" />
           </Link>
 
           {hike.hasCamping && (hike.campingDetails || hike.campingUrl || hike.campingPrice) && (
