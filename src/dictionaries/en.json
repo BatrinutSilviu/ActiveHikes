@@ -81,6 +81,8 @@
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "feeBreakdown": "{entryFee} RON entry fee + {deposit} RON accommodation deposit",
+    "totalPriceLabel": "Total price",
+    "confirmationPriceLabel": "Confirmation price",
     "payWithRevolut": "Pay with Revolut",
     "viewFullAlbum": "View full album",
     "photosTitle": "Photos",

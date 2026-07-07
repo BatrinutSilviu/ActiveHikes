@@ -81,6 +81,8 @@
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "feeBreakdown": "{entryFee} RON taxă participare + {deposit} RON avans cazare",
+    "totalPriceLabel": "Preț total",
+    "confirmationPriceLabel": "Preț confirmare",
     "payWithRevolut": "Plătește cu Revolut",
     "viewFullAlbum": "Vezi albumul complet",
     "photosTitle": "Fotografii",

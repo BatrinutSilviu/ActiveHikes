@@ -48,8 +48,10 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const isFull = spotsLeft <= 0
   const isUpcoming = hike.status === 'upcoming'
   const entryFee = Number(hike.entryFee)
+  const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? Number(hike.accommodationPrice) : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
-  const totalDue = entryFee + accommodationDeposit
+  const confirmationPrice = entryFee + accommodationDeposit
+  const totalPrice = entryFee + accommodationPrice
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
   const dd = d.hikeDetail
@@ -247,10 +249,25 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
           {isUpcoming && (
             <div className="bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
               <div className="text-center mb-5">
-                <div className="text-4xl font-black tracking-tight text-stone-900">
-                  {totalDue > 0 ? `${totalDue} RON` : dd.free}
-                </div>
-                {totalDue > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                {totalPrice > confirmationPrice ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{totalPrice} RON</div>
+                      <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.totalPriceLabel}</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{confirmationPrice} RON</div>
+                      <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.confirmationPriceLabel}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-4xl font-black tracking-tight text-stone-900">
+                      {confirmationPrice > 0 ? `${confirmationPrice} RON` : dd.free}
+                    </div>
+                    {confirmationPrice > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                  </>
+                )}
                 {accommodationDeposit > 0 && (
                   <p className="text-stone-400 text-xs mt-2 leading-relaxed">
                     {dd.feeBreakdown
@@ -289,13 +306,13 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </a>
           )}
 
-          {totalDue > 0 && bankAccounts.length > 0 && (
+          {confirmationPrice > 0 && bankAccounts.length > 0 && (
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
               <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
                 <DollarSign size={16} /> {dd.paymentTitle}
               </h3>
               <p className="text-amber-700 text-sm mb-4">
-                {dd.paymentDesc.replace('{fee}', String(totalDue))}
+                {dd.paymentDesc.replace('{fee}', String(confirmationPrice))}
               </p>
               {accommodationDeposit > 0 && (
                 <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
