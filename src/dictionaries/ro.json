@@ -193,18 +193,13 @@
     }
   },
   "roomPicker": {
-    "title": "Preferință cameră",
-    "choose": "Alege o cameră",
-    "none": "Fără preferință",
-    "full": "ocupată",
-    "save": "Salvează preferința",
-    "saving": "Se salvează…",
-    "error": "Nu s-a putut salva. Încearcă din nou.",
-    "typeLabels": {
-      "double": "Dublă",
-      "triple": "Triplă",
-      "quadruple": "Cvadruplă"
-    }
+    "join": "Alătură-te",
+    "joining": "Se alătură…",
+    "leave": "Părăsește",
+    "leaving": "Se părăsește…",
+    "full": "Plină",
+    "joined": "Ești în cameră",
+    "error": "Nu s-a putut salva. Încearcă din nou."
   },
   "profile": {
     "adminBadge": "Admin",

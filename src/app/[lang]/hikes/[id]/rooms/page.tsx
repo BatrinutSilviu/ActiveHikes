@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import RoomPicker from '@/components/hikes/RoomPicker'
+import RoomJoinButton from '@/components/hikes/RoomJoinButton'
 import { ArrowLeft, UserCheck } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
@@ -64,15 +64,28 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
       {rooms.length === 0 ? (
         <p className="text-stone-400">{d.admin.roomsPage.noRooms}</p>
       ) : (
-        <>
-          <div className="space-y-2 mb-6">
-            {rooms.map(room => (
+        <div className="space-y-2">
+          {rooms.map(room => {
+            const isCurrent = userParticipation?.roomId === room.id
+            const isFull = room.occupied >= room.capacity && !isCurrent
+            return (
               <div key={room.id} className="bg-white border border-stone-100 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 gap-3">
                   <span className="font-semibold text-stone-800">
                     {roomTypeLabels[room.type] ?? room.type} {room.label}
                   </span>
-                  <span className="text-xs font-medium text-stone-400">{room.occupied}/{room.capacity}</span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs font-medium text-stone-400">{room.occupied}/{room.capacity}</span>
+                    {userParticipation && userParticipation.status !== 'rejected' && (
+                      <RoomJoinButton
+                        hikeId={hike.id}
+                        roomId={room.id}
+                        isCurrent={isCurrent}
+                        isFull={isFull}
+                        dict={d.roomPicker}
+                      />
+                    )}
+                  </div>
                 </div>
                 {room.occupants.length === 0 ? (
                   <p className="text-stone-400 text-sm">{dd.roomEmpty}</p>
@@ -87,18 +100,9 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-
-          {userParticipation && userParticipation.status !== 'rejected' && (
-            <RoomPicker
-              hikeId={hike.id}
-              rooms={rooms}
-              currentRoomId={userParticipation.roomId}
-              dict={d.roomPicker}
-            />
-          )}
-        </>
+            )
+          })}
+        </div>
       )}
     </div>
   )

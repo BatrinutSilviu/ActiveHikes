@@ -193,18 +193,13 @@
     }
   },
   "roomPicker": {
-    "title": "Room preference",
-    "choose": "Choose a room",
-    "none": "No preference",
-    "full": "full",
-    "save": "Save room preference",
-    "saving": "Saving…",
-    "error": "Could not save. Please try again.",
-    "typeLabels": {
-      "double": "Double",
-      "triple": "Triple",
-      "quadruple": "Quadruple"
-    }
+    "join": "Join room",
+    "joining": "Joining…",
+    "leave": "Leave",
+    "leaving": "Leaving…",
+    "full": "Full",
+    "joined": "Joined",
+    "error": "Could not save. Please try again."
   },
   "profile": {
     "adminBadge": "Admin",
