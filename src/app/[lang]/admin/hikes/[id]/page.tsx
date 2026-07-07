@@ -116,6 +116,11 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         </div>
 
         <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
+            <HikeEditForm hike={hikeData as any} dict={d.admin.hikeEdit} />
+          </div>
+
           <div className="bg-white border border-stone-100 rounded-2xl p-5">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>
             <JoinButton
@@ -135,10 +140,6 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.photosTitle}</h2>
             <PhotoUploader hikeId={hike.id} existingPhotos={photos} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
-            <HikeEditForm hike={hikeData as any} dict={d.admin.hikeEdit} />
           </div>
         </div>
       </div>
