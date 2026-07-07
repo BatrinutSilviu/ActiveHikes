@@ -19,6 +19,7 @@ type HikeData = {
   externalPhotosUrl: string | null
   whatsappGroupUrl: string | null
   accommodationDetails: string | null
+  accommodationUrl: string | null
   accommodationPrice: number | null
   accommodationDeposit: number | null
   entryFee: number
@@ -30,6 +31,7 @@ type HikeData = {
   startingPoint: string | null
   hasCamping: boolean
   campingDetails: string | null
+  campingUrl: string | null
   campingPrice: number | null
   hasAccommodation: boolean
   peoplePerCar: number
@@ -64,10 +66,14 @@ type HikeEditDict = {
   camping: string
   campingDetails: string
   campingDetailsPlaceholder: string
+  campingUrl: string
+  campingUrlPlaceholder: string
   campingPrice: string
   accommodation: string
   accommodationDetails: string
   accommodationDetailsPlaceholder: string
+  accommodationUrl: string
+  accommodationUrlPlaceholder: string
   accommodationPrice: string
   accommodationDeposit: string
   essentials: string
@@ -106,6 +112,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     externalPhotosUrl: hike.externalPhotosUrl ?? '',
     whatsappGroupUrl: hike.whatsappGroupUrl ?? '',
     accommodationDetails: hike.accommodationDetails ?? '',
+    accommodationUrl: hike.accommodationUrl ?? '',
     accommodationPrice: hike.accommodationPrice != null ? String(hike.accommodationPrice) : '',
     accommodationDeposit: hike.accommodationDeposit != null ? String(hike.accommodationDeposit) : '',
     entryFee: String(hike.entryFee),
@@ -115,6 +122,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     startingPoint: hike.startingPoint ?? '',
     hasCamping: hike.hasCamping,
     campingDetails: hike.campingDetails ?? '',
+    campingUrl: hike.campingUrl ?? '',
     campingPrice: hike.campingPrice != null ? String(hike.campingPrice) : '',
     hasAccommodation: hike.hasAccommodation,
     peoplePerCar: String(hike.peoplePerCar),
@@ -172,6 +180,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         externalPhotosUrl: form.externalPhotosUrl || null,
         whatsappGroupUrl: form.whatsappGroupUrl || null,
         accommodationDetails: form.accommodationDetails || null,
+        accommodationUrl: form.accommodationUrl || null,
         accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
         accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
         entryFee: parseFloat(form.entryFee),
@@ -181,6 +190,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         startingPoint: form.startingPoint || null,
         hasCamping: form.hasCamping,
         campingDetails: form.campingDetails || null,
+        campingUrl: form.campingUrl || null,
         campingPrice: form.campingPrice ? parseFloat(form.campingPrice) : null,
         hasAccommodation: form.hasAccommodation,
         peoplePerCar: parseInt(form.peoplePerCar) || 5,
@@ -308,6 +318,11 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
               rows={2} placeholder={dict.campingDetailsPlaceholder} className={cls} />
           </div>
           <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">{dict.campingUrl}</label>
+            <input type="url" value={form.campingUrl} onChange={e => set('campingUrl', e.target.value)}
+              placeholder={dict.campingUrlPlaceholder} className={cls} />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-stone-700 mb-1">{dict.campingPrice}</label>
             <input type="number" value={form.campingPrice} onChange={e => set('campingPrice', e.target.value)}
               min="0" step="1" placeholder="—" className={cls} />
@@ -321,6 +336,11 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
             <label className="block text-sm font-medium text-stone-700 mb-1">{dict.accommodationDetails}</label>
             <textarea value={form.accommodationDetails} onChange={e => set('accommodationDetails', e.target.value)}
               rows={2} placeholder={dict.accommodationDetailsPlaceholder} className={cls} />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">{dict.accommodationUrl}</label>
+            <input type="url" value={form.accommodationUrl} onChange={e => set('accommodationUrl', e.target.value)}
+              placeholder={dict.accommodationUrlPlaceholder} className={cls} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>

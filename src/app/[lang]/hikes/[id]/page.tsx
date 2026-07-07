@@ -8,7 +8,6 @@ import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import AttendeeSection from '@/components/hikes/AttendeeSection'
-import { LinkifiedText } from '@/components/ui/LinkifiedText'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -152,15 +151,23 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             }}
           />
 
-          {hike.hasCamping && (hike.campingDetails || hike.campingPrice) && (
+          {hike.hasCamping && (hike.campingDetails || hike.campingUrl || hike.campingPrice) && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-2">
               <h3 className="font-semibold text-amber-800 flex items-center gap-2">
                 <Tent size={16} /> {dd.campingTitle}
               </h3>
               {hike.campingDetails && (
-                <p className="text-amber-700 text-sm break-words">
-                  <LinkifiedText text={hike.campingDetails} />
-                </p>
+                <p className="text-amber-700 text-sm break-words">{hike.campingDetails}</p>
+              )}
+              {hike.campingUrl && (
+                <a
+                  href={hike.campingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-amber-800 underline hover:no-underline"
+                >
+                  <ExternalLink size={14} /> {dd.campingBookingLink}
+                </a>
               )}
               {hike.campingPrice && (
                 <div className="bg-white rounded-lg p-3 inline-block text-center">
@@ -171,15 +178,23 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </div>
           )}
 
-          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationPrice) && (
+          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice) && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
               <h3 className="font-semibold text-blue-800 flex items-center gap-2">
                 <Hotel size={16} /> {dd.accommodationTitle}
               </h3>
               {hike.accommodationDetails && (
-                <p className="text-blue-700 text-sm break-words">
-                  <LinkifiedText text={hike.accommodationDetails} />
-                </p>
+                <p className="text-blue-700 text-sm break-words">{hike.accommodationDetails}</p>
+              )}
+              {hike.accommodationUrl && (
+                <a
+                  href={hike.accommodationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-800 underline hover:no-underline"
+                >
+                  <ExternalLink size={14} /> {dd.accommodationBookingLink}
+                </a>
               )}
               {hike.accommodationPrice && (() => {
                 const price = Number(hike.accommodationPrice)

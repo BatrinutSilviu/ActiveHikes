@@ -108,11 +108,13 @@ model Hike {
   durationHours        Decimal?    @db.Decimal(4, 1)
   hasCamping           Boolean     @default(false)
   campingDetails       String?
+  campingUrl           String?
   campingPrice         Decimal?    @db.Decimal(10, 2)
   hasAccommodation     Boolean     @default(false)
   peoplePerCar         Int         @default(5)
   carsNeeded           Int?
   accommodationDetails  String?
+  accommodationUrl      String?
   accommodationPrice    Decimal?    @db.Decimal(10, 2)
   accommodationDeposit  Decimal?    @db.Decimal(10, 2)
   meetingTime          String?

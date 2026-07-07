@@ -26,8 +26,8 @@ export default function NewHikePage() {
       title: '', destination: '', description: '', date: '', meeting_time: '',
       entry_fee: '0', max_participants, mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
-      has_camping: false, camping_details: '', camping_price: '', has_accommodation: false, accommodation_details: '',
-      accommodation_price: '', accommodation_deposit: '',
+      has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
+      accommodation_url: '', accommodation_price: '', accommodation_deposit: '',
       difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
     }
   })
@@ -71,11 +71,13 @@ export default function NewHikePage() {
           durationHours: form.duration_hours ? parseFloat(form.duration_hours) : undefined,
           hasCamping: form.has_camping,
           campingDetails: form.camping_details || undefined,
+          campingUrl: form.camping_url || undefined,
           campingPrice: form.camping_price ? parseFloat(form.camping_price) : undefined,
           hasAccommodation: form.has_accommodation,
           peoplePerCar: parseInt(form.people_per_car) || 5,
           carsNeeded: form.cars_needed ? parseInt(form.cars_needed) : undefined,
           accommodationDetails: form.accommodation_details || undefined,
+          accommodationUrl: form.accommodation_url || undefined,
           accommodationPrice: form.accommodation_price ? parseFloat(form.accommodation_price) : undefined,
           accommodationDeposit: form.accommodation_deposit ? parseFloat(form.accommodation_deposit) : undefined,
           difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
@@ -173,15 +175,23 @@ export default function NewHikePage() {
               <Field label={d.campingDetails}>
                 <textarea value={form.camping_details} onChange={e => set('camping_details', e.target.value)} rows={2} placeholder={d.campingDetailsPlaceholder} className={input} />
               </Field>
+              <Field label={d.campingUrl}>
+                <input type="url" value={form.camping_url} onChange={e => set('camping_url', e.target.value)} placeholder={d.campingUrlPlaceholder} className={input} />
+              </Field>
               <Field label={d.campingPrice}>
                 <input type="number" value={form.camping_price} onChange={e => set('camping_price', e.target.value)} min="0" step="1" placeholder="—" className={input} />
               </Field>
             </>
           )}
           {form.has_accommodation && (
-            <Field label={d.accommodationDetails}>
-              <textarea value={form.accommodation_details} onChange={e => set('accommodation_details', e.target.value)} rows={2} placeholder={d.accommodationPlaceholder} className={input} />
-            </Field>
+            <>
+              <Field label={d.accommodationDetails}>
+                <textarea value={form.accommodation_details} onChange={e => set('accommodation_details', e.target.value)} rows={2} placeholder={d.accommodationPlaceholder} className={input} />
+              </Field>
+              <Field label={d.accommodationUrl}>
+                <input type="url" value={form.accommodation_url} onChange={e => set('accommodation_url', e.target.value)} placeholder={d.accommodationUrlPlaceholder} className={input} />
+              </Field>
+            </>
           )}
           {form.has_accommodation && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

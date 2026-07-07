@@ -129,11 +129,13 @@ export async function createHike(data: {
   durationHours?: number
   hasCamping: boolean
   campingDetails?: string
+  campingUrl?: string
   campingPrice?: number
   hasAccommodation: boolean
   peoplePerCar?: number
   carsNeeded?: number
   accommodationDetails?: string
+  accommodationUrl?: string
   accommodationPrice?: number
   accommodationDeposit?: number
   difficulty?: string
@@ -161,11 +163,13 @@ export async function createHike(data: {
       durationHours: data.durationHours ?? null,
       hasCamping: data.hasCamping,
       campingDetails: data.campingDetails || null,
+      campingUrl: data.campingUrl || null,
       campingPrice: data.campingPrice ?? null,
       hasAccommodation: data.hasAccommodation,
       peoplePerCar: data.peoplePerCar ?? 5,
       carsNeeded: data.carsNeeded ?? null,
       accommodationDetails: data.accommodationDetails || null,
+      accommodationUrl: data.accommodationUrl || null,
       accommodationPrice: data.accommodationPrice ?? null,
       accommodationDeposit: data.accommodationDeposit ?? null,
       difficulty: (data.difficulty as Difficulty) || null,
@@ -196,6 +200,7 @@ export async function updateHike(
     externalPhotosUrl?: string | null
     whatsappGroupUrl?: string | null
     accommodationDetails?: string | null
+    accommodationUrl?: string | null
     entryFee?: number
     maxParticipants?: number
     gpxActualUrl?: string | null
@@ -208,6 +213,7 @@ export async function updateHike(
     accommodationDeposit?: number | null
     hasCamping?: boolean
     campingDetails?: string | null
+    campingUrl?: string | null
     campingPrice?: number | null
     hasAccommodation?: boolean
     peoplePerCar?: number
