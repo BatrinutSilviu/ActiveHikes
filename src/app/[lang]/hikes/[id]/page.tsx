@@ -287,7 +287,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
             </div>
           )}
 
-          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime || rooms.length > 0) && (
+          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime || hike.checkInTime || hike.checkOutTime || rooms.length > 0) && (
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
               <h3 className="font-semibold text-blue-800 flex items-center gap-2">
                 <Hotel size={16} /> {dd.accommodationTitle}
@@ -329,8 +329,18 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                   </div>
                 )
               })()}
-              {(hike.breakfastTime || hike.dinnerTime) && (
+              {(hike.checkInTime || hike.checkOutTime || hike.breakfastTime || hike.dinnerTime) && (
                 <div className="flex flex-wrap gap-4">
+                  {hike.checkInTime && (
+                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
+                      <Clock size={14} /> {dd.checkInTime}: {hike.checkInTime}
+                    </span>
+                  )}
+                  {hike.checkOutTime && (
+                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
+                      <Clock size={14} /> {dd.checkOutTime}: {hike.checkOutTime}
+                    </span>
+                  )}
                   {hike.breakfastTime && (
                     <span className="flex items-center gap-1.5 text-sm text-blue-700">
                       <Clock size={14} /> {dd.breakfastTime}: {hike.breakfastTime}

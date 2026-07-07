@@ -135,6 +135,8 @@ model Hike {
   quadrupleRoomCount    Int         @default(0)
   breakfastTime         String?
   dinnerTime            String?
+  checkInTime           String?
+  checkOutTime          String?
   meetingTime          String?
   difficulty           Difficulty?
   status               HikeStatus  @default(upcoming)

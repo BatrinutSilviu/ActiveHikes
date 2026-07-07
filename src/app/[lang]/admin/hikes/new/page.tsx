@@ -28,6 +28,7 @@ export default function NewHikePage() {
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
       has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
       accommodation_url: '', accommodation_price: '', accommodation_deposit: '', breakfast_time: '', dinner_time: '',
+      check_in_time: '', check_out_time: '',
       double_room_count: '0', triple_room_count: '0', quadruple_room_count: '0',
       difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
     }
@@ -87,6 +88,8 @@ export default function NewHikePage() {
           quadrupleRoomCount: form.quadruple_room_count ? parseInt(form.quadruple_room_count) : undefined,
           breakfastTime: form.breakfast_time || undefined,
           dinnerTime: form.dinner_time || undefined,
+          checkInTime: form.check_in_time || undefined,
+          checkOutTime: form.check_out_time || undefined,
           difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
           essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
           externalPhotosUrl: form.external_photos_url || undefined,
@@ -220,6 +223,16 @@ export default function NewHikePage() {
               </Field>
               <Field label={d.dinnerTime}>
                 <input type="time" value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
+              </Field>
+            </div>
+          )}
+          {form.has_accommodation && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label={d.checkInTime}>
+                <input type="time" value={form.check_in_time} onChange={e => set('check_in_time', e.target.value)} className={input} />
+              </Field>
+              <Field label={d.checkOutTime}>
+                <input type="time" value={form.check_out_time} onChange={e => set('check_out_time', e.target.value)} className={input} />
               </Field>
             </div>
           )}

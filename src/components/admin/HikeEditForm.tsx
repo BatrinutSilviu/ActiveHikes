@@ -28,6 +28,8 @@ type HikeData = {
   quadrupleRoomCount: number
   breakfastTime: string | null
   dinnerTime: string | null
+  checkInTime: string | null
+  checkOutTime: string | null
   entryFee: number
   maxParticipants: number
   gpxActualUrl: string | null
@@ -88,6 +90,8 @@ type HikeEditDict = {
   quadrupleRoomCount: string
   breakfastTime: string
   dinnerTime: string
+  checkInTime: string
+  checkOutTime: string
   essentials: string
   essentialsPlaceholder: string
   essentialsHint: string
@@ -133,6 +137,8 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     quadrupleRoomCount: String(hike.quadrupleRoomCount),
     breakfastTime: hike.breakfastTime ?? '',
     dinnerTime: hike.dinnerTime ?? '',
+    checkInTime: hike.checkInTime ?? '',
+    checkOutTime: hike.checkOutTime ?? '',
     entryFee: String(hike.entryFee),
     maxParticipants: String(hike.maxParticipants),
     mountainRange: hike.mountainRange ?? '',
@@ -207,6 +213,8 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         quadrupleRoomCount: parseInt(form.quadrupleRoomCount) || 0,
         breakfastTime: form.breakfastTime || null,
         dinnerTime: form.dinnerTime || null,
+        checkInTime: form.checkInTime || null,
+        checkOutTime: form.checkOutTime || null,
         entryFee: parseFloat(form.entryFee),
         maxParticipants: parseInt(form.maxParticipants),
         mountainRange: form.mountainRange || null,
@@ -388,6 +396,16 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.dinnerTime}</label>
               <input type="time" value={form.dinnerTime} onChange={e => set('dinnerTime', e.target.value)} className={cls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.checkInTime}</label>
+              <input type="time" value={form.checkInTime} onChange={e => set('checkInTime', e.target.value)} className={cls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.checkOutTime}</label>
+              <input type="time" value={form.checkOutTime} onChange={e => set('checkOutTime', e.target.value)} className={cls} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

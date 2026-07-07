@@ -173,6 +173,8 @@ export async function createHike(data: {
   quadrupleRoomCount?: number
   breakfastTime?: string
   dinnerTime?: string
+  checkInTime?: string
+  checkOutTime?: string
   difficulty?: string
   coverImageUrl?: string
   gpxApproximateUrl?: string
@@ -213,6 +215,8 @@ export async function createHike(data: {
       quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
       breakfastTime: data.breakfastTime || null,
       dinnerTime: data.dinnerTime || null,
+      checkInTime: data.checkInTime || null,
+      checkOutTime: data.checkOutTime || null,
       difficulty: (data.difficulty as Difficulty) || null,
       coverImageUrl: data.coverImageUrl || null,
       gpxApproximateUrl: data.gpxApproximateUrl || null,
@@ -264,6 +268,8 @@ export async function updateHike(
     quadrupleRoomCount?: number
     breakfastTime?: string | null
     dinnerTime?: string | null
+    checkInTime?: string | null
+    checkOutTime?: string | null
     hasCamping?: boolean
     campingDetails?: string | null
     campingUrl?: string | null
