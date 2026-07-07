@@ -37,7 +37,20 @@
     "free": "Gratuit",
     "noCoverPhoto": "Fără fotografie de copertă",
     "camping": "Camping",
-    "accommodation": "Cazare"
+    "accommodation": "Cazare",
+    "difficulty": {
+      "easy": "Ușor",
+      "easy_medium": "Ușor spre Mediu",
+      "medium": "Mediu",
+      "medium_hard": "Mediu spre Greu",
+      "hard": "Greu"
+    },
+    "status": {
+      "upcoming": "Viitoare",
+      "ongoing": "În desfășurare",
+      "completed": "Finalizată",
+      "cancelled": "Anulată"
+    }
   },
   "hikeDetail": {
     "mountainRangeLabel": "Masiv montan",

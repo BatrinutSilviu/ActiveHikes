@@ -37,7 +37,20 @@
     "free": "Free",
     "noCoverPhoto": "No cover photo yet",
     "camping": "Camping",
-    "accommodation": "Accommodation"
+    "accommodation": "Accommodation",
+    "difficulty": {
+      "easy": "Easy",
+      "easy_medium": "Easy to Medium",
+      "medium": "Medium",
+      "medium_hard": "Medium to Hard",
+      "hard": "Hard"
+    },
+    "status": {
+      "upcoming": "Upcoming",
+      "ongoing": "Ongoing",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   },
   "hikeDetail": {
     "mountainRangeLabel": "Mountain range",

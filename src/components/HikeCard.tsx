@@ -28,6 +28,8 @@ type HikeCardDict = {
   noCoverPhoto: string
   camping: string
   accommodation: string
+  difficulty: Record<string, string>
+  status: Record<string, string>
 }
 
 const DIFFICULTY_TEXT: Record<string, string> = {
@@ -79,11 +81,11 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
         {/* Status + difficulty — top left */}
         <div className="absolute top-3.5 left-3.5 flex gap-1.5">
           <span className={`bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1.5 rounded-full ${STATUS_TEXT[hike.status]}`}>
-            {hike.status.charAt(0).toUpperCase() + hike.status.slice(1)}
+            {dict.status[hike.status] ?? hike.status}
           </span>
           {hike.difficulty && (
             <span className={`bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1.5 rounded-full ${DIFFICULTY_TEXT[hike.difficulty]}`}>
-              {hike.difficulty.charAt(0).toUpperCase() + hike.difficulty.slice(1)}
+              {dict.difficulty[hike.difficulty] ?? hike.difficulty}
             </span>
           )}
         </div>
