@@ -83,6 +83,7 @@
     "feeBreakdown": "{entryFee} RON taxă participare + {deposit} RON avans cazare",
     "totalPriceLabel": "Preț total",
     "confirmationPriceLabel": "Preț confirmare",
+    "gasNotIncluded": "Nu include contribuția la combustibil pentru drum",
     "payWithRevolut": "Plătește cu Revolut",
     "viewFullAlbum": "Vezi albumul complet",
     "photosTitle": "Fotografii",

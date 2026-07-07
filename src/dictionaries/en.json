@@ -83,6 +83,7 @@
     "feeBreakdown": "{entryFee} RON entry fee + {deposit} RON accommodation deposit",
     "totalPriceLabel": "Total price",
     "confirmationPriceLabel": "Confirmation price",
+    "gasNotIncluded": "Doesn't include gas money for the ride there",
     "payWithRevolut": "Pay with Revolut",
     "viewFullAlbum": "View full album",
     "photosTitle": "Photos",

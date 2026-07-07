@@ -275,6 +275,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                       .replace('{deposit}', String(accommodationDeposit))}
                   </p>
                 )}
+                <p className="flex items-center justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed">
+                  <Car size={13} className="shrink-0" /> {dd.gasNotIncluded}
+                </p>
               </div>
 
               <SpotsCounter
