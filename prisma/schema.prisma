@@ -124,6 +124,8 @@ model Hike {
   accommodationUrl      String?
   accommodationPrice    Decimal?    @db.Decimal(10, 2)
   accommodationDeposit  Decimal?    @db.Decimal(10, 2)
+  breakfastTime         String?
+  dinnerTime            String?
   meetingTime          String?
   difficulty           Difficulty?
   status               HikeStatus  @default(upcoming)

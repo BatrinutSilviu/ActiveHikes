@@ -23,6 +23,8 @@ type HikeData = {
   accommodationUrl: string | null
   accommodationPrice: number | null
   accommodationDeposit: number | null
+  breakfastTime: string | null
+  dinnerTime: string | null
   entryFee: number
   maxParticipants: number
   gpxActualUrl: string | null
@@ -78,6 +80,8 @@ type HikeEditDict = {
   accommodationUrlPlaceholder: string
   accommodationPrice: string
   accommodationDeposit: string
+  breakfastTime: string
+  dinnerTime: string
   essentials: string
   essentialsPlaceholder: string
   essentialsHint: string
@@ -118,6 +122,8 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     accommodationUrl: hike.accommodationUrl ?? '',
     accommodationPrice: hike.accommodationPrice != null ? String(hike.accommodationPrice) : '',
     accommodationDeposit: hike.accommodationDeposit != null ? String(hike.accommodationDeposit) : '',
+    breakfastTime: hike.breakfastTime ?? '',
+    dinnerTime: hike.dinnerTime ?? '',
     entryFee: String(hike.entryFee),
     maxParticipants: String(hike.maxParticipants),
     mountainRange: hike.mountainRange ?? '',
@@ -187,6 +193,8 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         accommodationUrl: form.accommodationUrl || null,
         accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
         accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
+        breakfastTime: form.breakfastTime || null,
+        dinnerTime: form.dinnerTime || null,
         entryFee: parseFloat(form.entryFee),
         maxParticipants: parseInt(form.maxParticipants),
         mountainRange: form.mountainRange || null,
@@ -358,6 +366,16 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.accommodationDeposit}</label>
               <input type="number" value={form.accommodationDeposit} onChange={e => set('accommodationDeposit', e.target.value)} min="0" step="1" placeholder="—" className={cls} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.breakfastTime}</label>
+              <input type="time" value={form.breakfastTime} onChange={e => set('breakfastTime', e.target.value)} className={cls} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.dinnerTime}</label>
+              <input type="time" value={form.dinnerTime} onChange={e => set('dinnerTime', e.target.value)} className={cls} />
             </div>
           </div>
         </>

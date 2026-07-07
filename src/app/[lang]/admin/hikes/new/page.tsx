@@ -27,7 +27,7 @@ export default function NewHikePage() {
       entry_fee: '0', max_participants, mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
       has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
-      accommodation_url: '', accommodation_price: '', accommodation_deposit: '',
+      accommodation_url: '', accommodation_price: '', accommodation_deposit: '', breakfast_time: '', dinner_time: '',
       difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
     }
   })
@@ -81,6 +81,8 @@ export default function NewHikePage() {
           accommodationUrl: form.accommodation_url || undefined,
           accommodationPrice: form.accommodation_price ? parseFloat(form.accommodation_price) : undefined,
           accommodationDeposit: form.accommodation_deposit ? parseFloat(form.accommodation_deposit) : undefined,
+          breakfastTime: form.breakfast_time || undefined,
+          dinnerTime: form.dinner_time || undefined,
           difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
           essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
           externalPhotosUrl: form.external_photos_url || undefined,
@@ -204,6 +206,16 @@ export default function NewHikePage() {
               </Field>
               <Field label={d.accommodationDeposit}>
                 <input type="number" value={form.accommodation_deposit} onChange={e => set('accommodation_deposit', e.target.value)} min="0" step="1" placeholder={d.accommodationDepositPlaceholder} className={input} />
+              </Field>
+            </div>
+          )}
+          {form.has_accommodation && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label={d.breakfastTime}>
+                <input type="time" value={form.breakfast_time} onChange={e => set('breakfast_time', e.target.value)} className={input} />
+              </Field>
+              <Field label={d.dinnerTime}>
+                <input type="time" value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
               </Field>
             </div>
           )}

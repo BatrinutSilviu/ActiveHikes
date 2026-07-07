@@ -139,6 +139,8 @@ export async function createHike(data: {
   accommodationUrl?: string
   accommodationPrice?: number
   accommodationDeposit?: number
+  breakfastTime?: string
+  dinnerTime?: string
   difficulty?: string
   coverImageUrl?: string
   gpxApproximateUrl?: string
@@ -174,6 +176,8 @@ export async function createHike(data: {
       accommodationUrl: data.accommodationUrl || null,
       accommodationPrice: data.accommodationPrice ?? null,
       accommodationDeposit: data.accommodationDeposit ?? null,
+      breakfastTime: data.breakfastTime || null,
+      dinnerTime: data.dinnerTime || null,
       difficulty: (data.difficulty as Difficulty) || null,
       coverImageUrl: data.coverImageUrl || null,
       gpxApproximateUrl: data.gpxApproximateUrl || null,
@@ -214,6 +218,8 @@ export async function updateHike(
     startingPoint?: string | null
     accommodationPrice?: number | null
     accommodationDeposit?: number | null
+    breakfastTime?: string | null
+    dinnerTime?: string | null
     hasCamping?: boolean
     campingDetails?: string | null
     campingUrl?: string | null
