@@ -120,6 +120,7 @@ export async function createHike(data: {
   destination: string
   description?: string
   date: string
+  endDate?: string
   meetingTime?: string
   entryFee: number
   maxParticipants: number
@@ -154,6 +155,7 @@ export async function createHike(data: {
       destination: data.destination,
       description: data.description || null,
       date: new Date(data.date),
+      endDate: data.endDate ? new Date(data.endDate) : null,
       meetingTime: data.meetingTime || null,
       entryFee: data.entryFee,
       maxParticipants: data.maxParticipants,
@@ -193,6 +195,7 @@ export async function updateHike(
     destination?: string
     description?: string | null
     date?: string
+    endDate?: string | null
     meetingTime?: string | null
     durationHours?: number | null
     difficulty?: string | null
@@ -224,12 +227,13 @@ export async function updateHike(
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  const { date, difficulty, ...rest } = data
+  const { date, endDate, difficulty, ...rest } = data
   await prisma.hike.update({
     where: { id: hikeId },
     data: {
       ...rest,
       ...(date ? { date: new Date(date) } : {}),
+      ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
       ...(difficulty !== undefined ? { difficulty: (difficulty as Difficulty | null) } : {}),
     },
   })

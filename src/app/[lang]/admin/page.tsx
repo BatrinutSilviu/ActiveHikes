@@ -4,6 +4,7 @@ import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'luc
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { formatHikeDate } from '@/lib/dates'
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -20,12 +21,12 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       where: { status: { in: ['upcoming', 'ongoing'] } },
       orderBy: { date: 'asc' },
       take: 5,
-      select: { id: true, title: true, date: true, maxParticipants: true },
+      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
     }),
     prisma.hike.findMany({
       where: { status: { in: ['completed', 'cancelled'] } },
       orderBy: { date: 'desc' },
-      select: { id: true, title: true, date: true, status: true },
+      select: { id: true, title: true, date: true, endDate: true, status: true },
     }),
   ])
 
@@ -112,7 +113,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
                 <div>
                   <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
                   <div className="text-stone-400 text-xs mt-0.5">
-                    {hike.date.toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     {' · '}{hike.maxParticipants} {da.spots}
                   </div>
                 </div>
@@ -141,7 +142,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
                 <div>
                   <div className="font-semibold text-stone-700 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
                   <div className="text-stone-400 text-xs mt-0.5">
-                    {hike.date.toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     {' · '}
                     <span className={hike.status === 'completed' ? 'text-emerald-600' : 'text-red-400'}>
                       {hike.status}

@@ -11,6 +11,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { formatHikeDate } from '@/lib/dates'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -72,6 +73,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
   const hikeData = {
     ...hike,
     date: hike.date.toISOString(),
+    endDate: hike.endDate ? hike.endDate.toISOString() : null,
     createdAt: hike.createdAt.toISOString(),
     entryFee: Number(hike.entryFee),
     durationHours: hike.durationHours ? Number(hike.durationHours) : null,
@@ -92,7 +94,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <div>
           <h1 className="text-3xl font-bold text-stone-900">{hike.title}</h1>
           <p className="text-stone-500 mt-1">
-            {hike.destination} · {hike.date.toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
+            {hike.destination} · {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <Link href={`/${lang}/hikes/${hike.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">

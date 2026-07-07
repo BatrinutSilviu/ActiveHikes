@@ -23,7 +23,7 @@ export default function NewHikePage() {
     const max_participants = '20'
     const people_per_car = '5'
     return {
-      title: '', destination: '', description: '', date: '', meeting_time: '',
+      title: '', destination: '', description: '', date: '', end_date: '', meeting_time: '',
       entry_fee: '0', max_participants, mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
       has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
@@ -63,6 +63,7 @@ export default function NewHikePage() {
         const hikeId = await createHike({
           title: form.title, destination: form.destination,
           description: form.description || undefined, date: form.date,
+          endDate: form.end_date || undefined,
           meetingTime: form.meeting_time || undefined,
           entryFee: parseFloat(form.entry_fee), maxParticipants: parseInt(form.max_participants),
           mountainRange: form.mountain_range || undefined,
@@ -110,9 +111,12 @@ export default function NewHikePage() {
           <Field label={d.description}>
             <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} placeholder={d.descriptionPlaceholder} className={input} />
           </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Field label={d.date} required>
               <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={input} />
+            </Field>
+            <Field label={d.endDate}>
+              <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} className={input} />
             </Field>
             <Field label={d.meetingTime}>
               <input type="time" value={form.meeting_time} onChange={e => set('meeting_time', e.target.value)} className={input} />

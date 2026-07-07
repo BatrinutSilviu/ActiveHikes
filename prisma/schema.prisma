@@ -106,6 +106,7 @@ model Hike {
   destination          String
   description          String?
   date                 DateTime    @db.Date
+  endDate              DateTime?   @db.Date
   entryFee             Decimal     @default(0) @db.Decimal(10, 2)
   maxParticipants      Int
   mountainRange        String?

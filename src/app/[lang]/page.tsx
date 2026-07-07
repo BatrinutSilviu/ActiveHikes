@@ -15,6 +15,7 @@ async function getUpcomingHikes() {
   return hikes.map(h => ({
     ...h,
     date: h.date.toISOString(),
+    endDate: h.endDate ? h.endDate.toISOString() : null,
     entryFee: Number(h.entryFee),
     durationHours: h.durationHours ? Number(h.durationHours) : null,
     confirmedCount: h.participants.filter(p => p.status === 'confirmed').length,

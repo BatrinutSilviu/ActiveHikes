@@ -8,6 +8,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { formatHikeDate } from '@/lib/dates'
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -23,7 +24,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
     prisma.hikeParticipant.findMany({
       where: { userId: session.user.id },
       orderBy: { joinedAt: 'desc' },
-      include: { hike: { select: { id: true, title: true, destination: true, date: true, status: true, coverImageUrl: true } } },
+      include: { hike: { select: { id: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } } },
     }),
   ])
 
@@ -132,7 +133,7 @@ function ParticipationCard({ participation, lang, statusUI, dateLocale }: {
         <div className="font-semibold text-stone-800 truncate group-hover:text-emerald-700 transition-colors">{hike.title}</div>
         <div className="text-stone-400 text-sm flex items-center gap-1 mt-0.5">
           <Calendar size={12} />
-          {new Date(hike.date).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
+          {formatHikeDate(hike.date, hike.endDate, dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       </div>
       <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full ${ui.color} ${ui.bg} shrink-0`}>

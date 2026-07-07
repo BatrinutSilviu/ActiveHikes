@@ -11,6 +11,7 @@ type HikeData = {
   destination: string
   description: string | null
   date: string
+  endDate: string | null
   meetingTime: string | null
   durationHours: number | null
   difficulty: string | null
@@ -47,6 +48,7 @@ type HikeEditDict = {
   description: string
   descriptionPlaceholder: string
   date: string
+  endDate: string
   meetingTime: string
   duration: string
   durationPlaceholder: string
@@ -105,6 +107,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     destination: hike.destination,
     description: hike.description ?? '',
     date: hike.date.slice(0, 10),
+    endDate: hike.endDate ? hike.endDate.slice(0, 10) : '',
     meetingTime: hike.meetingTime ?? '',
     durationHours: hike.durationHours != null ? String(hike.durationHours) : '',
     difficulty: hike.difficulty ?? '',
@@ -173,6 +176,7 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         destination: form.destination,
         description: form.description || null,
         date: form.date,
+        endDate: form.endDate || null,
         meetingTime: form.meetingTime || null,
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
         difficulty: form.difficulty || null,
@@ -225,10 +229,14 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} placeholder={dict.descriptionPlaceholder} className={cls} />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.date}</label>
           <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={cls} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.endDate}</label>
+          <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} min={form.date || undefined} className={cls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>

@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { Calendar, Users, Clock, Tent, Hotel, ChevronRight, Mountain, MapPin } from 'lucide-react'
+import { formatHikeDate } from '@/lib/dates'
+
+const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
 
 type HikeCardData = {
   id: string
@@ -7,6 +10,7 @@ type HikeCardData = {
   destination: string
   description: string | null
   date: string
+  endDate: string | null
   entryFee: number
   maxParticipants: number
   durationHours: number | null
@@ -122,7 +126,7 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
         <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
           <span className="flex items-center gap-1">
             <Calendar size={12} />
-            {new Date(hike.date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {formatHikeDate(hike.date, hike.endDate, LOCALE_MAP[lang] ?? 'ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
           {hike.durationHours && (
             <span className="flex items-center gap-1"><Clock size={12} /> {hike.durationHours}h</span>

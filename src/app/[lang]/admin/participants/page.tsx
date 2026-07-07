@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { formatHikeDate } from '@/lib/dates'
 
 const STATUS_BADGE: Record<string, string> = {
   confirmed: 'bg-emerald-100 text-emerald-700',
@@ -25,7 +26,7 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
       orderBy: { joinedAt: 'desc' },
       include: {
         user: { select: { name: true, email: true, phone: true } },
-        hike: { select: { id: true, title: true, date: true } },
+        hike: { select: { id: true, title: true, date: true, endDate: true } },
       },
     }),
   ])
@@ -67,7 +68,7 @@ function ParticipantTable({ participants, lang, dateLocale, none }: { participan
             <div className="font-medium text-stone-800">{p.user.name}</div>
             <div className="text-stone-400 text-xs">{p.user.email}</div>
             <div className="text-stone-500 text-sm mt-0.5 truncate">{p.hike.title}</div>
-            <div className="text-stone-400 text-xs">{new Date(p.hike.date).toLocaleDateString(dateLocale)}</div>
+            <div className="text-stone-400 text-xs">{formatHikeDate(p.hike.date, p.hike.endDate, dateLocale, {})}</div>
           </div>
           <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize shrink-0 ${STATUS_BADGE[p.status]}`}>{p.status}</span>
           <ChevronRight size={16} className="text-stone-300 shrink-0" />

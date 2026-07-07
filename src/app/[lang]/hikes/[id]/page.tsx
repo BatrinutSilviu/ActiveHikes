@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { formatHikeDate } from '@/lib/dates'
 
 export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -100,7 +101,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 : dd.notSet}
             </InfoCard>
             <InfoCard icon={<Calendar size={18} />} label={dd.dateLabel}>
-              {new Date(hike.date).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              {hike.endDate
+                ? formatHikeDate(hike.date, hike.endDate, dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })
+                : new Date(hike.date).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </InfoCard>
             <InfoCard icon={<Clock size={18} />} label={dd.meetingTimeLabel}>
               {hike.meetingTime ?? dd.notSet}
