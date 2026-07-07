@@ -26,11 +26,11 @@ export default function Navbar() {
             <Image src="/logo.png" alt="Active Hikes" width={120} height={40} className="h-9 w-auto" priority />
             <span className="relative flex items-center leading-none translate-y-[1px]">
               <Mountain
-                size={17}
+                size={20}
                 strokeWidth={2.5}
-                className="text-emerald-600 -mr-1 -mt-3 group-hover:-translate-y-0.5 transition-transform"
+                className="text-emerald-600 -mr-1 -mt-3.5 group-hover:-translate-y-0.5 transition-transform"
               />
-              <span className="text-2xl font-black tracking-tight bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 bg-clip-text text-transparent">
+              <span className="text-3xl font-black tracking-tight bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 bg-clip-text text-transparent">
                 Hikes
               </span>
             </span>
