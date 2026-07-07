@@ -38,6 +38,7 @@
     "noCoverPhoto": "No cover photo yet",
     "camping": "Camping",
     "accommodation": "Accommodation",
+    "onWaitlist": "waitlisted",
     "difficulty": {
       "easy": "Easy",
       "easy_medium": "Easy to Medium",

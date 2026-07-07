@@ -32,6 +32,7 @@ type HikeCardDict = {
   noCoverPhoto: string
   camping: string
   accommodation: string
+  onWaitlist: string
   difficulty: Record<string, string>
   status: Record<string, string>
 }
@@ -139,6 +140,9 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
                 : <span>{hike.confirmedCount}/{hike.maxParticipants}</span>
             ) : (
               <span>{hike.confirmedCount} {dict.went}</span>
+            )}
+            {isUpcoming && hike.waitlistCount > 0 && (
+              <span className="text-stone-400">· {hike.waitlistCount} {dict.onWaitlist}</span>
             )}
           </span>
         </div>
