@@ -105,7 +105,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* General details — mobile order 1, desktop left column top */}
-        <div className="order-1 lg:order-1 lg:col-span-2 space-y-8">
+        <div className="order-1 lg:col-start-1 lg:col-span-2 lg:row-start-1 space-y-8">
           {hike.description && <p className="text-stone-700 leading-relaxed text-lg whitespace-pre-wrap">{hike.description}</p>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -175,7 +175,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
         {/* Confirmation panel — mobile order 2 (right after general details), desktop right column top */}
         {isUpcoming && (
-          <div className="order-2 lg:order-5 self-start bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
+          <div className="order-2 lg:col-start-3 lg:row-start-1 self-start bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
             <div className="text-center mb-5">
               {totalPrice > confirmationPrice ? (
                 <div className="grid grid-cols-2 gap-2">
@@ -244,7 +244,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         )}
 
         {/* Rest of left column content — mobile order 4, desktop left column (after general details) */}
-        <div className="order-4 lg:order-2 lg:col-span-2 space-y-8">
+        <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
           <AttendeeSection
             hikeId={hike.id}
             participants={hike.participants as any}
@@ -377,13 +377,13 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         </div>
 
         {/* Route — mobile order last, desktop left column (unchanged position) */}
-        <div className="order-6 lg:order-3 lg:col-span-2">
+        <div className="order-6 lg:col-start-1 lg:col-span-2 lg:row-start-3">
           <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
         </div>
 
         {/* Photos — mobile order 5, desktop left column (unchanged position) */}
         {photos.length > 0 && (
-          <div className="order-5 lg:order-4 lg:col-span-2">
+          <div className="order-5 lg:col-start-1 lg:col-span-2 lg:row-start-4">
             <h2 className="text-2xl font-bold text-stone-900 mb-4">{dd.photosTitle}</h2>
             <PhotoGallery photos={photos} />
             {hike.externalPhotosUrl && (
@@ -396,7 +396,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         )}
 
         {/* Rest of sidebar content — mobile order 3, desktop right column (after confirmation panel) */}
-        <div className="order-3 lg:order-6 self-start space-y-4">
+        <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
           {hike.whatsappGroupUrl && userParticipation?.status === 'confirmed' && (
             <a href={hike.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
