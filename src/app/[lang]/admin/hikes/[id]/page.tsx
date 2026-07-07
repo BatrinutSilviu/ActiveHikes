@@ -39,10 +39,15 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     ? hike.participants.find(p => p.userId === session.user.id) ?? null
     : null
 
+  const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
+  const adminWaitlistPosition = adminParticipation?.status === 'waitlist'
+    ? waitlistParticipants.findIndex(p => p.userId === session?.user?.id) + 1
+    : null
+
   const counts = {
     confirmed: hike.participants.filter(p => p.status === 'confirmed').length,
     pending: hike.participants.filter(p => p.status === 'pending').length,
-    waitlist: hike.participants.filter(p => p.status === 'waitlist').length,
+    waitlist: waitlistParticipants.length,
     rejected: hike.participants.filter(p => p.status === 'rejected').length,
     expired: hike.participants.filter(p => p.status === 'expired').length,
   }
@@ -135,6 +140,8 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               currentPickupLat={adminParticipation?.pickupLat ?? null}
               currentPickupLng={adminParticipation?.pickupLng ?? null}
               paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
+              waitlistPosition={adminWaitlistPosition}
+              waitlistCount={waitlistParticipants.length}
               dict={d.joinButton}
               lang={lang}
             />

@@ -44,7 +44,11 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   }
 
   const confirmedCount = hike.participants.filter(p => p.status === 'confirmed').length
-  const waitlistCount = hike.participants.filter(p => p.status === 'waitlist').length
+  const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
+  const waitlistCount = waitlistParticipants.length
+  const userWaitlistPosition = userParticipation?.status === 'waitlist'
+    ? waitlistParticipants.findIndex(p => p.userId === session?.user?.id) + 1
+    : null
   const spotsLeft = hike.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = hike.status === 'upcoming'
@@ -313,6 +317,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 currentPickupLat={userParticipation?.pickupLat ?? null}
                 currentPickupLng={userParticipation?.pickupLng ?? null}
                 paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
+                waitlistPosition={userWaitlistPosition}
+                waitlistCount={waitlistCount}
                 dict={d.joinButton}
                 lang={lang}
               />

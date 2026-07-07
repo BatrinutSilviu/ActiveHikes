@@ -157,6 +157,7 @@
     "cancelError": "Could not cancel. Please try again.",
     "payWithin": "Pay within",
     "paymentWindowExpired": "Payment window elapsed.",
+    "waitlistPosition": "You're #{position} of {count} on the waitlist",
     "joinError": "Something went wrong. Please try again.",
     "saveCarPreference": "Save car preference",
     "savingCarPreference": "Saving…",

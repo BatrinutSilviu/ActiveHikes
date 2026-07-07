@@ -157,6 +157,7 @@
     "cancelError": "Nu s-a putut anula. Încearcă din nou.",
     "payWithin": "Plătește în",
     "paymentWindowExpired": "Timpul de plată a expirat.",
+    "waitlistPosition": "Ești #{position} din {count} pe lista de așteptare",
     "joinError": "A apărut o eroare. Încearcă din nou.",
     "saveCarPreference": "Salvează preferința auto",
     "savingCarPreference": "Se salvează…",

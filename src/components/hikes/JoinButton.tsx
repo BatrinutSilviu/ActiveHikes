@@ -37,6 +37,7 @@ type JoinButtonDict = {
   locationCancel: string
   payWithin: string
   paymentWindowExpired: string
+  waitlistPosition: string
   status: {
     pending: StatusEntry
     confirmed: StatusEntry
@@ -130,6 +131,8 @@ export default function JoinButton({
   currentPickupLat = null,
   currentPickupLng = null,
   paymentDeadline = null,
+  waitlistPosition = null,
+  waitlistCount = 0,
   dict,
   lang,
 }: {
@@ -142,6 +145,8 @@ export default function JoinButton({
   currentPickupLat?: number | null
   currentPickupLng?: number | null
   paymentDeadline?: string | null
+  waitlistPosition?: number | null
+  waitlistCount?: number
   dict: JoinButtonDict
   lang: string
 }) {
@@ -279,6 +284,13 @@ export default function JoinButton({
           <div className={`border rounded-xl p-4 text-center ${STATUS_COLORS[participationStatus]}`}>
             <div className="font-bold">{dict.status[participationStatus].label}</div>
             <p className="text-sm mt-1 opacity-80">{dict.status[participationStatus].desc}</p>
+            {participationStatus === 'waitlist' && waitlistPosition && (
+              <p className="text-sm mt-1 font-semibold">
+                {dict.waitlistPosition
+                  .replace('{position}', String(waitlistPosition))
+                  .replace('{count}', String(waitlistCount))}
+              </p>
+            )}
             {participationStatus === 'pending' && paymentDeadline && (
               <PaymentCountdown deadline={paymentDeadline} dict={dict} />
             )}
