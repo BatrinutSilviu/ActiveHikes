@@ -485,6 +485,8 @@
     "actualDesc": "GPS track recorded during the hike",
     "legendPlanned": "Planned route",
     "legendRecorded": "Recorded route",
-    "download": "Download"
+    "download": "Download",
+    "distance": "distance",
+    "elevationGain": "elevation gain"
   }
 }

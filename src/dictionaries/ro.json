@@ -485,6 +485,8 @@
     "actualDesc": "Traseul GPS înregistrat în timpul drumeției",
     "legendPlanned": "Traseu planificat",
     "legendRecorded": "Traseu înregistrat",
-    "download": "Descarcă"
+    "download": "Descarcă",
+    "distance": "distanță",
+    "elevationGain": "diferență de nivel"
   }
 }

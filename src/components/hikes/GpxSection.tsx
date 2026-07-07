@@ -10,6 +10,8 @@ type GpxDict = {
   legendPlanned: string
   legendRecorded: string
   download: string
+  distance: string
+  elevationGain: string
 }
 
 export default function GpxSection({
@@ -33,7 +35,11 @@ export default function GpxSection({
         <Map size={18} /> {dict.title}
       </h3>
 
-      <GpxMapWrapper approximateUrl={approximateUrl} actualUrl={actualUrl} />
+      <GpxMapWrapper
+        approximateUrl={approximateUrl}
+        actualUrl={actualUrl}
+        dict={{ distance: dict.distance, elevationGain: dict.elevationGain }}
+      />
 
       {/* Legend — only shown when there's something to distinguish */}
       {showBothInLegend && (
