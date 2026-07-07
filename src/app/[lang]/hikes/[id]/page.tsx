@@ -3,13 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import JoinButton from '@/components/hikes/JoinButton'
-import RoomPicker from '@/components/hikes/RoomPicker'
 import SpotsCounter from '@/components/hikes/SpotsCounter'
 import ParticipantsCount from '@/components/hikes/ParticipantsCount'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
-import AttendeeSection from '@/components/hikes/AttendeeSection'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -230,35 +228,20 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               lang={lang}
             />
 
-            {hike.hasAccommodation && rooms.length > 0 && userParticipation && userParticipation.status !== 'rejected' && (
-              <div className="mt-3">
-                <RoomPicker
-                  hikeId={hike.id}
-                  rooms={rooms}
-                  currentRoomId={userParticipation.roomId}
-                  dict={d.roomPicker}
-                />
-              </div>
-            )}
           </div>
         )}
 
         {/* Rest of left column content — mobile order 4, desktop left column (after general details) */}
         <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
-          <AttendeeSection
-            hikeId={hike.id}
-            participants={hike.participants as any}
-            userParticipantId={userParticipation?.id ?? null}
-            isUpcoming={isUpcoming}
-            dict={{
-              title: dd.participantsSectionTitle,
-              noConfirmedYet: dd.noConfirmedYet,
-              pendingCount: dd.pendingCount,
-              waitlistCount: dd.waitlistCount,
-              noCarAssigned: (dd as any).noCarAssigned,
-              ...(dd.carpool as any),
-            }}
-          />
+          <Link
+            href={`/${lang}/hikes/${hike.id}/carpool`}
+            className="flex items-center justify-between gap-2 bg-white border border-stone-200 rounded-xl p-4 hover:border-emerald-300 transition-colors"
+          >
+            <span className="flex items-center gap-2 font-semibold text-stone-800">
+              <Car size={18} className="text-emerald-600" /> {dd.participantsSectionTitle}
+            </span>
+            <ExternalLink size={15} className="text-stone-300" />
+          </Link>
 
           {hike.hasCamping && (hike.campingDetails || hike.campingUrl || hike.campingPrice) && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-2">
@@ -354,31 +337,12 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 </div>
               )}
               {rooms.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1.5">{dd.roomsTitle}</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
-                      <thead>
-                        <tr className="text-left text-blue-500 text-xs uppercase tracking-wide">
-                          <th className="py-1.5 pr-4 font-semibold">{dd.roomColumn}</th>
-                          <th className="py-1.5 pr-4 font-semibold">{dd.roomCapacityColumn}</th>
-                          <th className="py-1.5 font-semibold">{dd.roomOccupancyColumn}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rooms.map(room => (
-                          <tr key={room.id} className="border-t border-blue-100">
-                            <td className="py-1.5 pr-4 text-blue-800 font-medium">
-                              {(dd.roomTypes as Record<string, string>)[room.type]} {room.label}
-                            </td>
-                            <td className="py-1.5 pr-4 text-blue-700">{room.capacity}</td>
-                            <td className="py-1.5 text-blue-700">{room.occupied}/{room.capacity}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <Link
+                  href={`/${lang}/hikes/${hike.id}/rooms`}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 underline"
+                >
+                  {dd.roomsTitle} <ExternalLink size={13} />
+                </Link>
               )}
             </div>
           )}

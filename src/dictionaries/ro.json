@@ -368,6 +368,8 @@
       "noRegistrations": "Nicio înregistrare.",
       "noSpotsAlert": "Nu mai sunt locuri. Respinge sau mută pe cineva pe lista de așteptare.",
       "myRegistration": "Înscrierea Mea",
+      "manageCars": "Gestionează mașinile →",
+      "manageRooms": "Gestionează camerele →",
       "joined": "Înscris",
       "bringsCar": "Conduce",
       "payBy": "Plătește până la",
@@ -395,6 +397,29 @@
         "roundRobin": "fără pin",
         "applied": "Alocarea mașinilor a fost aplicată cu succes."
       }
+    },
+    "carsPage": {
+      "title": "Mașini",
+      "backToHike": "← Înapoi la drumeție",
+      "peoplePerCar": "Persoane per mașină",
+      "carsNeeded": "Număr minim de mașini",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saved": "Salvat"
+    },
+    "roomsPage": {
+      "title": "Camere",
+      "backToHike": "← Înapoi la drumeție",
+      "doubleRoomCount": "Camere duble",
+      "tripleRoomCount": "Camere triple",
+      "quadrupleRoomCount": "Camere cvadruple",
+      "save": "Salvează",
+      "saving": "Se salvează…",
+      "saved": "Salvat",
+      "occupantsTitle": "Cine e în fiecare cameră",
+      "unassignedTitle": "Nealocați unei camere",
+      "empty": "Goală",
+      "noRooms": "Nu există camere configurate încă."
     },
     "bankAccounts": {
       "title": "Metode de Plată",

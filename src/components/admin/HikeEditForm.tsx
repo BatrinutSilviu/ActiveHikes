@@ -23,9 +23,6 @@ type HikeData = {
   accommodationUrl: string | null
   accommodationPrice: number | null
   accommodationDeposit: number | null
-  doubleRoomCount: number
-  tripleRoomCount: number
-  quadrupleRoomCount: number
   breakfastTime: string | null
   dinnerTime: string | null
   checkInTime: string | null
@@ -42,8 +39,6 @@ type HikeData = {
   campingUrl: string | null
   campingPrice: number | null
   hasAccommodation: boolean
-  peoplePerCar: number
-  carsNeeded: number | null
   essentials: string[]
 }
 
@@ -70,8 +65,6 @@ type HikeEditDict = {
   meetingPointPlaceholder: string
   startingPoint: string
   startingPointPlaceholder: string
-  peoplePerCar: string
-  carsNeeded: string
   camping: string
   campingDetails: string
   campingDetailsPlaceholder: string
@@ -85,9 +78,6 @@ type HikeEditDict = {
   accommodationUrlPlaceholder: string
   accommodationPrice: string
   accommodationDeposit: string
-  doubleRoomCount: string
-  tripleRoomCount: string
-  quadrupleRoomCount: string
   breakfastTime: string
   dinnerTime: string
   checkInTime: string
@@ -132,9 +122,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     accommodationUrl: hike.accommodationUrl ?? '',
     accommodationPrice: hike.accommodationPrice != null ? String(hike.accommodationPrice) : '',
     accommodationDeposit: hike.accommodationDeposit != null ? String(hike.accommodationDeposit) : '',
-    doubleRoomCount: String(hike.doubleRoomCount),
-    tripleRoomCount: String(hike.tripleRoomCount),
-    quadrupleRoomCount: String(hike.quadrupleRoomCount),
     breakfastTime: hike.breakfastTime ?? '',
     dinnerTime: hike.dinnerTime ?? '',
     checkInTime: hike.checkInTime ?? '',
@@ -149,8 +136,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
     campingUrl: hike.campingUrl ?? '',
     campingPrice: hike.campingPrice != null ? String(hike.campingPrice) : '',
     hasAccommodation: hike.hasAccommodation,
-    peoplePerCar: String(hike.peoplePerCar),
-    carsNeeded: hike.carsNeeded != null ? String(hike.carsNeeded) : '',
     essentials: hike.essentials.join('\n'),
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
@@ -208,9 +193,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         accommodationUrl: form.accommodationUrl || null,
         accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
         accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
-        doubleRoomCount: parseInt(form.doubleRoomCount) || 0,
-        tripleRoomCount: parseInt(form.tripleRoomCount) || 0,
-        quadrupleRoomCount: parseInt(form.quadrupleRoomCount) || 0,
         breakfastTime: form.breakfastTime || null,
         dinnerTime: form.dinnerTime || null,
         checkInTime: form.checkInTime || null,
@@ -225,8 +207,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         campingUrl: form.campingUrl || null,
         campingPrice: form.campingPrice ? parseFloat(form.campingPrice) : null,
         hasAccommodation: form.hasAccommodation,
-        peoplePerCar: parseInt(form.peoplePerCar) || 5,
-        carsNeeded: form.carsNeeded ? parseInt(form.carsNeeded) : null,
         essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
         gpxActualUrl,
         gpxApproximateUrl,
@@ -321,19 +301,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
         <input value={form.startingPoint} onChange={e => set('startingPoint', e.target.value)} placeholder={dict.startingPointPlaceholder} className={cls} />
       </div>
 
-      {/* Cars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.peoplePerCar}</label>
-          <input type="number" value={form.peoplePerCar} onChange={e => set('peoplePerCar', e.target.value)} min="1" className={cls} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.carsNeeded}</label>
-          <input type="number" value={form.carsNeeded} onChange={e => set('carsNeeded', e.target.value)} min="0"
-            placeholder={String(Math.ceil(parseInt(form.maxParticipants) / (parseInt(form.peoplePerCar) || 5)))} className={cls} />
-        </div>
-      </div>
-
       {/* Camping / accommodation checkboxes */}
       <div className="flex gap-6">
         <label className="flex items-center gap-2 cursor-pointer">
@@ -406,20 +373,6 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.checkOutTime}</label>
               <input type="time" value={form.checkOutTime} onChange={e => set('checkOutTime', e.target.value)} className={cls} />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.doubleRoomCount}</label>
-              <input type="number" value={form.doubleRoomCount} onChange={e => set('doubleRoomCount', e.target.value)} min="0" step="1" className={cls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.tripleRoomCount}</label>
-              <input type="number" value={form.tripleRoomCount} onChange={e => set('tripleRoomCount', e.target.value)} min="0" step="1" className={cls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">{dict.quadrupleRoomCount}</label>
-              <input type="number" value={form.quadrupleRoomCount} onChange={e => set('quadrupleRoomCount', e.target.value)} min="0" step="1" className={cls} />
             </div>
           </div>
         </>

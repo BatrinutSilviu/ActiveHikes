@@ -368,6 +368,8 @@
       "noRegistrations": "No registrations yet.",
       "noSpotsAlert": "No spots left. Reject or move someone to waitlist first.",
       "myRegistration": "My Registration",
+      "manageCars": "Manage cars →",
+      "manageRooms": "Manage rooms →",
       "joined": "Joined",
       "bringsCar": "Driving",
       "payBy": "Pay by",
@@ -395,6 +397,29 @@
         "roundRobin": "no pin",
         "applied": "Car allocation applied successfully."
       }
+    },
+    "carsPage": {
+      "title": "Cars",
+      "backToHike": "← Back to hike",
+      "peoplePerCar": "People per car",
+      "carsNeeded": "Minimum number of cars",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "roomsPage": {
+      "title": "Rooms",
+      "backToHike": "← Back to hike",
+      "doubleRoomCount": "Double rooms",
+      "tripleRoomCount": "Triple rooms",
+      "quadrupleRoomCount": "Quadruple rooms",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "occupantsTitle": "Who's in each room",
+      "unassignedTitle": "Not assigned to a room",
+      "empty": "Empty",
+      "noRooms": "No rooms configured yet."
     },
     "bankAccounts": {
       "title": "Payment Methods",
