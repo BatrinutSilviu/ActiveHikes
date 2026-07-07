@@ -84,7 +84,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
-          {hike.description && <p className="text-stone-700 leading-relaxed text-lg">{hike.description}</p>}
+          {hike.description && <p className="text-stone-700 leading-relaxed text-lg whitespace-pre-wrap">{hike.description}</p>}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard icon={<Mountain size={18} />} label={dd.difficultyLabel}>
