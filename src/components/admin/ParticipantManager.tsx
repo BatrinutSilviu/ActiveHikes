@@ -185,7 +185,9 @@ export default function ParticipantManager({
                     className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
                 )}
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="text-stone-400 text-xs">{dict.joined} {new Date(p.joinedAt).toLocaleDateString()}</span>
+                  <span className="text-stone-400 text-xs">
+                    {dict.joined} {new Date(p.joinedAt).toLocaleDateString()} {new Date(p.joinedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  </span>
                   {p.status === 'pending' && p.paymentDeadline && (
                     <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">
                       <Timer size={11} /> {dict.payBy} {new Date(p.paymentDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
