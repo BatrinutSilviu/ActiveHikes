@@ -12,6 +12,7 @@ export default function NewHikePage() {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const d = useDict().admin.newHike
+  const timeLocale = lang === 'en' ? 'en-GB' : 'ro-RO'
 
   const computeCars = (participants: string, perCar: string) => {
     const p = parseInt(participants)
@@ -128,7 +129,7 @@ export default function NewHikePage() {
               <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} className={input} />
             </Field>
             <Field label={d.meetingTime}>
-              <input type="time" value={form.meeting_time} onChange={e => set('meeting_time', e.target.value)} className={input} />
+              <input type="time" lang={timeLocale} value={form.meeting_time} onChange={e => set('meeting_time', e.target.value)} className={input} />
             </Field>
           </div>
           <Field label={d.difficulty}>
@@ -219,20 +220,20 @@ export default function NewHikePage() {
           {form.has_accommodation && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label={d.breakfastTime}>
-                <input type="time" value={form.breakfast_time} onChange={e => set('breakfast_time', e.target.value)} className={input} />
+                <input type="time" lang={timeLocale} value={form.breakfast_time} onChange={e => set('breakfast_time', e.target.value)} className={input} />
               </Field>
               <Field label={d.dinnerTime}>
-                <input type="time" value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
+                <input type="time" lang={timeLocale} value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
               </Field>
             </div>
           )}
           {form.has_accommodation && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label={d.checkInTime}>
-                <input type="time" value={form.check_in_time} onChange={e => set('check_in_time', e.target.value)} className={input} />
+                <input type="time" lang={timeLocale} value={form.check_in_time} onChange={e => set('check_in_time', e.target.value)} className={input} />
               </Field>
               <Field label={d.checkOutTime}>
-                <input type="time" value={form.check_out_time} onChange={e => set('check_out_time', e.target.value)} className={input} />
+                <input type="time" lang={timeLocale} value={form.check_out_time} onChange={e => set('check_out_time', e.target.value)} className={input} />
               </Field>
             </div>
           )}

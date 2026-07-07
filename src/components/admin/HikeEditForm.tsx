@@ -105,7 +105,8 @@ type HikeEditDict = {
 
 const DIFFICULTIES = ['easy', 'easy_medium', 'medium', 'medium_hard', 'hard'] as const
 
-export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: HikeEditDict }) {
+export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeData; dict: HikeEditDict; lang?: string }) {
+  const timeLocale = lang === 'en' ? 'en-GB' : 'ro-RO'
   const [form, setForm] = useState({
     title: hike.title,
     destination: hike.destination,
@@ -358,21 +359,21 @@ export default function HikeEditForm({ hike, dict }: { hike: HikeData; dict: Hik
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.breakfastTime}</label>
-              <input type="time" value={form.breakfastTime} onChange={e => set('breakfastTime', e.target.value)} className={cls} />
+              <input type="time" lang={timeLocale} value={form.breakfastTime} onChange={e => set('breakfastTime', e.target.value)} className={cls} />
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.dinnerTime}</label>
-              <input type="time" value={form.dinnerTime} onChange={e => set('dinnerTime', e.target.value)} className={cls} />
+              <input type="time" lang={timeLocale} value={form.dinnerTime} onChange={e => set('dinnerTime', e.target.value)} className={cls} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.checkInTime}</label>
-              <input type="time" value={form.checkInTime} onChange={e => set('checkInTime', e.target.value)} className={cls} />
+              <input type="time" lang={timeLocale} value={form.checkInTime} onChange={e => set('checkInTime', e.target.value)} className={cls} />
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-1">{dict.checkOutTime}</label>
-              <input type="time" value={form.checkOutTime} onChange={e => set('checkOutTime', e.target.value)} className={cls} />
+              <input type="time" lang={timeLocale} value={form.checkOutTime} onChange={e => set('checkOutTime', e.target.value)} className={cls} />
             </div>
           </div>
         </>
