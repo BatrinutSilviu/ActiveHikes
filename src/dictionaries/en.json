@@ -101,6 +101,7 @@
     "roomColumn": "Room",
     "roomCapacityColumn": "Capacity",
     "roomOccupancyColumn": "Occupancy",
+    "roomEmpty": "Empty",
     "roomTypes": {
       "double": "Double",
       "triple": "Triple",

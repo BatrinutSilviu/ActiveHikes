@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import RoomPicker from '@/components/hikes/RoomPicker'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, UserCheck } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
 export default async function HikeRoomsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -21,7 +21,11 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
         title: true,
         rooms: {
           orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
-          include: { occupants: { select: { id: true } } },
+          include: {
+            occupants: {
+              select: { id: true, guestName: true, user: { select: { name: true } } },
+            },
+          },
         },
       },
     }),
@@ -35,6 +39,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
     label: r.label,
     capacity: r.capacity,
     occupied: r.occupants.length,
+    occupants: r.occupants,
   }))
 
   let userParticipation = null
@@ -60,27 +65,29 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
         <p className="text-stone-400">{d.admin.roomsPage.noRooms}</p>
       ) : (
         <>
-          <div className="overflow-x-auto mb-6">
-            <table className="w-full text-sm border-collapse bg-white border border-stone-100 rounded-xl overflow-hidden">
-              <thead>
-                <tr className="text-left bg-stone-50 text-stone-500 text-xs uppercase tracking-wide">
-                  <th className="py-2.5 px-4 font-semibold">{dd.roomColumn}</th>
-                  <th className="py-2.5 px-4 font-semibold">{dd.roomCapacityColumn}</th>
-                  <th className="py-2.5 px-4 font-semibold">{dd.roomOccupancyColumn}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rooms.map(room => (
-                  <tr key={room.id} className="border-t border-stone-100">
-                    <td className="py-2.5 px-4 text-stone-800 font-medium">
-                      {roomTypeLabels[room.type] ?? room.type} {room.label}
-                    </td>
-                    <td className="py-2.5 px-4 text-stone-600">{room.capacity}</td>
-                    <td className="py-2.5 px-4 text-stone-600">{room.occupied}/{room.capacity}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-2 mb-6">
+            {rooms.map(room => (
+              <div key={room.id} className="bg-white border border-stone-100 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-stone-800">
+                    {roomTypeLabels[room.type] ?? room.type} {room.label}
+                  </span>
+                  <span className="text-xs font-medium text-stone-400">{room.occupied}/{room.capacity}</span>
+                </div>
+                {room.occupants.length === 0 ? (
+                  <p className="text-stone-400 text-sm">{dd.roomEmpty}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {room.occupants.map(o => (
+                      <span key={o.id} className="flex items-center gap-1 text-xs bg-blue-50 border border-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
+                        <UserCheck size={11} />
+                        {o.user.name ?? '?'}{o.guestName && ` +${o.guestName}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           {userParticipation && userParticipation.status !== 'rejected' && (

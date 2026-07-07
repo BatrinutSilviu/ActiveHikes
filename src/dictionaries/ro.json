@@ -101,6 +101,7 @@
     "roomColumn": "Cameră",
     "roomCapacityColumn": "Capacitate",
     "roomOccupancyColumn": "Ocupare",
+    "roomEmpty": "Goală",
     "roomTypes": {
       "double": "Dublă",
       "triple": "Triplă",
