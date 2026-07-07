@@ -164,9 +164,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                   href={hike.campingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-amber-800 underline hover:no-underline"
+                  className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
                 >
-                  <ExternalLink size={14} /> {dd.campingBookingLink}
+                  <ExternalLink size={15} /> {dd.campingBookingLink}
                 </a>
               )}
               {hike.campingPrice && (
@@ -191,9 +191,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                   href={hike.accommodationUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-blue-800 underline hover:no-underline"
+                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
                 >
-                  <ExternalLink size={14} /> {dd.accommodationBookingLink}
+                  <ExternalLink size={15} /> {dd.accommodationBookingLink}
                 </a>
               )}
               {hike.accommodationPrice && (() => {
