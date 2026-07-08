@@ -73,6 +73,7 @@
     "participantsLabel": "Participants",
     "entryFeeLabel": "Entry fee",
     "perPerson": "per person",
+    "forYouAndFriend": "for you and your friend",
     "free": "Free",
     "full": "Full",
     "spotsLeft": "spots left",
@@ -110,6 +111,7 @@
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "feeBreakdown": "{entryFee} RON entry fee + {deposit} RON accommodation deposit",
+    "friendDoublesFee": "This covers both you and your friend — double the usual amount.",
     "totalPriceLabel": "Total price",
     "confirmationPriceLabel": "Confirmation price",
     "gasNotIncluded": "Doesn't include gas money for the ride there",
@@ -124,7 +126,8 @@
       "hopIn": "Hop in",
       "leave": "Leave",
       "noDrivers": "No drivers yet.",
-      "yourCar": "your car"
+      "yourCar": "your car",
+      "friendOf": "friend of"
     },
     "difficulty": {
       "easy": "Easy",
@@ -157,7 +160,11 @@
   "joinButton": {
     "bringFriend": "Bring a friend",
     "friendNamePlaceholder": "Friend's full name",
-    "bringingCar": "I'm driving my own car",
+    "agreeToTermsLabel": "I agree to the",
+    "termsLinkText": "Terms & Conditions",
+    "carToggleLabel": "How are you getting there?",
+    "carOptionDriver": "I'm driving",
+    "carOptionPassenger": "I need a ride",
     "carSeatsLabel": "Available passenger seats",
     "loginToJoin": "Login to join",
     "registerNow": "Register now",
@@ -255,7 +262,8 @@
       "createAccount": "Create account",
       "creating": "Creating account…",
       "alreadyAccount": "Already have an account?",
-      "signIn": "Sign in"
+      "signIn": "Sign in",
+      "viewTerms": "Terms & Conditions"
     }
   },
   "admin": {
@@ -350,7 +358,8 @@
       "title": "All Participants",
       "pendingSection": "Pending confirmation",
       "othersSection": "All others",
-      "none": "None."
+      "none": "None.",
+      "friendOf": "Friend of"
     },
     "hike": {
       "backToDashboard": "Back to dashboard",
@@ -373,6 +382,9 @@
       "joined": "Joined",
       "bringsCar": "Driving",
       "payBy": "Pay by",
+      "friendOf": "Friend of",
+      "removeFriend": "Remove friend",
+      "removeFriendConfirm": "Remove this friend from the registration? The host's own registration will be unaffected.",
       "status": {
         "confirmed": "Confirmed",
         "pending": "Pending",
@@ -395,7 +407,8 @@
         "noLocationWarning": "{n} passenger(s) have no pickup pin — assigned by round-robin.",
         "distanceKm": "km",
         "roundRobin": "no pin",
-        "applied": "Car allocation applied successfully."
+        "applied": "Car allocation applied successfully.",
+        "friendLabel": "friend"
       }
     },
     "carsPage": {
@@ -422,6 +435,7 @@
       "empty": "Empty",
       "noRoom": "No room",
       "full": "full",
+      "friendOf": "friend of",
       "error": "Could not save. Please try again.",
       "noRooms": "No rooms configured yet."
     },
@@ -523,5 +537,16 @@
     "download": "Download",
     "distance": "distance",
     "elevationGain": "elevation gain"
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "intro": "Please read this before registering for a hike.",
+    "liabilityTitle": "Liability",
+    "liabilityText": "ActiveHikes and its organizers help plan and coordinate group hikes, but we are not a professional guiding service and do not assume responsibility for injuries, accidents, loss, or damage that may occur before, during, or after a hike. Every participant takes part at their own risk and is responsible for assessing their own fitness and preparedness for the terrain and conditions.",
+    "refundTitle": "Refund Policy",
+    "refundIntro": "If you can no longer attend a hike you've registered and paid for:",
+    "refundWaitlist": "If someone from the waitlist takes your spot, your payment will be refunded in full.",
+    "refundNoWaitlist": "If no one is on the waitlist to take your spot, your payment will not be refunded.",
+    "refund24h": "If you cancel less than 24 hours before the hike, your payment will not be refunded, regardless of waitlist availability."
   }
 }

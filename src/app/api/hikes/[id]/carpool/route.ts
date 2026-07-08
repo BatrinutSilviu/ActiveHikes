@@ -9,7 +9,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     select: {
       id: true,
       status: true,
-      guestName: true,
+      friendName: true,
+      hostParticipantId: true,
       bringsCar: true,
       carSeats: true,
       carDriverParticipantId: true,

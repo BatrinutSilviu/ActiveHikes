@@ -158,13 +158,15 @@ model Hike {
 model HikeParticipant {
   id          String            @id @default(cuid())
   hikeId      String
-  userId      String
+  userId      String?
   status      ParticipantStatus @default(pending)
   joinedAt    DateTime          @default(now())
   confirmedAt DateTime?
   paymentDeadline DateTime?
+  agreedToTermsAt DateTime?
   adminNotes  String?
-  guestName              String?
+  friendName             String?
+  hostParticipantId      String? @unique
   bringsCar              Boolean @default(false)
   carSeats               Int?
   carDriverParticipantId String?
@@ -173,10 +175,12 @@ model HikeParticipant {
   roomId                 String?
 
   hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
-  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
   carDriver    HikeParticipant? @relation("CarPassengers", fields: [carDriverParticipantId], references: [id], onDelete: SetNull)
   carPassengers HikeParticipant[] @relation("CarPassengers")
   room         HikeRoom?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  host         HikeParticipant? @relation("HostFriend", fields: [hostParticipantId], references: [id], onDelete: Cascade)
+  friend       HikeParticipant? @relation("HostFriend")
 
   @@unique([hikeId, userId])
 }

@@ -7,11 +7,12 @@ import { Car, UserCheck, X } from 'lucide-react'
 type Participant = {
   id: string
   status: 'confirmed' | 'pending' | 'waitlist' | 'rejected'
-  guestName: string | null
+  friendName: string | null
+  hostParticipantId: string | null
   bringsCar: boolean
   carSeats: number | null
   carDriverParticipantId: string | null
-  user: { name: string | null }
+  user: { name: string | null } | null
 }
 
 type AttendeeSectionDict = {
@@ -25,10 +26,11 @@ type AttendeeSectionDict = {
   hopIn: string
   leave: string
   yourCar: string
+  friendOf: string
 }
 
 function pName(p: Participant) {
-  return p.user.name ?? '?'
+  return p.hostParticipantId ? p.friendName ?? '?' : p.user?.name ?? '?'
 }
 
 export default function AttendeeSection({
@@ -79,6 +81,9 @@ export default function AttendeeSection({
   const drivers = confirmed.filter(p => p.bringsCar && p.carSeats !== null)
   const hasCarpoolData = drivers.length > 0
 
+  const hostNameOf = (p: Participant) =>
+    p.hostParticipantId ? participants.find(h => h.id === p.hostParticipantId)?.user?.name ?? '?' : null
+
   return (
     <div>
       <h2 className="text-2xl font-bold text-stone-900 mb-4">{dict.title}</h2>
@@ -102,7 +107,7 @@ export default function AttendeeSection({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 font-semibold text-stone-800 flex-wrap">
                       <Car size={15} className="text-emerald-600 shrink-0" />
-                      <span>{pName(driver)}{driver.guestName && <span className="font-normal text-stone-500"> +{driver.guestName}</span>}</span>
+                      <span>{pName(driver)}</span>
                       {isMyOwnCar && (
                         <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">{dict.yourCar}</span>
                       )}
@@ -112,7 +117,8 @@ export default function AttendeeSection({
                         {passengers.map(p => (
                           <span key={p.id} className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                             <UserCheck size={10} />
-                            {pName(p)}{p.guestName && ` +${p.guestName}`}
+                            {pName(p)}
+                            {p.hostParticipantId && <span className="text-stone-400"> ({dict.friendOf} {hostNameOf(p)})</span>}
                           </span>
                         ))}
                       </div>
@@ -154,7 +160,8 @@ export default function AttendeeSection({
                 <div className="flex flex-wrap gap-1.5">
                   {withoutCar.map(p => (
                     <span key={p.id} className="bg-stone-50 border border-stone-200 text-stone-700 text-sm px-3 py-1 rounded-full">
-                      {pName(p)}{p.guestName && <span className="text-stone-400"> +{p.guestName}</span>}
+                      {pName(p)}
+                      {p.hostParticipantId && <span className="text-stone-400"> ({dict.friendOf} {hostNameOf(p)})</span>}
                     </span>
                   ))}
                 </div>
@@ -166,7 +173,8 @@ export default function AttendeeSection({
         <div className="flex flex-wrap gap-2">
           {confirmed.map(p => (
             <span key={p.id} className="bg-emerald-50 border border-emerald-100 text-emerald-800 text-sm font-medium px-3 py-1.5 rounded-full">
-              {pName(p)}{p.guestName && <span className="text-emerald-600 font-normal"> +{p.guestName}</span>}
+              {pName(p)}
+              {p.hostParticipantId && <span className="text-emerald-600 font-normal"> ({dict.friendOf} {hostNameOf(p)})</span>}
             </span>
           ))}
         </div>

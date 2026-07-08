@@ -21,7 +21,7 @@ export default async function HikeCarpoolPage({ params }: { params: Promise<{ la
         title: true,
         status: true,
         participants: {
-          select: { id: true, userId: true, status: true, guestName: true, bringsCar: true, carSeats: true, carDriverParticipantId: true, user: { select: { name: true } } },
+          select: { id: true, userId: true, status: true, friendName: true, hostParticipantId: true, bringsCar: true, carSeats: true, carDriverParticipantId: true, user: { select: { name: true } } },
           orderBy: { joinedAt: 'asc' },
         },
       },

@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { ParticipantStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
+import { resolvePair } from '@/lib/participantPairs'
 
 export async function updateParticipantStatus(
   participantId: string,
@@ -16,8 +17,10 @@ export async function updateParticipantStatus(
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  await prisma.hikeParticipant.update({
-    where: { id: participantId },
+  const { hostId, friendId } = await resolvePair(prisma, participantId)
+
+  await prisma.hikeParticipant.updateMany({
+    where: { id: { in: [hostId, friendId].filter((id): id is string => id !== null) } },
     data: {
       status: newStatus,
       confirmedAt: newStatus === 'confirmed' ? new Date() : undefined,
@@ -26,6 +29,22 @@ export async function updateParticipantStatus(
   })
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+}
+
+export async function removeFriend(hikeId: string, hostParticipantId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const host = await prisma.hikeParticipant.findUnique({
+    where: { id: hostParticipantId },
+    select: { hikeId: true },
+  })
+  if (!host || host.hikeId !== hikeId) throw new Error('Invalid participant')
+
+  await prisma.hikeParticipant.delete({ where: { hostParticipantId } })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
 export async function adminAddParticipant(hikeId: string, email: string): Promise<{ status: ParticipantStatus }> {
@@ -65,28 +84,36 @@ export async function confirmAllPending(hikeId: string): Promise<{ confirmed: nu
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  const [hike, alreadyConfirmed, pending] = await Promise.all([
+  const [hike, alreadyConfirmed, pendingHosts] = await Promise.all([
     prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } }),
     prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } }),
     prisma.hikeParticipant.findMany({
-      where: { hikeId, status: 'pending' },
+      where: { hikeId, status: 'pending', hostParticipantId: null },
       orderBy: { joinedAt: 'asc' },
-      select: { id: true },
+      select: { id: true, friend: { select: { id: true } } },
     }),
   ])
 
   if (!hike) throw new Error('Hike not found')
 
   const spotsLeft = hike.maxParticipants - alreadyConfirmed
-  const toConfirm = pending.slice(0, Math.max(spotsLeft, 0))
+  const idsToConfirm: string[] = []
+  let spotsUsed = 0
+  for (const host of pendingHosts) {
+    const unitSize = host.friend ? 2 : 1
+    if (spotsUsed + unitSize > spotsLeft) break
+    idsToConfirm.push(host.id)
+    if (host.friend) idsToConfirm.push(host.friend.id)
+    spotsUsed += unitSize
+  }
 
-  if (toConfirm.length === 0) return { confirmed: 0 }
+  if (idsToConfirm.length === 0) return { confirmed: 0 }
 
   await prisma.hikeParticipant.updateMany({
-    where: { id: { in: toConfirm.map(p => p.id) } },
+    where: { id: { in: idsToConfirm } },
     data: { status: 'confirmed', confirmedAt: new Date() },
   })
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  return { confirmed: toConfirm.length }
+  return { confirmed: idsToConfirm.length }
 }

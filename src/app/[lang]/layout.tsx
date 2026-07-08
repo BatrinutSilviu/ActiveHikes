@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Providers from '@/components/Providers'
 import { hasLocale, defaultLocale } from '@/lib/i18n'
@@ -28,6 +29,10 @@ export default async function LocaleLayout({
           © {new Date().getFullYear()} <span className="font-semibold text-stone-600">ActiveHikes</span>
           {' · '}
           {lang === 'ro' ? 'Cu dragoste pentru munți' : 'Made with love for the mountains'}
+          {' · '}
+          <Link href={`/${lang}/terms`} className="hover:text-stone-600 hover:underline">
+            {lang === 'ro' ? 'Termeni și condiții' : 'Terms & Conditions'}
+          </Link>
         </div>
       </footer>
     </Providers>

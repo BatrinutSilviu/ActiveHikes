@@ -24,13 +24,21 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
           orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
           include: {
             occupants: {
-              select: { id: true, guestName: true, user: { select: { name: true } } },
+              select: { id: true, friendName: true, hostParticipantId: true, host: { select: { user: { select: { name: true } } } }, user: { select: { name: true } } },
             },
           },
         },
         participants: {
           where: { status: { in: ['confirmed', 'pending', 'waitlist'] } },
-          select: { id: true, guestName: true, roomId: true, user: { select: { name: true } } },
+          select: {
+            id: true,
+            friendName: true,
+            hostParticipantId: true,
+            roomId: true,
+            user: { select: { name: true } },
+            friend: { select: { id: true, friendName: true } },
+            host: { select: { user: { select: { name: true } } } },
+          },
         },
       },
     }),
@@ -87,7 +95,8 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
                       {room.occupants.map(o => (
                         <span key={o.id} className="flex items-center gap-1 text-xs bg-blue-50 border border-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
                           <UserCheck size={11} />
-                          {o.user.name ?? '?'}{o.guestName && ` +${o.guestName}`}
+                          {o.hostParticipantId ? o.friendName : o.user?.name ?? '?'}
+                          {o.hostParticipantId && ` (${dr.friendOf} ${o.host?.user?.name ?? '?'})`}
                         </span>
                       ))}
                     </div>
@@ -105,7 +114,15 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
             </h2>
             <RoomAssignmentList
               hikeId={hike.id}
-              participants={hike.participants}
+              participants={hike.participants.map(p => ({
+                id: p.id,
+                friendName: p.friendName,
+                hostParticipantId: p.hostParticipantId,
+                hostName: p.host?.user?.name ?? null,
+                linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
+                roomId: p.roomId,
+                user: p.user,
+              }))}
               rooms={hike.rooms.map(r => ({ id: r.id, type: r.type, label: r.label, capacity: r.capacity, occupied: r.occupants.length }))}
               roomTypeLabels={roomTypeLabels}
               dict={dr}

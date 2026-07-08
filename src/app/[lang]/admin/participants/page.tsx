@@ -26,6 +26,7 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
       orderBy: { joinedAt: 'desc' },
       include: {
         user: { select: { name: true, email: true, phone: true } },
+        host: { select: { user: { select: { name: true } } } },
         hike: { select: { id: true, title: true, date: true, endDate: true } },
       },
     }),
@@ -45,19 +46,19 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
             <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
             {dp.pendingSection} ({pending.length})
           </h2>
-          <ParticipantTable participants={pending} lang={lang} dateLocale={d.locale} none={dp.none} />
+          <ParticipantTable participants={pending} lang={lang} dateLocale={d.locale} none={dp.none} friendOf={dp.friendOf} />
         </section>
       )}
 
       <section>
         <h2 className="text-lg font-bold text-stone-700 mb-3">{dp.othersSection}</h2>
-        <ParticipantTable participants={others} lang={lang} dateLocale={d.locale} none={dp.none} />
+        <ParticipantTable participants={others} lang={lang} dateLocale={d.locale} none={dp.none} friendOf={dp.friendOf} />
       </section>
     </div>
   )
 }
 
-function ParticipantTable({ participants, lang, dateLocale, none }: { participants: any[]; lang: string; dateLocale: string; none: string }) {
+function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { participants: any[]; lang: string; dateLocale: string; none: string; friendOf: string }) {
   if (participants.length === 0) return <p className="text-stone-400">{none}</p>
   return (
     <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden divide-y divide-stone-50">
@@ -65,8 +66,10 @@ function ParticipantTable({ participants, lang, dateLocale, none }: { participan
         <Link key={p.id} href={`/${lang}/admin/hikes/${p.hike.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-stone-800">{p.user.name}</div>
-            <div className="text-stone-400 text-xs">{p.user.email}</div>
+            <div className="font-medium text-stone-800">{p.hostParticipantId ? p.friendName : p.user?.name}</div>
+            <div className="text-stone-400 text-xs">
+              {p.hostParticipantId ? `${friendOf} ${p.host?.user?.name ?? '?'}` : p.user?.email}
+            </div>
             <div className="text-stone-500 text-sm mt-0.5 truncate">{p.hike.title}</div>
             <div className="text-stone-400 text-xs">{formatHikeDate(p.hike.date, p.hike.endDate, dateLocale, {})}</div>
           </div>

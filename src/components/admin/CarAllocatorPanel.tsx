@@ -20,6 +20,7 @@ type Dict = {
   distanceKm: string
   roundRobin: string
   applied: string
+  friendLabel: string
 }
 
 export default function CarAllocatorPanel({
@@ -118,13 +119,19 @@ export default function CarAllocatorPanel({
               <div key={driver.driverId} className="border border-stone-200 rounded-xl p-3 sm:p-4">
                 <div className="flex items-center gap-2 font-semibold text-stone-800 mb-2">
                   <Car size={15} className="text-emerald-600 shrink-0" />
-                  <span className="truncate">{driver.driverName}</span>
+                  <span className="truncate">
+                    {driver.driverName}
+                    {driver.friendName && <span className="font-normal text-stone-500"> + {driver.friendName} ({dict.friendLabel})</span>}
+                  </span>
                 </div>
                 <div className="space-y-1.5 pl-5">
                   {driver.passengers.map(p => (
                     <div key={p.passengerId} className="flex items-start gap-2 text-sm text-stone-600">
                       <MapPin size={12} className="text-stone-400 shrink-0 mt-0.5" />
-                      <span className="flex-1 min-w-0 break-words">{p.passengerName}</span>
+                      <span className="flex-1 min-w-0 break-words">
+                        {p.passengerName}
+                        {p.friendName && <span className="text-stone-400"> + {p.friendName} ({dict.friendLabel})</span>}
+                      </span>
                       <span className="text-stone-400 text-xs shrink-0 mt-0.5">
                         {p.distanceKm != null
                           ? `${p.distanceKm.toFixed(1)} ${dict.distanceKm}`
@@ -143,7 +150,7 @@ export default function CarAllocatorPanel({
               <div className="flex flex-wrap gap-1.5">
                 {preview.unassigned.map(p => (
                   <span key={p.id} className="text-xs bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full">
-                    {p.name}
+                    {p.name}{p.friendName && ` + ${p.friendName} (${dict.friendLabel})`}
                   </span>
                 ))}
               </div>

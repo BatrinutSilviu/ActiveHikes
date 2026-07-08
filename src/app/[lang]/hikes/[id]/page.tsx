@@ -26,7 +26,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
     where: { id },
     include: {
       participants: {
-        select: { id: true, userId: true, status: true, guestName: true, bringsCar: true, carSeats: true, carDriverParticipantId: true, user: { select: { name: true } } },
+        select: { id: true, userId: true, status: true, friendName: true, hostParticipantId: true, bringsCar: true, carSeats: true, carDriverParticipantId: true, user: { select: { name: true } } },
         orderBy: { joinedAt: 'asc' },
       },
       photos: { orderBy: { createdAt: 'asc' } },
@@ -52,8 +52,11 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   if (session?.user?.id) {
     userParticipation = await prisma.hikeParticipant.findUnique({
       where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
+      include: { friend: { select: { id: true, friendName: true } } },
     })
   }
+  const hasFriend = !!userParticipation?.friend
+  const priceMultiplier = hasFriend ? 2 : 1
 
   const confirmedCount = hike.participants.filter(p => p.status === 'confirmed').length
   const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
@@ -69,6 +72,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
   const confirmationPrice = entryFee + accommodationDeposit
   const totalPrice = entryFee + accommodationPrice
+  const displayConfirmationPrice = confirmationPrice * priceMultiplier
+  const displayTotalPrice = totalPrice * priceMultiplier
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
   const dd = d.hikeDetail
@@ -178,28 +183,33 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               {totalPrice > confirmationPrice ? (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{totalPrice} RON</div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{displayTotalPrice} RON</div>
                     <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.totalPriceLabel}</div>
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{confirmationPrice} RON</div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{displayConfirmationPrice} RON</div>
                     <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.confirmationPriceLabel}</div>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="text-4xl font-black tracking-tight text-stone-900">
-                    {confirmationPrice > 0 ? `${confirmationPrice} RON` : dd.free}
+                    {displayConfirmationPrice > 0 ? `${displayConfirmationPrice} RON` : dd.free}
                   </div>
-                  {confirmationPrice > 0 && <p className="text-stone-400 text-sm mt-1">{dd.perPerson}</p>}
+                  {displayConfirmationPrice > 0 && (
+                    <p className="text-stone-400 text-sm mt-1">{hasFriend ? dd.forYouAndFriend : dd.perPerson}</p>
+                  )}
                 </>
               )}
               {accommodationDeposit > 0 && (
                 <p className="text-stone-400 text-xs mt-2 leading-relaxed">
                   {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee))
-                    .replace('{deposit}', String(accommodationDeposit))}
+                    .replace('{entryFee}', String(entryFee * priceMultiplier))
+                    .replace('{deposit}', String(accommodationDeposit * priceMultiplier))}
                 </p>
+              )}
+              {hasFriend && (
+                <p className="text-emerald-600 text-xs font-medium mt-2 leading-relaxed">{dd.friendDoublesFee}</p>
               )}
               <p className="flex items-center justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed">
                 <Car size={13} className="shrink-0" /> {dd.gasNotIncluded}
@@ -384,13 +394,18 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                 <DollarSign size={16} /> {dd.paymentTitle}
               </h3>
               <p className="text-amber-700 text-sm mb-4">
-                {dd.paymentDesc.replace('{fee}', String(confirmationPrice))}
+                {dd.paymentDesc.replace('{fee}', String(displayConfirmationPrice))}
               </p>
+              {hasFriend && (
+                <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
+                  {dd.friendDoublesFee}
+                </p>
+              )}
               {accommodationDeposit > 0 && (
                 <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
                   {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee))
-                    .replace('{deposit}', String(accommodationDeposit))}
+                    .replace('{entryFee}', String(entryFee * priceMultiplier))
+                    .replace('{deposit}', String(accommodationDeposit * priceMultiplier))}
                 </p>
               )}
               {bankAccounts.map(account => {

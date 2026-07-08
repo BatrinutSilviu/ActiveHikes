@@ -8,10 +8,21 @@ import { Difficulty, HikeStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
+import { resolvePair } from '@/lib/participantPairs'
 
-export async function joinHike(hikeId: string, guestName?: string, bringsCar?: boolean, carSeats?: number, pickupLat?: number, pickupLng?: number) {
+export async function joinHike(
+  hikeId: string,
+  friendName?: string,
+  bringsCar?: boolean,
+  carSeats?: number,
+  pickupLat?: number,
+  pickupLng?: number,
+  agreedToTerms?: boolean,
+) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
+
+  const trimmedFriendName = friendName?.trim() || null
 
   await prisma.$transaction(async (tx) => {
     // Lock the hike row so concurrent joins are serialized
@@ -24,24 +35,43 @@ export async function joinHike(hikeId: string, guestName?: string, bringsCar?: b
       where: { hikeId, status: 'confirmed' },
     })
 
+    const neededSpots = trimmedFriendName ? 2 : 1
     const isAdmin = session.user.role === 'admin'
-    const isFull = confirmed >= hikes[0].maxParticipants
+    const isFull = confirmed + neededSpots > hikes[0].maxParticipants
     const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending'
+    const confirmedAt = isAdmin ? new Date() : undefined
+    const paymentDeadline = status === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null
 
-    await tx.hikeParticipant.create({
+    const host = await tx.hikeParticipant.create({
       data: {
         hikeId,
         userId: session.user.id,
         status,
-        confirmedAt: isAdmin ? new Date() : undefined,
-        paymentDeadline: status === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
-        guestName: guestName?.trim() || null,
+        confirmedAt,
+        paymentDeadline,
+        agreedToTermsAt: agreedToTerms ? new Date() : null,
         bringsCar: bringsCar ?? false,
         carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
         pickupLat: pickupLat ?? null,
         pickupLng: pickupLng ?? null,
       },
     })
+
+    if (trimmedFriendName) {
+      await tx.hikeParticipant.create({
+        data: {
+          hikeId,
+          userId: null,
+          status,
+          confirmedAt,
+          paymentDeadline,
+          friendName: trimmedFriendName,
+          hostParticipantId: host.id,
+          bringsCar: false,
+          carDriverParticipantId: bringsCar ? host.id : null,
+        },
+      })
+    }
   })
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
@@ -70,18 +100,34 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true },
+    select: { id: true, friend: { select: { id: true, carDriverParticipantId: true } } },
   })
   if (!participation) throw new Error('Registration not found')
 
-  await prisma.hikeParticipant.update({
-    where: { id: participation.id },
-    data: {
-      bringsCar,
-      carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
-      ...(pickupLat !== undefined ? { pickupLat } : {}),
-      ...(pickupLng !== undefined ? { pickupLng } : {}),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.hikeParticipant.update({
+      where: { id: participation.id },
+      data: {
+        bringsCar,
+        carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+        ...(pickupLat !== undefined ? { pickupLat } : {}),
+        ...(pickupLng !== undefined ? { pickupLng } : {}),
+      },
+    })
+
+    if (participation.friend) {
+      if (bringsCar) {
+        await tx.hikeParticipant.update({
+          where: { id: participation.friend.id },
+          data: { carDriverParticipantId: participation.id },
+        })
+      } else if (participation.friend.carDriverParticipantId === participation.id) {
+        await tx.hikeParticipant.update({
+          where: { id: participation.friend.id },
+          data: { carDriverParticipantId: null },
+        })
+      }
+    }
   })
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
@@ -93,25 +139,35 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, bringsCar: true },
+    select: { id: true, bringsCar: true, friend: { select: { id: true } } },
   })
   if (!participation) throw new Error('Not registered for this hike')
   if (participation.bringsCar) throw new Error('Drivers cannot join another car')
 
+  const neededSeats = participation.friend ? 2 : 1
+
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
       where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, carPassengers: { select: { id: true } } },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
     })
-    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar) throw new Error('Invalid driver')
+    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
     const takenSeats = driver.carPassengers.length
-    if (driver.carSeats !== null && takenSeats >= driver.carSeats) throw new Error('Car is full')
+    if (driver.carSeats !== null && takenSeats + neededSeats > driver.carSeats) throw new Error('Car is full')
   }
 
-  await prisma.hikeParticipant.update({
-    where: { id: participation.id },
-    data: { carDriverParticipantId: driverParticipantId },
-  })
+  await prisma.$transaction([
+    prisma.hikeParticipant.update({
+      where: { id: participation.id },
+      data: { carDriverParticipantId: driverParticipantId },
+    }),
+    ...(participation.friend
+      ? [prisma.hikeParticipant.update({
+          where: { id: participation.friend.id },
+          data: { carDriverParticipantId: driverParticipantId },
+        })]
+      : []),
+  ])
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
@@ -122,9 +178,12 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true },
+    select: { id: true, friend: { select: { id: true } } },
   })
   if (!participation) throw new Error('Not registered for this hike')
+
+  const friendId = participation.friend?.id ?? null
+  const neededSeats = friendId ? 2 : 1
 
   if (roomId !== null) {
     const room = await prisma.hikeRoom.findUnique({
@@ -132,14 +191,14 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
       select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
     })
     if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
-    const taken = room.occupants.filter(o => o.id !== participation.id).length
-    if (taken >= room.capacity) throw new Error('Room is full')
+    const taken = room.occupants.filter(o => o.id !== participation.id && o.id !== friendId).length
+    if (taken + neededSeats > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.hikeParticipant.update({
-    where: { id: participation.id },
-    data: { roomId },
-  })
+  await prisma.$transaction([
+    prisma.hikeParticipant.update({ where: { id: participation.id }, data: { roomId } }),
+    ...(friendId ? [prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })] : []),
+  ])
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
@@ -154,20 +213,23 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
   })
   if (!participant || participant.hikeId !== hikeId) throw new Error('Invalid participant')
 
+  const { hostId, friendId } = await resolvePair(prisma, participantId)
+  const neededSeats = friendId ? 2 : 1
+
   if (roomId !== null) {
     const room = await prisma.hikeRoom.findUnique({
       where: { id: roomId },
       select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
     })
     if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
-    const taken = room.occupants.filter(o => o.id !== participantId).length
-    if (taken >= room.capacity) throw new Error('Room is full')
+    const taken = room.occupants.filter(o => o.id !== hostId && o.id !== friendId).length
+    if (taken + neededSeats > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.hikeParticipant.update({
-    where: { id: participantId },
-    data: { roomId },
-  })
+  await prisma.$transaction([
+    prisma.hikeParticipant.update({ where: { id: hostId }, data: { roomId } }),
+    ...(friendId ? [prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })] : []),
+  ])
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
@@ -348,19 +410,21 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 export type AllocationPassenger = {
   passengerId: string
   passengerName: string
+  friendName: string | null
   distanceKm: number | null
 }
 
 export type AllocationDriver = {
   driverId: string
   driverName: string
+  friendName: string | null
   passengers: AllocationPassenger[]
   remainingSeats: number
 }
 
 export type AllocationPreview = {
   drivers: AllocationDriver[]
-  unassigned: { id: string; name: string }[]
+  unassigned: { id: string; name: string; friendName: string | null }[]
   noLocationCount: number
 }
 
@@ -377,21 +441,27 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
       carDriverParticipantId: true,
       pickupLat: true,
       pickupLng: true,
-      guestName: true,
+      hostParticipantId: true,
+      friendName: true,
+      friend: { select: { id: true, friendName: true } },
       user: { select: { name: true } },
     },
   })
 
-  const pName = (p: { user: { name: string | null }; guestName: string | null }) =>
-    p.user.name ?? '?'
+  const pName = (p: { user: { name: string | null } | null; friendName: string | null }) =>
+    p.user?.name ?? p.friendName ?? '?'
 
-  const rawDrivers = participants.filter(p => p.bringsCar && p.carSeats != null)
-  const unassignedPassengers = participants.filter(p => !p.bringsCar && p.carDriverParticipantId === null)
+  // Friend rows never enter the matching pool independently — they always ride
+  // along with whichever driver their host ends up with.
+  const hostRows = participants.filter(p => p.hostParticipantId === null)
+  const rawDrivers = hostRows.filter(p => p.bringsCar && p.carSeats != null)
+  const unassignedPassengers = hostRows.filter(p => !p.bringsCar && p.carDriverParticipantId === null)
 
-  // Track remaining seats per driver (pre-fill with already-assigned passengers not touched here)
-  const alreadyAssigned = participants.filter(p => !p.bringsCar && p.carDriverParticipantId !== null)
+  // Track seats already used per driver — this naturally includes a driver's own
+  // friend and any already-assigned passenger's friend, since every physical row
+  // (host or friend) that points at a driver counts as one occupied seat.
   const seatsUsed = new Map<string, number>()
-  for (const p of alreadyAssigned) {
+  for (const p of participants) {
     if (p.carDriverParticipantId) {
       seatsUsed.set(p.carDriverParticipantId, (seatsUsed.get(p.carDriverParticipantId) ?? 0) + 1)
     }
@@ -400,6 +470,7 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
   const drivers = rawDrivers.map(d => ({
     id: d.id,
     name: pName(d),
+    friendName: d.friend?.friendName ?? null,
     lat: d.pickupLat,
     lng: d.pickupLng,
     remaining: (d.carSeats ?? 0) - (seatsUsed.get(d.id) ?? 0),
@@ -417,24 +488,25 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
 
   // Sort passengers by distance to nearest available driver (ascending) so closest pairs get priority
   const scored = withCoords.map(p => {
+    const groupSize = p.friend ? 2 : 1
     const dists = driversWithCoords.map(d => ({
       driverId: d.id,
       dist: haversineKm(p.pickupLat!, p.pickupLng!, d.lat!, d.lng!),
     })).sort((a, b) => a.dist - b.dist)
-    return { p, dists }
+    return { p, dists, groupSize }
   }).sort((a, b) => (a.dists[0]?.dist ?? Infinity) - (b.dists[0]?.dist ?? Infinity))
 
   const remaining = new Map(drivers.map(d => [d.id, d.remaining]))
 
-  for (const { p, dists } of scored) {
+  for (const { p, dists, groupSize } of scored) {
     for (const { driverId, dist } of dists) {
-      if ((remaining.get(driverId) ?? 0) > 0) {
+      if ((remaining.get(driverId) ?? 0) >= groupSize) {
         assignments.set(p.id, { driverId, distanceKm: dist })
-        remaining.set(driverId, (remaining.get(driverId) ?? 1) - 1)
+        remaining.set(driverId, (remaining.get(driverId) ?? groupSize) - groupSize)
         break
       }
     }
-    // If no driver with coords has seats, fall through to round-robin below
+    // If no driver with coords has enough seats, fall through to round-robin below
   }
 
   // Passengers with coords that weren't assigned (no seats in coord-drivers) + passengers without coords
@@ -445,10 +517,11 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
   ]
   const allDriversOrdered = [...driversWithoutCoords, ...driversWithCoords]
   for (const p of needsRoundRobin) {
+    const groupSize = p.friend ? 2 : 1
     for (const d of allDriversOrdered) {
-      if ((remaining.get(d.id) ?? 0) > 0) {
+      if ((remaining.get(d.id) ?? 0) >= groupSize) {
         assignments.set(p.id, { driverId: d.id, distanceKm: null })
-        remaining.set(d.id, (remaining.get(d.id) ?? 1) - 1)
+        remaining.set(d.id, (remaining.get(d.id) ?? groupSize) - groupSize)
         break
       }
     }
@@ -463,11 +536,13 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
         .map(p => ({
           passengerId: p.id,
           passengerName: pName(p),
+          friendName: p.friend?.friendName ?? null,
           distanceKm: assignments.get(p.id)?.distanceKm ?? null,
         }))
       return {
         driverId: d.id,
         driverName: pName(d),
+        friendName: d.friend?.friendName ?? null,
         passengers,
         remainingSeats: remaining.get(d.id) ?? 0,
       }
@@ -475,7 +550,7 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
 
   const unassigned = unassignedPassengers
     .filter(p => !assignments.has(p.id))
-    .map(p => ({ id: p.id, name: pName(p) }))
+    .map(p => ({ id: p.id, name: pName(p), friendName: p.friend?.friendName ?? null }))
 
   return {
     drivers: resultDrivers,
@@ -491,13 +566,23 @@ export async function applyCarAllocation(
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
+  const passengers = await prisma.hikeParticipant.findMany({
+    where: { id: { in: assignments.map(a => a.passengerId) } },
+    select: { id: true, friend: { select: { id: true } } },
+  })
+  const friendByHost = new Map(passengers.map(p => [p.id, p.friend?.id ?? null]))
+
   await prisma.$transaction(
-    assignments.map(({ passengerId, driverId }) =>
-      prisma.hikeParticipant.update({
-        where: { id: passengerId },
-        data: { carDriverParticipantId: driverId },
-      })
-    )
+    assignments.flatMap(({ passengerId, driverId }) => {
+      const updates = [
+        prisma.hikeParticipant.update({ where: { id: passengerId }, data: { carDriverParticipantId: driverId } }),
+      ]
+      const friendId = friendByHost.get(passengerId)
+      if (friendId) {
+        updates.push(prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverId } }))
+      }
+      return updates
+    })
   )
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)

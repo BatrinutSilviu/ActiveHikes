@@ -23,7 +23,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
           orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
           include: {
             occupants: {
-              select: { id: true, guestName: true, user: { select: { name: true } } },
+              select: { id: true, friendName: true, hostParticipantId: true, host: { select: { user: { select: { name: true } } } }, user: { select: { name: true } } },
             },
           },
         },
@@ -46,9 +46,10 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
   if (session?.user?.id) {
     userParticipation = await prisma.hikeParticipant.findUnique({
       where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
-      select: { status: true, roomId: true },
+      select: { status: true, roomId: true, friend: { select: { id: true } } },
     })
   }
+  const neededSeats = userParticipation?.friend ? 2 : 1
 
   const dd = d.hikeDetail
   const roomTypeLabels = dd.roomTypes as Record<string, string>
@@ -67,7 +68,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
         <div className="space-y-2">
           {rooms.map(room => {
             const isCurrent = userParticipation?.roomId === room.id
-            const isFull = room.occupied >= room.capacity && !isCurrent
+            const isFull = !isCurrent && room.occupied + neededSeats > room.capacity
             return (
               <div key={room.id} className="bg-white border border-stone-100 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2 gap-3">
@@ -94,7 +95,8 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
                     {room.occupants.map(o => (
                       <span key={o.id} className="flex items-center gap-1 text-xs bg-blue-50 border border-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
                         <UserCheck size={11} />
-                        {o.user.name ?? '?'}{o.guestName && ` +${o.guestName}`}
+                        {o.hostParticipantId ? o.friendName : o.user?.name ?? '?'}
+                        {o.hostParticipantId && ` (${d.admin.roomsPage.friendOf} ${o.host?.user?.name ?? '?'})`}
                       </span>
                     ))}
                   </div>

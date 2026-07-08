@@ -24,7 +24,14 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     prisma.hike.findUnique({
       where: { id },
       include: {
-        participants: { include: { user: { select: { id: true, name: true, email: true, phone: true } } }, orderBy: { joinedAt: 'asc' } },
+        participants: {
+        include: {
+          user: { select: { id: true, name: true, email: true, phone: true } },
+          friend: { select: { id: true, friendName: true } },
+          host: { select: { id: true, user: { select: { name: true } } } },
+        },
+        orderBy: { joinedAt: 'asc' },
+      },
         photos: { orderBy: { createdAt: 'asc' } },
       },
     }),
@@ -59,7 +66,10 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     joinedAt: p.joinedAt.toISOString(),
     paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
     adminNotes: p.adminNotes,
-    guestName: p.guestName,
+    friendName: p.friendName,
+    hostParticipantId: p.hostParticipantId,
+    hostName: p.host?.user?.name ?? null,
+    linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
     bringsCar: p.bringsCar,
     carSeats: p.carSeats,
     carDriverParticipantId: p.carDriverParticipantId,

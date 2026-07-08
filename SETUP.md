@@ -135,6 +135,63 @@ docker compose exec app npx prisma db execute --stdin <<< \
 
 ---
 
+## Continuous deployment (GitHub Actions)
+
+Every push to `main` auto-deploys to the VPS via `.github/workflows/deploy.yml`. It SSHes in
+and runs `/root/deploy-activehikes.sh`, which does `git pull && docker compose up -d --build`
+in the project directory (migrations run automatically on container start — see step 4 above).
+
+### How it's secured
+
+The workflow authenticates with a dedicated ed25519 keypair (`github-actions-deploy-<project>`),
+not your personal SSH key. Its public half is in the VPS's `~/.ssh/authorized_keys` with a
+forced command restriction:
+
+```
+command="/root/deploy-activehikes.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA... github-actions-deploy-activehikes
+```
+
+That restriction means this key can *only* ever run that one script on the VPS — even if the
+private key leaked out of GitHub, it couldn't be used to run arbitrary commands as root.
+
+### Secrets
+
+The workflow's `deploy` job is scoped to a GitHub **Environment** named `ACTIVEHikes`
+(Settings → Environments → `ACTIVEHikes`), which holds:
+
+| Secret | Value |
+|---|---|
+| `VPS_HOST` | the VPS IP/hostname |
+| `VPS_USER` | `root` |
+| `VPS_SSH_KEY` | the private half of the deploy keypair (`~/.ssh/activehikes_deploy` on the machine that generated it — never stored on the VPS itself) |
+
+Because these are Environment secrets rather than plain repository secrets, the job must
+declare `environment: ACTIVEHikes` to see them — that's already set in the workflow file.
+If secrets ever need re-adding (e.g. rotating the key), do it at
+`https://github.com/BatrinutSilviu/ActiveHikes/settings/environments`, not the plain
+repo-secrets page.
+
+### Setting this up again (e.g. new VPS, or a second project on the same pattern)
+
+1. Generate a dedicated keypair: `ssh-keygen -t ed25519 -f ~/.ssh/<project>_deploy -N ""`
+2. On the VPS, create a deploy script (e.g. `/root/deploy-<project>.sh`) that `cd`s into the
+   project directory and runs `git pull && docker compose up -d --build`, then `chmod +x` it
+3. Append the public key to `/root/.ssh/authorized_keys` with the `command="..."` restriction
+   shown above, pointing at that script
+4. Add the three secrets to a GitHub Environment (or repo secrets, if you skip the
+   `environment:` scoping) and reference them in a `deploy.yml` workflow like this repo's
+
+### Troubleshooting
+
+- **"missing server host" in the Actions log** — the job can't see the secrets. Usually means
+  they're Environment-scoped but the job doesn't declare `environment: <name>`, or they were
+  added to the wrong tab (Codespaces/Dependabot secrets instead of Actions/Environment secrets).
+- **Deploy ran but nothing changed on the VPS** — check the container actually restarted:
+  `docker compose ps` should show a recent "Up X seconds" for the `app` service right after a
+  run finishes.
+
+---
+
 ## App structure
 
 ```

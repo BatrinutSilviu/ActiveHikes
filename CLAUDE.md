@@ -63,6 +63,7 @@ src/middleware.ts             Route protection (admin + profile routes)
 src/app/actions/              Server Actions — hikes.ts, participants.ts, photos.ts, bank-accounts.ts
 src/app/api/upload/route.ts   File upload endpoint (saves to public/uploads/)
 src/app/api/auth/register/    User signup endpoint (validates full name, hashes password)
+.github/workflows/deploy.yml  Auto-deploy to VPS on push to main (see SETUP.md)
 ```
 
 ## Pages

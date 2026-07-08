@@ -73,6 +73,7 @@
     "participantsLabel": "Participanți",
     "entryFeeLabel": "Taxă de participare",
     "perPerson": "per persoană",
+    "forYouAndFriend": "pentru tine și prietenul tău",
     "free": "Gratuit",
     "full": "Complet",
     "spotsLeft": "locuri libere",
@@ -110,6 +111,7 @@
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "feeBreakdown": "{entryFee} RON taxă participare + {deposit} RON avans cazare",
+    "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
     "totalPriceLabel": "Preț total",
     "confirmationPriceLabel": "Preț confirmare",
     "gasNotIncluded": "Nu include contribuția la combustibil pentru drum",
@@ -124,7 +126,8 @@
       "hopIn": "Urcă",
       "leave": "Coboară",
       "noDrivers": "Niciun șofer înscris.",
-      "yourCar": "mașina ta"
+      "yourCar": "mașina ta",
+      "friendOf": "prieten cu"
     },
     "difficulty": {
       "easy": "Ușor",
@@ -157,7 +160,11 @@
   "joinButton": {
     "bringFriend": "Aduc un prieten",
     "friendNamePlaceholder": "Numele complet al prietenului",
-    "bringingCar": "Vin cu mașina mea",
+    "agreeToTermsLabel": "Sunt de acord cu",
+    "termsLinkText": "Termenii și condițiile",
+    "carToggleLabel": "Cum ajungi acolo?",
+    "carOptionDriver": "Conduc eu",
+    "carOptionPassenger": "Am nevoie de loc",
     "carSeatsLabel": "Locuri disponibile în mașină",
     "loginToJoin": "Autentifică-te pentru a te înscrie",
     "registerNow": "Înscrie-te",
@@ -255,7 +262,8 @@
       "createAccount": "Creează cont",
       "creating": "Se creează contul…",
       "alreadyAccount": "Ai deja cont?",
-      "signIn": "Autentifică-te"
+      "signIn": "Autentifică-te",
+      "viewTerms": "Termeni și condiții"
     }
   },
   "admin": {
@@ -350,7 +358,8 @@
       "title": "Toți Participanții",
       "pendingSection": "În așteptarea confirmării",
       "othersSection": "Toți ceilalți",
-      "none": "Niciunul."
+      "none": "Niciunul.",
+      "friendOf": "Prieten cu"
     },
     "hike": {
       "backToDashboard": "Înapoi la panou",
@@ -373,6 +382,9 @@
       "joined": "Înscris",
       "bringsCar": "Conduce",
       "payBy": "Plătește până la",
+      "friendOf": "Prieten cu",
+      "removeFriend": "Elimină prietenul",
+      "removeFriendConfirm": "Elimini acest prieten din înregistrare? Înregistrarea persoanei gazdă nu va fi afectată.",
       "status": {
         "confirmed": "Confirmat",
         "pending": "În așteptare",
@@ -395,7 +407,8 @@
         "noLocationWarning": "{n} pasager(i) fără pin de preluare — alocați prin rotație.",
         "distanceKm": "km",
         "roundRobin": "fără pin",
-        "applied": "Alocarea mașinilor a fost aplicată cu succes."
+        "applied": "Alocarea mașinilor a fost aplicată cu succes.",
+        "friendLabel": "prieten"
       }
     },
     "carsPage": {
@@ -422,6 +435,7 @@
       "empty": "Goală",
       "noRoom": "Fără cameră",
       "full": "plină",
+      "friendOf": "prieten cu",
       "error": "Nu s-a putut salva. Încearcă din nou.",
       "noRooms": "Nu există camere configurate încă."
     },
@@ -523,5 +537,16 @@
     "download": "Descarcă",
     "distance": "distanță",
     "elevationGain": "diferență de nivel"
+  },
+  "terms": {
+    "title": "Termeni și condiții",
+    "intro": "Te rugăm să citești acest text înainte de a te înscrie la o drumeție.",
+    "liabilityTitle": "Răspundere",
+    "liabilityText": "ActiveHikes și organizatorii ajută la planificarea și coordonarea drumețiilor în grup, dar nu suntem un serviciu profesionist de ghidaj montan și nu ne asumăm răspunderea pentru accidentări, incidente, pierderi sau daune care pot apărea înainte, în timpul sau după o drumeție. Fiecare participant ia parte pe propria răspundere și este responsabil să își evalueze condiția fizică și pregătirea pentru traseu și condițiile meteo.",
+    "refundTitle": "Politica de rambursare",
+    "refundIntro": "Dacă nu mai poți participa la o drumeție la care te-ai înscris și pentru care ai plătit:",
+    "refundWaitlist": "Dacă cineva de pe lista de așteptare îți preia locul, taxa plătită îți va fi rambursată integral.",
+    "refundNoWaitlist": "Dacă nu este nimeni pe lista de așteptare care să îți preia locul, taxa plătită nu va fi rambursată.",
+    "refund24h": "Dacă renunți cu mai puțin de 24 de ore înainte de drumeție, taxa plătită nu va fi rambursată, indiferent de disponibilitatea listei de așteptare."
   }
 }

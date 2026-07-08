@@ -113,6 +113,9 @@ export default function SignupPage() {
           {d.alreadyAccount}{' '}
           <Link href={`/${lang}/auth/login`} className="text-emerald-400 font-semibold hover:underline">{d.signIn}</Link>
         </p>
+        <p className="text-center text-stone-500 text-xs mt-3">
+          <Link href={`/${lang}/terms`} className="hover:underline">{d.viewTerms}</Link>
+        </p>
       </div>
     </div>
   )

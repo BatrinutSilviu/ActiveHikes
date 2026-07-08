@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { joinHike, cancelRegistration, updateCarPreference } from '@/app/actions/hikes'
-import { X, UserPlus, Car, MapPin, Pencil, Timer } from 'lucide-react'
+import { X, UserPlus, User, Car, MapPin, Pencil, Timer } from 'lucide-react'
 import LocationPickerModal from './LocationPickerModalWrapper'
 
 type StatusEntry = { label: string; desc: string }
@@ -21,7 +21,11 @@ type JoinButtonDict = {
   joinError: string
   bringFriend: string
   friendNamePlaceholder: string
-  bringingCar: string
+  agreeToTermsLabel: string
+  termsLinkText: string
+  carToggleLabel: string
+  carOptionDriver: string
+  carOptionPassenger: string
   carSeatsLabel: string
   saveCarPreference: string
   savingCarPreference: string
@@ -78,6 +82,49 @@ function PaymentCountdown({ deadline, dict }: { deadline: string; dict: JoinButt
       <Timer size={14} />
       {dict.payWithin} {hours}h {String(minutes).padStart(2, '0')}m {String(seconds).padStart(2, '0')}s
     </p>
+  )
+}
+
+function CarToggle({
+  value,
+  onChange,
+  dict,
+}: {
+  value: boolean
+  onChange: (value: boolean) => void
+  dict: JoinButtonDict
+}) {
+  return (
+    <div>
+      <span className="flex items-center gap-1.5 text-sm font-medium text-stone-600 mb-1.5">
+        <Car size={15} className="text-emerald-600" />
+        {dict.carToggleLabel}
+      </span>
+      <div className="grid grid-cols-2 gap-1 p-1 bg-stone-100 rounded-xl" role="group">
+        <button
+          type="button"
+          onClick={() => onChange(true)}
+          aria-pressed={value}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            value ? 'bg-white text-emerald-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          <Car size={14} className="shrink-0" />
+          {dict.carOptionDriver}
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange(false)}
+          aria-pressed={!value}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+            !value ? 'bg-white text-emerald-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+          }`}
+        >
+          <User size={14} className="shrink-0" />
+          {dict.carOptionPassenger}
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -162,6 +209,7 @@ export default function JoinButton({
   const [carSeats, setCarSeats] = useState(4)
   const [pickupLat, setPickupLat] = useState<number | null>(null)
   const [pickupLng, setPickupLng] = useState<number | null>(null)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Edit form state (already registered)
   const [editBringsCar, setEditBringsCar] = useState(currentBringsCar)
@@ -255,6 +303,7 @@ export default function JoinButton({
           bringingCar ? carSeats : undefined,
           pickupLat ?? undefined,
           pickupLng ?? undefined,
+          agreedToTerms,
         )
         router.refresh()
       } catch {
@@ -297,18 +346,7 @@ export default function JoinButton({
           </div>
 
           <div className="border border-stone-200 rounded-xl p-3 space-y-3">
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={editBringsCar}
-                onChange={e => setEditBringsCar(e.target.checked)}
-                className="w-4 h-4 accent-emerald-600 shrink-0"
-              />
-              <span className="flex items-center gap-1.5 text-sm font-medium text-stone-600">
-                <Car size={15} className="text-emerald-600" />
-                {dict.bringingCar}
-              </span>
-            </label>
+            <CarToggle value={editBringsCar} onChange={setEditBringsCar} dict={dict} />
 
             {editBringsCar && (
               <div className="pl-6 space-y-1">
@@ -380,18 +418,7 @@ export default function JoinButton({
             />
           )}
 
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={bringingCar}
-              onChange={e => setBringingCar(e.target.checked)}
-              className="w-4 h-4 accent-emerald-600 shrink-0"
-            />
-            <span className="flex items-center gap-1.5 text-sm font-medium text-stone-600">
-              <Car size={15} className="text-emerald-600" />
-              {dict.bringingCar}
-            </span>
-          </label>
+          <CarToggle value={bringingCar} onChange={setBringingCar} dict={dict} />
 
           {bringingCar && (
             <div className="pl-6 space-y-1">
@@ -415,9 +442,30 @@ export default function JoinButton({
             onOpen={() => openModal(false)}
           />
 
+          <label className="flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={agreedToTerms}
+              onChange={e => setAgreedToTerms(e.target.checked)}
+              className="w-4 h-4 mt-0.5 accent-emerald-600 shrink-0"
+            />
+            <span className="text-sm text-stone-600">
+              {dict.agreeToTermsLabel}{' '}
+              <Link
+                href={`/${lang}/terms`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="text-emerald-700 font-medium underline hover:text-emerald-800"
+              >
+                {dict.termsLinkText}
+              </Link>
+            </span>
+          </label>
+
           <button
             onClick={handleJoin}
-            disabled={isPending || (bringingFriend && !friendName.trim())}
+            disabled={isPending || (bringingFriend && !friendName.trim()) || !agreedToTerms}
             className={`w-full py-3 rounded-xl font-semibold transition-colors disabled:opacity-60 ${
               isFull ? 'bg-stone-700 text-white hover:bg-stone-800' : 'bg-emerald-600 text-white hover:bg-emerald-700'
             }`}

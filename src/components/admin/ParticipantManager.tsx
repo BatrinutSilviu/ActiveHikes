@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateParticipantStatus, confirmAllPending, adminAddParticipant } from '@/app/actions/participants'
-import { Check, X, List, CheckCheck, Car, Timer, UserPlus } from 'lucide-react'
+import { updateParticipantStatus, confirmAllPending, adminAddParticipant, removeFriend } from '@/app/actions/participants'
+import { Check, X, List, CheckCheck, Car, Timer, UserPlus, UserMinus } from 'lucide-react'
 
 type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
 
@@ -13,11 +13,14 @@ type Participant = {
   status: ParticipantStatus
   joinedAt: string
   paymentDeadline?: string | null
-  guestName?: string | null
+  friendName?: string | null
+  hostParticipantId?: string | null
+  hostName?: string | null
+  linkedFriend?: { id: string; name: string | null } | null
   bringsCar?: boolean
   carSeats?: number | null
   carDriverParticipantId?: string | null
-  user: { id: string; name: string | null; email: string | null; phone?: string | null }
+  user: { id: string; name: string | null; email: string | null; phone?: string | null } | null
 }
 
 type ParticipantManagerDict = {
@@ -29,6 +32,9 @@ type ParticipantManagerDict = {
   joined: string
   bringsCar: string
   payBy: string
+  friendOf: string
+  removeFriend: string
+  removeFriendConfirm: string
   status: Record<string, string>
   actions: { confirm: string; waitlist: string; reject: string }
   addParticipant: string
@@ -84,15 +90,22 @@ export default function ParticipantManager({
 
   const confirmedCount = items.filter(p => p.status === 'confirmed').length
 
-  const updateStatus = (participantId: string, newStatus: ParticipantStatus) => {
-    if (newStatus === 'confirmed' && confirmedCount >= maxParticipants) {
-      alert(dict.noSpotsAlert)
-      return
+  const updateStatus = (p: Participant, newStatus: ParticipantStatus) => {
+    const siblingId = p.hostParticipantId ?? p.linkedFriend?.id ?? null
+    const sibling = siblingId ? items.find(i => i.id === siblingId) ?? null : null
+
+    if (newStatus === 'confirmed') {
+      const additional = [p, sibling].filter((x): x is Participant => !!x && x.status !== 'confirmed').length
+      if (confirmedCount + additional > maxParticipants) {
+        alert(dict.noSpotsAlert)
+        return
+      }
     }
-    setLoadingId(participantId)
+
+    setLoadingId(p.id)
     startTransition(async () => {
-      await updateParticipantStatus(participantId, newStatus, hikeId)
-      setItems(prev => prev.map(p => p.id === participantId ? { ...p, status: newStatus } : p))
+      await updateParticipantStatus(p.id, newStatus, hikeId)
+      setItems(prev => prev.map(item => (item.id === p.id || item.id === siblingId) ? { ...item, status: newStatus } : item))
       setLoadingId(null)
     })
   }
@@ -102,16 +115,18 @@ export default function ParticipantManager({
   const handleConfirmAll = async () => {
     setBulkLoading(true)
     const result = await confirmAllPending(hikeId)
-    if (result.confirmed > 0) {
-      setItems(prev => {
-        let remaining = result.confirmed
-        return prev.map(p => {
-          if (p.status === 'pending' && remaining > 0) { remaining--; return { ...p, status: 'confirmed' as ParticipantStatus } }
-          return p
-        })
-      })
-    }
+    if (result.confirmed > 0) router.refresh()
     setBulkLoading(false)
+  }
+
+  const [removingFriendId, setRemovingFriendId] = useState<string | null>(null)
+  const handleRemoveFriend = (hostId: string) => {
+    if (!confirm(dict.removeFriendConfirm)) return
+    setRemovingFriendId(hostId)
+    startTransition(async () => {
+      await removeFriend(hikeId, hostId)
+      router.refresh()
+    })
   }
 
   const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected', 'expired']
@@ -174,15 +189,21 @@ export default function ParticipantManager({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-semibold text-stone-800 truncate">
-                  {p.user.name}
-                  {p.guestName && (
-                    <span className="ml-1.5 text-xs font-normal bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full">+ {p.guestName}</span>
+                  {p.hostParticipantId ? p.friendName : p.user?.name}
+                  {p.linkedFriend && (
+                    <span className="ml-1.5 text-xs font-normal bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full">+ {p.linkedFriend.name}</span>
                   )}
                 </div>
-                <div className="text-stone-400 text-sm truncate">{p.user.email}</div>
-                {p.user.phone && (
-                  <a href={`https://wa.me/${p.user.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                    className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
+                {p.hostParticipantId ? (
+                  <div className="text-stone-400 text-sm truncate">{dict.friendOf} {p.hostName ?? '?'}</div>
+                ) : (
+                  <>
+                    <div className="text-stone-400 text-sm truncate">{p.user?.email}</div>
+                    {p.user?.phone && (
+                      <a href={`https://wa.me/${p.user.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
+                        className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
+                    )}
+                  </>
                 )}
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-stone-400 text-xs">
@@ -202,10 +223,16 @@ export default function ParticipantManager({
                     const driver = items.find(d => d.id === p.carDriverParticipantId)
                     return driver ? (
                       <span className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-full">
-                        <Car size={11} /> {driver.user.name}
+                        <Car size={11} /> {driver.hostParticipantId ? driver.friendName : driver.user?.name}
                       </span>
                     ) : null
                   })()}
+                  {p.linkedFriend && (
+                    <button onClick={() => handleRemoveFriend(p.id)} disabled={removingFriendId === p.id}
+                      className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded-full hover:bg-red-100 disabled:opacity-50">
+                      <UserMinus size={11} /> {dict.removeFriend}
+                    </button>
+                  )}
                 </div>
               </div>
               <span className={`text-xs font-semibold px-2 py-1 rounded-full shrink-0 ${STATUS_BADGE_CLASSES[p.status]}`}>
@@ -215,19 +242,19 @@ export default function ParticipantManager({
 
             <div className="mt-3 flex gap-2 flex-wrap">
               {p.status !== 'confirmed' && (
-                <button onClick={() => updateStatus(p.id, 'confirmed')} disabled={loadingId === p.id}
+                <button onClick={() => updateStatus(p, 'confirmed')} disabled={loadingId === p.id}
                   className="flex items-center gap-1 bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 disabled:opacity-50">
                   <Check size={12} /> {dict.actions.confirm}
                 </button>
               )}
               {p.status !== 'waitlist' && (
-                <button onClick={() => updateStatus(p.id, 'waitlist')} disabled={loadingId === p.id}
+                <button onClick={() => updateStatus(p, 'waitlist')} disabled={loadingId === p.id}
                   className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded-lg hover:bg-blue-200 disabled:opacity-50">
                   <List size={12} /> {dict.actions.waitlist}
                 </button>
               )}
               {p.status !== 'rejected' && (
-                <button onClick={() => updateStatus(p.id, 'rejected')} disabled={loadingId === p.id}
+                <button onClick={() => updateStatus(p, 'rejected')} disabled={loadingId === p.id}
                   className="flex items-center gap-1 bg-red-100 text-red-600 text-xs px-3 py-1.5 rounded-lg hover:bg-red-200 disabled:opacity-50">
                   <X size={12} /> {dict.actions.reject}
                 </button>
