@@ -547,7 +547,6 @@
     "refundTitle": "Refund Policy",
     "refundIntro": "If you can no longer attend a hike you've registered and paid for:",
     "refundWaitlist": "If someone from the waitlist takes your spot, your payment will be refunded in full.",
-    "refundNoWaitlist": "If no one is on the waitlist to take your spot, your payment will not be refunded.",
-    "refund24h": "If you cancel less than 24 hours before the hike, your payment will not be refunded, regardless of waitlist availability."
+    "refundNoWaitlist": "If no one is on the waitlist to take your spot, your payment will not be refunded."
   }
 }

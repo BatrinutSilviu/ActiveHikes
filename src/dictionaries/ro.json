@@ -547,7 +547,6 @@
     "refundTitle": "Politica de rambursare",
     "refundIntro": "Dacă nu mai poți participa la o drumeție la care te-ai înscris și pentru care ai plătit:",
     "refundWaitlist": "Dacă cineva de pe lista de așteptare îți preia locul, taxa plătită îți va fi rambursată integral.",
-    "refundNoWaitlist": "Dacă nu este nimeni pe lista de așteptare care să îți preia locul, taxa plătită nu va fi rambursată.",
-    "refund24h": "Dacă renunți cu mai puțin de 24 de ore înainte de drumeție, taxa plătită nu va fi rambursată, indiferent de disponibilitatea listei de așteptare."
+    "refundNoWaitlist": "Dacă nu este nimeni pe lista de așteptare care să îți preia locul, taxa plătită nu va fi rambursată."
   }
 }

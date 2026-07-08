@@ -34,7 +34,6 @@ export default async function TermsPage({ params }: { params: Promise<{ lang: st
         <ul className="space-y-2 text-stone-600 list-disc list-inside leading-relaxed">
           <li>{t.refundWaitlist}</li>
           <li>{t.refundNoWaitlist}</li>
-          <li>{t.refund24h}</li>
         </ul>
       </section>
     </div>
