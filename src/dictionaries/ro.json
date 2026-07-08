@@ -114,7 +114,7 @@
     "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
     "totalPriceLabel": "Preț total",
     "confirmationPriceLabel": "Preț confirmare",
-    "gasNotIncluded": "Nu include contribuția la combustibil pentru drum",
+    "gasNotIncluded": "Nu include contribuția la combustibil. Ne propunem {count} mașini — după drumeție, costurile totale cu benzina se adună și se împart egal între toate mașinile, astfel încât toată lumea plătește aceeași sumă, indiferent de mașina cu care a mers.",
     "payWithRevolut": "Plătește cu Revolut",
     "viewFullAlbum": "Vezi albumul complet",
     "photosTitle": "Fotografii",

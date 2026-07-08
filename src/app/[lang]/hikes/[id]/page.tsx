@@ -74,6 +74,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const totalPrice = entryFee + accommodationPrice
   const displayConfirmationPrice = confirmationPrice * priceMultiplier
   const displayTotalPrice = totalPrice * priceMultiplier
+  const carsCount = hike.carsNeeded ?? Math.ceil(hike.maxParticipants / hike.peoplePerCar)
+  const carsCountIsAuto = !hike.carsNeeded
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
   const dd = d.hikeDetail
@@ -157,11 +159,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               {entryFee > 0 ? `${entryFee} RON` : dd.free}
             </InfoCard>
             <InfoCard icon={<Car size={18} />} label={dd.carsLabel}>
-              {(() => {
-                const count = hike.carsNeeded ?? Math.ceil(hike.maxParticipants / hike.peoplePerCar)
-                const isAuto = !hike.carsNeeded
-                return <>{count} {isAuto && <span className="text-stone-400 text-xs">({dd.carsAuto})</span>}</>
-              })()}
+              {carsCount} {carsCountIsAuto && <span className="text-stone-400 text-xs">({dd.carsAuto})</span>}
             </InfoCard>
             <InfoCard icon={<Tent size={18} />} label={dd.campingLabel}>
               <span className={hike.hasCamping ? 'text-amber-600 font-semibold' : 'text-stone-400'}>
@@ -211,8 +209,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
               {hasFriend && (
                 <p className="text-emerald-600 text-xs font-medium mt-2 leading-relaxed">{dd.friendDoublesFee}</p>
               )}
-              <p className="flex items-center justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed">
-                <Car size={13} className="shrink-0" /> {dd.gasNotIncluded}
+              <p className="flex items-start justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed text-left">
+                <Car size={13} className="shrink-0 mt-0.5" /> {dd.gasNotIncluded.replace('{count}', String(carsCount))}
               </p>
             </div>
 

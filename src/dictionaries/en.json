@@ -114,7 +114,7 @@
     "friendDoublesFee": "This covers both you and your friend — double the usual amount.",
     "totalPriceLabel": "Total price",
     "confirmationPriceLabel": "Confirmation price",
-    "gasNotIncluded": "Doesn't include gas money for the ride there",
+    "gasNotIncluded": "Doesn't include gas money. We aim for {count} cars — after the hike, total petrol costs are added up and split evenly across all cars, so everyone pays the same share no matter which car they rode in.",
     "payWithRevolut": "Pay with Revolut",
     "viewFullAlbum": "View full album",
     "photosTitle": "Photos",
