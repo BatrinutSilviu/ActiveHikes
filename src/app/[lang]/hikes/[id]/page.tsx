@@ -320,6 +320,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
                   </div>
                 )
               })()}
+              {hike.accommodationPrice && hike.accommodationDeposit && (
+                <p className="text-blue-600 text-xs leading-relaxed">{dd.accommodationRemainingNote}</p>
+              )}
               {(hike.checkInTime || hike.checkOutTime || hike.breakfastTime || hike.dinnerTime) && (
                 <div className="flex flex-wrap gap-4">
                   {hike.checkInTime && (
