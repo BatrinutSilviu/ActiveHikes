@@ -206,14 +206,14 @@ export default function JoinButton({
   const [bringingFriend, setBringingFriend] = useState(false)
   const [friendName, setFriendName] = useState('')
   const [bringingCar, setBringingCar] = useState(false)
-  const [carSeats, setCarSeats] = useState(4)
+  const [carSeats, setCarSeats] = useState('4')
   const [pickupLat, setPickupLat] = useState<number | null>(null)
   const [pickupLng, setPickupLng] = useState<number | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Edit form state (already registered)
   const [editBringsCar, setEditBringsCar] = useState(currentBringsCar)
-  const [editCarSeats, setEditCarSeats] = useState(currentCarSeats ?? 4)
+  const [editCarSeats, setEditCarSeats] = useState(String(currentCarSeats ?? 4))
   const [editPickupLat, setEditPickupLat] = useState<number | null>(currentPickupLat ?? null)
   const [editPickupLng, setEditPickupLng] = useState<number | null>(currentPickupLng ?? null)
   const [carSaveError, setCarSaveError] = useState('')
@@ -225,9 +225,14 @@ export default function JoinButton({
 
   const router = useRouter()
 
+  const clampSeats = (raw: string) => {
+    const n = parseInt(raw, 10)
+    return Math.max(1, Math.min(8, Number.isFinite(n) ? n : 4))
+  }
+
   const carChanged =
     editBringsCar !== currentBringsCar ||
-    (editBringsCar && editCarSeats !== (currentCarSeats ?? 4)) ||
+    (editBringsCar && clampSeats(editCarSeats) !== (currentCarSeats ?? 4)) ||
     editPickupLat !== (currentPickupLat ?? null) ||
     editPickupLng !== (currentPickupLng ?? null)
 
@@ -258,7 +263,7 @@ export default function JoinButton({
         await updateCarPreference(
           hikeId,
           editBringsCar,
-          editBringsCar ? editCarSeats : undefined,
+          editBringsCar ? clampSeats(editCarSeats) : undefined,
           editPickupLat,
           editPickupLng,
         )
@@ -300,7 +305,7 @@ export default function JoinButton({
           hikeId,
           bringingFriend && friendName.trim() ? friendName.trim() : undefined,
           bringingCar,
-          bringingCar ? carSeats : undefined,
+          bringingCar ? clampSeats(carSeats) : undefined,
           pickupLat ?? undefined,
           pickupLng ?? undefined,
           agreedToTerms,
@@ -353,8 +358,10 @@ export default function JoinButton({
                 <label className="block text-sm text-stone-500">{dict.carSeatsLabel}</label>
                 <input
                   type="number"
+                  inputMode="numeric"
                   value={editCarSeats}
-                  onChange={e => setEditCarSeats(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
+                  onChange={e => setEditCarSeats(e.target.value)}
+                  onBlur={() => setEditCarSeats(String(clampSeats(editCarSeats)))}
                   min={1}
                   max={8}
                   className="w-full border border-stone-200 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -425,8 +432,10 @@ export default function JoinButton({
               <label className="block text-sm text-stone-500">{dict.carSeatsLabel}</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={carSeats}
-                onChange={e => setCarSeats(Math.max(1, Math.min(8, parseInt(e.target.value) || 1)))}
+                onChange={e => setCarSeats(e.target.value)}
+                onBlur={() => setCarSeats(String(clampSeats(carSeats)))}
                 min={1}
                 max={8}
                 className="w-full border border-stone-200 rounded-lg px-3 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
