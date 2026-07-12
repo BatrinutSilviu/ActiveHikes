@@ -9,6 +9,7 @@ import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { resolvePair } from '@/lib/participantPairs'
+import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 
 export async function joinHike(
   hikeId: string,
@@ -74,7 +75,7 @@ export async function joinHike(
     }
   })
 
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function cancelRegistration(hikeId: string) {
@@ -91,7 +92,7 @@ export async function cancelRegistration(hikeId: string) {
 
   await prisma.hikeParticipant.delete({ where: { id: participation.id } })
 
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number, pickupLat?: number | null, pickupLng?: number | null) {

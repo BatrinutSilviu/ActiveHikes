@@ -6,6 +6,13 @@ import { notFound } from 'next/navigation'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import OnboardingForm from '@/components/auth/OnboardingForm'
 
+function resolveCallbackUrl(raw: string | undefined, lang: string): string {
+  const home = `/${lang}`
+  if (!raw || (!raw.startsWith(`${home}/`) && raw !== home)) return home
+  if (raw.startsWith(`${home}/onboarding`) || raw.startsWith(`${home}/auth/`)) return home
+  return raw
+}
+
 export default async function OnboardingPage({
   params,
   searchParams,
@@ -23,8 +30,10 @@ export default async function OnboardingPage({
   ])
   if (!session) redirect(`/${lang}/auth/login`)
 
+  const safeCallbackUrl = resolveCallbackUrl(callbackUrl, lang)
+
   const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { name: true, phone: true } })
-  if (user?.phone) redirect(callbackUrl || `/${lang}`)
+  if (user?.phone) redirect(safeCallbackUrl)
 
   return (
     <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4 py-12">
@@ -39,7 +48,7 @@ export default async function OnboardingPage({
           <OnboardingForm
             initialName={user?.name ?? ''}
             lang={lang}
-            callbackUrl={callbackUrl || `/${lang}`}
+            callbackUrl={safeCallbackUrl}
             dict={d.auth.onboarding}
           />
         </div>

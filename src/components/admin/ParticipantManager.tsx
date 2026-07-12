@@ -69,6 +69,14 @@ export default function ParticipantManager({
 }) {
   const router = useRouter()
   const [items, setItems] = useState(participants)
+
+  // router.refresh() re-fetches this component's props on the server, but
+  // doesn't remount it — resync local state whenever the fresh list arrives.
+  const [prevParticipants, setPrevParticipants] = useState(participants)
+  if (participants !== prevParticipants) {
+    setPrevParticipants(participants)
+    setItems(participants)
+  }
   const [filter, setFilter] = useState('all')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [bulkLoading, setBulkLoading] = useState(false)

@@ -3,11 +3,10 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
 import { ParticipantStatus } from '@prisma/client'
-import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { resolvePair } from '@/lib/participantPairs'
+import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 
 export async function updateParticipantStatus(
   participantId: string,
@@ -28,7 +27,7 @@ export async function updateParticipantStatus(
     },
   })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function removeFriend(hikeId: string, hostParticipantId: string) {
@@ -43,8 +42,7 @@ export async function removeFriend(hikeId: string, hostParticipantId: string) {
 
   await prisma.hikeParticipant.delete({ where: { hostParticipantId } })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function adminAddParticipant(hikeId: string, email: string): Promise<{ status: ParticipantStatus }> {
@@ -74,8 +72,7 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
     },
   })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 
   return { status }
 }
@@ -100,8 +97,7 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
     },
   })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 
   return { id: participant.id }
 }
@@ -140,6 +136,6 @@ export async function confirmAllPending(hikeId: string): Promise<{ confirmed: nu
     data: { status: 'confirmed', confirmedAt: new Date() },
   })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
   return { confirmed: idsToConfirm.length }
 }
