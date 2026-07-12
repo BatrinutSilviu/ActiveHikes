@@ -255,7 +255,7 @@
       "fullNameNote": "First and last name required",
       "fullNamePlaceholder": "Ion Popescu",
       "phone": "Phone",
-      "phoneNote": "Optional — used for WhatsApp contact",
+      "phoneNote": "Required — used for WhatsApp contact",
       "phonePlaceholder": "+40 7xx xxx xxx",
       "email": "Email",
       "password": "Password",
@@ -265,6 +265,19 @@
       "alreadyAccount": "Already have an account?",
       "signIn": "Sign in",
       "viewTerms": "Terms & Conditions"
+    },
+    "onboarding": {
+      "title": "Just one more step",
+      "subtitle": "We need a couple of details before you can join a hike",
+      "fullName": "Full name",
+      "fullNameNote": "First and last name required — check what we got from Google",
+      "fullNamePlaceholder": "Ion Popescu",
+      "phone": "Phone",
+      "phoneNote": "Used for WhatsApp contact and carpool coordination",
+      "phonePlaceholder": "+40 7xx xxx xxx",
+      "save": "Continue",
+      "saving": "Saving…",
+      "error": "Something went wrong"
     }
   },
   "admin": {
@@ -377,6 +390,11 @@
       "addParticipantPlaceholder": "person@example.com",
       "add": "Add",
       "adding": "Adding…",
+      "importParticipant": "Import participant (no account, name only)",
+      "importParticipantPlaceholder": "Full name",
+      "import": "Import",
+      "importing": "Importing…",
+      "importedLabel": "No account — added manually",
       "myRegistration": "My Registration",
       "manageCars": "Manage cars",
       "manageRooms": "Manage rooms",

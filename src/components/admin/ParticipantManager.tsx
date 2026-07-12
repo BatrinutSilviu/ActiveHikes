@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateParticipantStatus, confirmAllPending, adminAddParticipant, removeFriend } from '@/app/actions/participants'
+import { updateParticipantStatus, confirmAllPending, adminAddParticipant, adminImportParticipant, removeFriend } from '@/app/actions/participants'
 import { Check, X, List, CheckCheck, Car, Timer, UserPlus, UserMinus } from 'lucide-react'
 
 type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
@@ -41,6 +41,11 @@ type ParticipantManagerDict = {
   addParticipantPlaceholder: string
   add: string
   adding: string
+  importParticipant: string
+  importParticipantPlaceholder: string
+  import: string
+  importing: string
+  importedLabel: string
 }
 
 const STATUS_BADGE_CLASSES: Record<ParticipantStatus, string> = {
@@ -85,6 +90,26 @@ export default function ParticipantManager({
         setAddError(err instanceof Error ? err.message : 'Something went wrong')
       }
       setIsAdding(false)
+    })
+  }
+
+  const [newName, setNewName] = useState('')
+  const [importError, setImportError] = useState('')
+  const [isImporting, setIsImporting] = useState(false)
+
+  const handleImportParticipant = (e: React.FormEvent) => {
+    e.preventDefault()
+    setImportError('')
+    setIsImporting(true)
+    startTransition(async () => {
+      try {
+        await adminImportParticipant(hikeId, newName)
+        setNewName('')
+        router.refresh()
+      } catch (err: unknown) {
+        setImportError(err instanceof Error ? err.message : 'Something went wrong')
+      }
+      setIsImporting(false)
     })
   }
 
@@ -153,10 +178,32 @@ export default function ParticipantManager({
     </form>
   )
 
+  const importForm = (
+    <form onSubmit={handleImportParticipant} className="bg-white border border-stone-100 rounded-2xl p-4">
+      <label className="block text-sm font-medium text-stone-700 mb-1.5">{dict.importParticipant}</label>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          required
+          value={newName}
+          onChange={e => setNewName(e.target.value)}
+          placeholder={dict.importParticipantPlaceholder}
+          className="flex-1 border border-stone-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        />
+        <button type="submit" disabled={isImporting}
+          className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
+          <UserPlus size={14} /> {isImporting ? dict.importing : dict.import}
+        </button>
+      </div>
+      {importError && <p className="text-red-600 text-xs mt-2">{importError}</p>}
+    </form>
+  )
+
   if (items.length === 0) {
     return (
       <div className="space-y-3">
         {addForm}
+        {importForm}
         <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400">{dict.noRegistrations}</div>
       </div>
     )
@@ -165,6 +212,7 @@ export default function ParticipantManager({
   return (
     <div className="space-y-3">
       {addForm}
+      {importForm}
       {pendingCount > 0 && (
         <button onClick={handleConfirmAll} disabled={bulkLoading}
           className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm">
@@ -189,14 +237,14 @@ export default function ParticipantManager({
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-semibold text-stone-800 truncate">
-                  {p.hostParticipantId ? p.friendName : p.user?.name}
+                  {p.user?.name ?? p.friendName}
                   {p.linkedFriend && (
                     <span className="ml-1.5 text-xs font-normal bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full">+ {p.linkedFriend.name}</span>
                   )}
                 </div>
                 {p.hostParticipantId ? (
                   <div className="text-stone-400 text-sm truncate">{dict.friendOf} {p.hostName ?? '?'}</div>
-                ) : (
+                ) : p.user ? (
                   <>
                     <div className="text-stone-400 text-sm truncate">{p.user?.email}</div>
                     {p.user?.phone && (
@@ -204,6 +252,8 @@ export default function ParticipantManager({
                         className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
                     )}
                   </>
+                ) : (
+                  <div className="text-stone-400 text-sm truncate italic">{dict.importedLabel}</div>
                 )}
                 <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-stone-400 text-xs">
@@ -223,7 +273,7 @@ export default function ParticipantManager({
                     const driver = items.find(d => d.id === p.carDriverParticipantId)
                     return driver ? (
                       <span className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-full">
-                        <Car size={11} /> {driver.hostParticipantId ? driver.friendName : driver.user?.name}
+                        <Car size={11} /> {driver.user?.name ?? driver.friendName}
                       </span>
                     ) : null
                   })()}

@@ -83,8 +83,10 @@ export default function SignupPage() {
               <p className="text-xs text-stone-400 mt-1.5">{d.fullNameNote}</p>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1.5">{d.phone}</label>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
+              <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1.5">
+                {d.phone} <span className="text-red-500 normal-case">*</span>
+              </label>
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
                 className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-stone-50 focus:bg-white transition-colors"
                 placeholder={d.phonePlaceholder} />
               <p className="text-xs text-stone-400 mt-1.5">{d.phoneNote}</p>

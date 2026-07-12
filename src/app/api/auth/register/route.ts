@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db'
 export async function POST(req: NextRequest) {
   const { name, email, password, phone } = await req.json()
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !phone) {
     return NextResponse.json({ error: 'All fields are required.' }, { status: 400 })
   }
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       name: name.trim(),
       email,
       password: hashed,
-      phone: phone?.trim() || null,
+      phone: phone.trim(),
       role: 'user',
     },
   })

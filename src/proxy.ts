@@ -32,18 +32,28 @@ export async function proxy(request: NextRequest) {
 
   const locale = pathname.split('/')[1] as Locale
   const isProtected = pathname.startsWith(`/${locale}/admin`) || pathname.startsWith(`/${locale}/profile`)
+  const isAuthPage = pathname.startsWith(`/${locale}/auth/`)
+  const isOnboardingPage = pathname.startsWith(`/${locale}/onboarding`)
 
-  if (isProtected) {
+  if (!isAuthPage && !isOnboardingPage) {
     const token = await getToken({ req: request })
-    if (!token) {
+
+    if (isProtected && !token) {
       const url = request.nextUrl.clone()
       url.pathname = `/${locale}/auth/login`
       url.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(url)
     }
-    if (pathname.startsWith(`/${locale}/admin`) && token.role !== 'admin') {
+    if (isProtected && pathname.startsWith(`/${locale}/admin`) && token?.role !== 'admin') {
       const url = request.nextUrl.clone()
       url.pathname = `/${locale}`
+      return NextResponse.redirect(url)
+    }
+    // Every signed-in user must have a phone on file before using the app further
+    if (token && !token.phone) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/${locale}/onboarding`
+      url.searchParams.set('callbackUrl', pathname)
       return NextResponse.redirect(url)
     }
   }

@@ -95,7 +95,7 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
                       {room.occupants.map(o => (
                         <span key={o.id} className="flex items-center gap-1 text-xs bg-blue-50 border border-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
                           <UserCheck size={11} />
-                          {o.hostParticipantId ? o.friendName : o.user?.name ?? '?'}
+                          {o.user?.name ?? o.friendName ?? '?'}
                           {o.hostParticipantId && ` (${dr.friendOf} ${o.host?.user?.name ?? '?'})`}
                         </span>
                       ))}

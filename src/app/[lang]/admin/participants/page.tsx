@@ -66,7 +66,7 @@ function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { 
         <Link key={p.id} href={`/${lang}/admin/hikes/${p.hike.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-stone-800">{p.hostParticipantId ? p.friendName : p.user?.name}</div>
+            <div className="font-medium text-stone-800">{p.user?.name ?? p.friendName}</div>
             <div className="text-stone-400 text-xs">
               {p.hostParticipantId ? `${friendOf} ${p.host?.user?.name ?? '?'}` : p.user?.email}
             </div>

@@ -255,7 +255,7 @@
       "fullNameNote": "Prenume și nume de familie obligatorii",
       "fullNamePlaceholder": "Ion Popescu",
       "phone": "Telefon",
-      "phoneNote": "Opțional — pentru contact pe WhatsApp",
+      "phoneNote": "Obligatoriu — pentru contact pe WhatsApp",
       "phonePlaceholder": "+40 7xx xxx xxx",
       "email": "Email",
       "password": "Parolă",
@@ -265,6 +265,19 @@
       "alreadyAccount": "Ai deja cont?",
       "signIn": "Autentifică-te",
       "viewTerms": "Termeni și condiții"
+    },
+    "onboarding": {
+      "title": "Încă un pas",
+      "subtitle": "Avem nevoie de câteva detalii înainte să te poți înscrie la o drumeție",
+      "fullName": "Nume complet",
+      "fullNameNote": "Prenume și nume de familie obligatorii — verifică ce am preluat de la Google",
+      "fullNamePlaceholder": "Ion Popescu",
+      "phone": "Telefon",
+      "phoneNote": "Folosit pentru contact pe WhatsApp și organizarea mașinilor",
+      "phonePlaceholder": "+40 7xx xxx xxx",
+      "save": "Continuă",
+      "saving": "Se salvează…",
+      "error": "A apărut o eroare"
     }
   },
   "admin": {
@@ -377,6 +390,11 @@
       "addParticipantPlaceholder": "persoana@exemplu.com",
       "add": "Adaugă",
       "adding": "Se adaugă…",
+      "importParticipant": "Importă participant (fără cont, doar nume)",
+      "importParticipantPlaceholder": "Nume complet",
+      "import": "Importă",
+      "importing": "Se importă…",
+      "importedLabel": "Fără cont — adăugat manual",
       "myRegistration": "Înscrierea Mea",
       "manageCars": "Gestionează mașinile",
       "manageRooms": "Gestionează camerele",

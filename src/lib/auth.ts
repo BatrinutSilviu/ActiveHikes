@@ -53,12 +53,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
-        // For OAuth users, role comes from DB; for credentials, it's already in user
-        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true } })
+        // For OAuth users, role/phone come from DB; for credentials, role is already in user
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true, phone: true } })
         token.role = dbUser?.role ?? 'user'
+        token.phone = dbUser?.phone ?? null
+      } else if (trigger === 'update') {
+        // Re-read from DB so proxy.ts sees a freshly-completed onboarding immediately
+        const dbUser = await prisma.user.findUnique({ where: { id: token.id }, select: { phone: true } })
+        token.phone = dbUser?.phone ?? null
       }
       return token
     },
@@ -66,6 +71,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.phone = token.phone ?? null
       }
       return session
     },

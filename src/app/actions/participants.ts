@@ -80,6 +80,32 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
   return { status }
 }
 
+export async function adminImportParticipant(hikeId: string, name: string): Promise<{ id: string }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const trimmedName = name.trim()
+  if (!trimmedName) throw new Error('Name is required')
+
+  const hike = await prisma.hike.findUnique({ where: { id: hikeId }, select: { id: true } })
+  if (!hike) throw new Error('Hike not found')
+
+  const participant = await prisma.hikeParticipant.create({
+    data: {
+      hikeId,
+      userId: null,
+      friendName: trimmedName,
+      status: 'confirmed',
+      confirmedAt: new Date(),
+    },
+  })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+
+  return { id: participant.id }
+}
+
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')

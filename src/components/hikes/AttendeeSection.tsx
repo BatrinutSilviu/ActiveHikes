@@ -30,7 +30,7 @@ type AttendeeSectionDict = {
 }
 
 function pName(p: Participant) {
-  return p.hostParticipantId ? p.friendName ?? '?' : p.user?.name ?? '?'
+  return p.user?.name ?? p.friendName ?? '?'
 }
 
 export default function AttendeeSection({

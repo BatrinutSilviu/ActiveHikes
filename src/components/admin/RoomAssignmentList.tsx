@@ -75,7 +75,7 @@ export default function RoomAssignmentList({
         return (
           <div key={p.id} className="bg-white border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-stone-800 truncate">
-              {p.hostParticipantId ? p.friendName : p.user?.name ?? '?'}
+              {p.user?.name ?? p.friendName ?? '?'}
               {p.linkedFriend && <span className="text-stone-400 font-normal"> +{p.linkedFriend.name}</span>}
               {p.hostParticipantId && <span className="text-stone-400 font-normal text-xs"> ({dict.friendOf} {p.hostName ?? '?'})</span>}
             </span>
