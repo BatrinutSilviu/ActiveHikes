@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { prisma } from '@/lib/db'
 
 const LOCALES = ['en', 'ro'] as const
 type Locale = typeof LOCALES[number]
@@ -49,12 +50,21 @@ export async function proxy(request: NextRequest) {
       url.pathname = `/${locale}`
       return NextResponse.redirect(url)
     }
-    // Every signed-in user must have a phone on file before using the app further
+    // Every signed-in user must have a phone on file before using the app further.
+    // The JWT's `phone` claim only refreshes on login or an explicit client-side
+    // session update, so a session that predates onboarding completion (e.g. a
+    // second tab/device) can carry a stale "no phone" claim forever. Falling back
+    // to the DB here avoids bouncing that session between the target page and
+    // onboarding — which otherwise loops until the browser gives up with
+    // "too many redirects".
     if (token && !token.phone) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/${locale}/onboarding`
-      url.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(url)
+      const dbUser = await prisma.user.findUnique({ where: { id: token.id as string }, select: { phone: true } })
+      if (!dbUser?.phone) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/${locale}/onboarding`
+        url.searchParams.set('callbackUrl', pathname)
+        return NextResponse.redirect(url)
+      }
     }
   }
 
