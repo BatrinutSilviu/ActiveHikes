@@ -9,12 +9,13 @@ import EssentialsSection from '@/components/hikes/EssentialsSection'
 import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 export default async function ViaFerrataDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 

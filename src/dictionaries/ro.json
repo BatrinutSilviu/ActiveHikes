@@ -183,6 +183,7 @@
     "roomCapacityColumn": "Capacitate",
     "roomOccupancyColumn": "Ocupare",
     "roomEmpty": "Goală",
+    "you": "Tu",
     "roomTypes": {
       "double": "Dublă",
       "triple": "Triplă",
@@ -503,7 +504,8 @@
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…",
-      "statuses": { "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" }
+      "statuses": { "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" },
+      "ongoingIsAutomatic": "\"În desfășurare\" se stabilește automat când ajunge data evenimentului."
     },
     "viaFerrataParticipants": {
       "title": "Toți Participanții Via Ferrata",
@@ -608,7 +610,13 @@
       "carsNeeded": "Număr minim de mașini",
       "save": "Salvează",
       "saving": "Se salvează…",
-      "saved": "Salvat"
+      "saved": "Salvat",
+      "assignTitle": "Alocă mașini",
+      "noCar": "Fără mașină",
+      "full": "plin",
+      "friendOf": "prieten al lui",
+      "drivingOwnCar": "Conduce propria mașină",
+      "error": "Nu s-a putut salva. Încearcă din nou."
     },
     "roomsPage": {
       "title": "Camere",
@@ -664,7 +672,6 @@
       "durationPlaceholder": "ex. 8",
       "difficulty": "Dificultate",
       "selectDifficulty": "— Selectează —",
-      "status": "Status",
       "maxParticipants": "Număr maxim participanți",
       "entryFee": "Taxă de participare (RON)",
       "mountainRange": "Masiv montan",
@@ -712,8 +719,18 @@
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…",
-      "statuses": { "draft": "Ciornă", "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" },
       "difficulties": { "easy": "Ușor", "easy_medium": "Ușor spre Mediu", "medium": "Mediu", "medium_hard": "Mediu spre Greu", "hard": "Greu" }
+    },
+    "hikeStatus": {
+      "draft": "Ciornă",
+      "published": "Publicată",
+      "publish": "Publică",
+      "revertToDraft": "Revenire la ciornă",
+      "markAs": "Marchează ca",
+      "normal": "Normal",
+      "completed": "Finalizată",
+      "cancelled": "Anulată",
+      "error": "A apărut o eroare"
     }
   },
   "gpx": {

@@ -35,6 +35,9 @@ export default async function HikeCarpoolPage({ params }: { params: Promise<{ la
   const userParticipation = session?.user?.id
     ? hike.participants.find(p => p.userId === session.user.id) ?? null
     : null
+  const friendParticipation = userParticipation
+    ? hike.participants.find(p => p.hostParticipantId === userParticipation.id) ?? null
+    : null
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -46,13 +49,15 @@ export default async function HikeCarpoolPage({ params }: { params: Promise<{ la
         hikeId={hike.id}
         participants={hike.participants as any}
         userParticipantId={userParticipation?.id ?? null}
-        isUpcoming={hike.status === 'upcoming'}
+        userFriendParticipantId={friendParticipation?.id ?? null}
+        isUpcoming={hike.status === 'upcoming' || hike.status === 'ongoing'}
         dict={{
           title: dd.participantsSectionTitle,
           noConfirmedYet: dd.noConfirmedYet,
           pendingCount: dd.pendingCount,
           waitlistCount: dd.waitlistCount,
           noCarAssigned: (dd as any).noCarAssigned,
+          you: dd.you,
           ...(dd.carpool as any),
         }}
       />

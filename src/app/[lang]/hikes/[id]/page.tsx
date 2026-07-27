@@ -12,13 +12,14 @@ import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 

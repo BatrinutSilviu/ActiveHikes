@@ -4,13 +4,14 @@ import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'luc
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [d, hikeCount, viaFerrataCount, hikePendingCount, viaFerrataPendingCount, userCount, draftHikes, upcomingHikes, pastHikes, upcomingViaFerrata] = await Promise.all([
     getDictionary(lang),

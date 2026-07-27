@@ -183,6 +183,7 @@
     "roomCapacityColumn": "Capacity",
     "roomOccupancyColumn": "Occupancy",
     "roomEmpty": "Empty",
+    "you": "You",
     "roomTypes": {
       "double": "Double",
       "triple": "Triple",
@@ -503,7 +504,8 @@
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
       "saving": "Saving…",
-      "statuses": { "upcoming": "Upcoming", "ongoing": "Ongoing", "completed": "Completed", "cancelled": "Cancelled" }
+      "statuses": { "upcoming": "Upcoming", "ongoing": "Ongoing", "completed": "Completed", "cancelled": "Cancelled" },
+      "ongoingIsAutomatic": "\"Ongoing\" is set automatically once the event date arrives."
     },
     "viaFerrataParticipants": {
       "title": "All Via Ferrata Participants",
@@ -608,7 +610,13 @@
       "carsNeeded": "Minimum number of cars",
       "save": "Save",
       "saving": "Saving…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "assignTitle": "Assign cars",
+      "noCar": "No car",
+      "full": "full",
+      "friendOf": "friend of",
+      "drivingOwnCar": "Driving own car",
+      "error": "Could not save. Please try again."
     },
     "roomsPage": {
       "title": "Rooms",
@@ -664,7 +672,6 @@
       "durationPlaceholder": "e.g. 8",
       "difficulty": "Difficulty",
       "selectDifficulty": "— Select —",
-      "status": "Status",
       "maxParticipants": "Max participants",
       "entryFee": "Entry fee (RON)",
       "mountainRange": "Mountain range",
@@ -712,8 +719,18 @@
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
       "saving": "Saving…",
-      "statuses": { "draft": "Draft", "upcoming": "Upcoming", "ongoing": "Ongoing", "completed": "Completed", "cancelled": "Cancelled" },
       "difficulties": { "easy": "Easy", "easy_medium": "Easy to Medium", "medium": "Medium", "medium_hard": "Medium to Hard", "hard": "Hard" }
+    },
+    "hikeStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "publish": "Publish",
+      "revertToDraft": "Revert to draft",
+      "markAs": "Mark as",
+      "normal": "Normal",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "error": "Something went wrong"
     }
   },
   "gpx": {

@@ -37,6 +37,7 @@ type ViaFerrataEditDict = {
   saveChanges: string
   saving: string
   statuses: Record<string, string>
+  ongoingIsAutomatic: string
 }
 
 export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: ViaFerrataData; dict: ViaFerrataEditDict }) {
@@ -109,9 +110,10 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.status}</label>
         <select value={form.status} onChange={e => set('status', e.target.value)} className={cls}>
           {(['upcoming', 'ongoing', 'completed', 'cancelled'] as const).map(s => (
-            <option key={s} value={s}>{dict.statuses[s] ?? s}</option>
+            <option key={s} value={s} disabled={s === 'ongoing'}>{dict.statuses[s] ?? s}</option>
           ))}
         </select>
+        <p className="text-xs text-stone-400 mt-1">{dict.ongoingIsAutomatic}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

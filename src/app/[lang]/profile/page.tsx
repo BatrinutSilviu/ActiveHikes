@@ -8,6 +8,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
@@ -17,7 +18,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
   const [session, d] = await Promise.all([getServerSession(authOptions), getDictionary(lang)])
   if (!session) redirect(`/${lang}/auth/login`)
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [user, participations] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),

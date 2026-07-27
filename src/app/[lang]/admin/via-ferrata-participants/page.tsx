@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 const STATUS_BADGE: Record<string, string> = {
   confirmed: 'bg-emerald-100 text-emerald-700',
@@ -17,7 +18,7 @@ export default async function AllViaFerrataParticipantsPage({ params }: { params
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [d, participants] = await Promise.all([
     getDictionary(lang),

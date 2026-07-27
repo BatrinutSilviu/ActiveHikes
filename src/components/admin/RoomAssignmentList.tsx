@@ -46,19 +46,16 @@ export default function RoomAssignmentList({
   const [error, setError] = useState('')
   const [, startTransition] = useTransition()
 
-  const siblingId = (p: Participant) => p.hostParticipantId ?? p.linkedFriend?.id ?? null
-
   const occupancy = (roomId: string) =>
     participants.filter(p => p.roomId === roomId).length
 
   const handleChange = (p: Participant, roomId: string | null) => {
     setError('')
     setSavingId(p.id)
-    const sibId = siblingId(p)
     startTransition(async () => {
       try {
         await adminAssignRoom(hikeId, p.id, roomId)
-        setParticipants(prev => prev.map(item => (item.id === p.id || item.id === sibId) ? { ...item, roomId } : item))
+        setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, roomId } : item))
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : dict.error)
       }
@@ -70,8 +67,6 @@ export default function RoomAssignmentList({
     <div className="space-y-2">
       {error && <p className="text-red-600 text-sm">{error}</p>}
       {participants.map(p => {
-        const sibId = siblingId(p)
-        const neededSeats = sibId ? 2 : 1
         return (
           <div key={p.id} className="bg-white border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
             <span className="text-sm font-medium text-stone-800 truncate">
@@ -87,9 +82,9 @@ export default function RoomAssignmentList({
             >
               <option value="">{dict.noRoom}</option>
               {rooms.map(room => {
-                const occExcludingPair = participants.filter(x => x.roomId === room.id && x.id !== p.id && x.id !== sibId).length
+                const occExcludingSelf = participants.filter(x => x.roomId === room.id && x.id !== p.id).length
                 const occ = occupancy(room.id)
-                const isFull = occExcludingPair + neededSeats > room.capacity
+                const isFull = occExcludingSelf + 1 > room.capacity
                 return (
                   <option key={room.id} value={room.id} disabled={isFull}>
                     {roomTypeLabels[room.type] ?? room.type} {room.label} — {occ}/{room.capacity}{isFull ? ` (${dict.full})` : ''}
