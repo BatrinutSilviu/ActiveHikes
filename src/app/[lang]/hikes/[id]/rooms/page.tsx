@@ -19,6 +19,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
       select: {
         id: true,
         title: true,
+        status: true,
         rooms: {
           orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
           include: {
@@ -32,6 +33,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
   ])
 
   if (!hike) notFound()
+  if (hike.status === 'draft' && session?.user?.role !== 'admin') notFound()
 
   const rooms = hike.rooms.map(r => ({
     id: r.id,
@@ -46,10 +48,9 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
   if (session?.user?.id) {
     userParticipation = await prisma.hikeParticipant.findUnique({
       where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
-      select: { status: true, roomId: true, friend: { select: { id: true } } },
+      select: { status: true, roomId: true, friend: { select: { id: true, roomId: true, friendName: true } } },
     })
   }
-  const neededSeats = userParticipation?.friend ? 2 : 1
 
   const dd = d.hikeDetail
   const roomTypeLabels = dd.roomTypes as Record<string, string>
@@ -68,7 +69,10 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
         <div className="space-y-2">
           {rooms.map(room => {
             const isCurrent = userParticipation?.roomId === room.id
-            const isFull = !isCurrent && room.occupied + neededSeats > room.capacity
+            const isFull = !isCurrent && room.occupied + 1 > room.capacity
+            const friend = userParticipation?.friend ?? null
+            const isFriendCurrent = friend?.roomId === room.id
+            const isFriendFull = !isFriendCurrent && room.occupied + 1 > room.capacity
             return (
               <div key={room.id} className="bg-white border border-stone-100 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2 gap-3">
@@ -78,13 +82,20 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-xs font-medium text-stone-400">{room.occupied}/{room.capacity}</span>
                     {userParticipation && userParticipation.status !== 'rejected' && (
-                      <RoomJoinButton
-                        hikeId={hike.id}
-                        roomId={room.id}
-                        isCurrent={isCurrent}
-                        isFull={isFull}
-                        dict={d.roomPicker}
-                      />
+                      friend ? (
+                        <div className="flex flex-col items-end gap-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-stone-400">{dd.you}</span>
+                            <RoomJoinButton hikeId={hike.id} roomId={room.id} isCurrent={isCurrent} isFull={isFull} dict={d.roomPicker} />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-stone-400">{friend.friendName ?? '?'}</span>
+                            <RoomJoinButton hikeId={hike.id} roomId={room.id} isCurrent={isFriendCurrent} isFull={isFriendFull} forFriend dict={d.roomPicker} />
+                          </div>
+                        </div>
+                      ) : (
+                        <RoomJoinButton hikeId={hike.id} roomId={room.id} isCurrent={isCurrent} isFull={isFull} dict={d.roomPicker} />
+                      )
                     )}
                   </div>
                 </div>

@@ -41,6 +41,10 @@ export default function Navbar() {
               className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
               {d.nav.hikes}
             </Link>
+            <Link href={`${pfx}/via-ferrata`}
+              className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
+              {d.nav.viaFerrata}
+            </Link>
             {session ? (
               <>
                 <Link href={`${pfx}/profile`}
@@ -74,6 +78,11 @@ export default function Navbar() {
               className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
               onClick={() => setMenuOpen(false)}>
               {d.nav.hikes}
+            </Link>
+            <Link href={`${pfx}/via-ferrata`}
+              className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+              onClick={() => setMenuOpen(false)}>
+              {d.nav.viaFerrata}
             </Link>
             {session ? (
               <>

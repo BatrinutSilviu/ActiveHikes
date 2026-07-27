@@ -5,7 +5,6 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate } from '@/lib/dates'
 
 const STATUS_BADGE: Record<string, string> = {
   confirmed: 'bg-emerald-100 text-emerald-700',
@@ -15,7 +14,7 @@ const STATUS_BADGE: Record<string, string> = {
   expired: 'bg-stone-200 text-stone-500',
 }
 
-export default async function AllParticipantsPage({ params }: { params: Promise<{ lang: string }> }) {
+export default async function AllViaFerrataParticipantsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
@@ -23,17 +22,17 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
 
   const [d, participants] = await Promise.all([
     getDictionary(lang),
-    prisma.hikeParticipant.findMany({
+    prisma.viaFerrataParticipant.findMany({
       orderBy: { joinedAt: 'desc' },
       include: {
         user: { select: { name: true, email: true, phone: true } },
         host: { select: { user: { select: { name: true } } } },
-        hike: { select: { id: true, title: true, date: true, endDate: true } },
+        viaFerrata: { select: { id: true, title: true, date: true } },
       },
     }),
   ])
 
-  const dp = d.admin.participants
+  const dp = d.admin.viaFerrataParticipants
   const pending = participants.filter(p => p.status === 'pending')
   const others = participants.filter(p => p.status !== 'pending')
 
@@ -64,15 +63,15 @@ function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { 
   return (
     <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden divide-y divide-stone-50">
       {participants.map((p: any) => (
-        <Link key={p.id} href={`/${lang}/admin/hikes/${p.hike.id}`}
+        <Link key={p.id} href={`/${lang}/admin/via-ferrata/${p.viaFerrata.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">
             <div className="font-medium text-stone-800">{p.user?.name ?? p.friendName}</div>
             <div className="text-stone-400 text-xs">
               {p.hostParticipantId ? `${friendOf} ${p.host?.user?.name ?? '?'}` : p.user?.email}
             </div>
-            <div className="text-stone-500 text-sm mt-0.5 truncate">{p.hike.title}</div>
-            <div className="text-stone-400 text-xs">{formatHikeDate(p.hike.date, p.hike.endDate, dateLocale, {})}</div>
+            <div className="text-stone-500 text-sm mt-0.5 truncate">{p.viaFerrata.title}</div>
+            <div className="text-stone-400 text-xs">{new Date(p.viaFerrata.date).toLocaleDateString(dateLocale, {})}</div>
           </div>
           <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize shrink-0 ${STATUS_BADGE[p.status]}`}>{p.status}</span>
           <ChevronRight size={16} className="text-stone-300 shrink-0" />

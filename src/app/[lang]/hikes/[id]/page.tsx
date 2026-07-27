@@ -12,13 +12,14 @@ import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
-  await expireOverduePending()
+  await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
@@ -37,6 +38,9 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
     },
   })
   if (!hike) notFound()
+
+  const isAdmin = session?.user?.role === 'admin'
+  if (hike.status === 'draft' && !isAdmin) notFound()
 
   const rooms = hike.rooms.map(r => ({
     id: r.id,
@@ -66,7 +70,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
     : null
   const spotsLeft = hike.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
-  const isUpcoming = hike.status === 'upcoming'
+  const isUpcoming = hike.status === 'upcoming' || (hike.status === 'draft' && isAdmin)
   const entryFee = Number(hike.entryFee)
   const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? Number(hike.accommodationPrice) : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
@@ -86,6 +90,11 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      {hike.status === 'draft' && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium">
+          {dd.draftNotice}
+        </div>
+      )}
       <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
         {hike.coverImageUrl ? (
           <img src={hike.coverImageUrl} alt={hike.title} className="w-full h-full object-cover" />

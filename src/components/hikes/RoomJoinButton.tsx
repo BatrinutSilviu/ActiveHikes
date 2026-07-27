@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { assignRoom } from '@/app/actions/hikes'
+import { assignRoom, assignFriendRoom } from '@/app/actions/hikes'
 
 type Dict = {
   join: string
@@ -19,12 +19,14 @@ export default function RoomJoinButton({
   roomId,
   isCurrent,
   isFull,
+  forFriend,
   dict,
 }: {
   hikeId: string
   roomId: string
   isCurrent: boolean
   isFull: boolean
+  forFriend?: boolean
   dict: Dict
 }) {
   const router = useRouter()
@@ -35,7 +37,8 @@ export default function RoomJoinButton({
     setError('')
     startTransition(async () => {
       try {
-        await assignRoom(hikeId, isCurrent ? null : roomId)
+        const assign = forFriend ? assignFriendRoom : assignRoom
+        await assign(hikeId, isCurrent ? null : roomId)
         router.refresh()
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : dict.error)

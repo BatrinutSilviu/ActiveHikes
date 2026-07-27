@@ -8,7 +8,6 @@ import { Difficulty, HikeStatus } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
-import { resolvePair } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 
 export async function joinHike(
@@ -25,19 +24,21 @@ export async function joinHike(
 
   const trimmedFriendName = friendName?.trim() || null
 
+  const isAdmin = session.user.role === 'admin'
+
   await prisma.$transaction(async (tx) => {
     // Lock the hike row so concurrent joins are serialized
-    const hikes = await tx.$queryRaw<{ maxParticipants: number }[]>`
-      SELECT "maxParticipants" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
+    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string }[]>`
+      SELECT "maxParticipants", "status" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
     `
     if (!hikes.length) throw new Error('Hike not found')
+    if (hikes[0].status === 'draft' && !isAdmin) throw new Error('Hike not found')
 
     const confirmed = await tx.hikeParticipant.count({
       where: { hikeId, status: 'confirmed' },
     })
 
     const neededSpots = trimmedFriendName ? 2 : 1
-    const isAdmin = session.user.role === 'admin'
     const isFull = confirmed + neededSpots > hikes[0].maxParticipants
     const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending'
     const confirmedAt = isAdmin ? new Date() : undefined
@@ -101,9 +102,15 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, friend: { select: { id: true, carDriverParticipantId: true } } },
+    select: { id: true, carDriverParticipantId: true, friend: { select: { id: true, carDriverParticipantId: true } } },
   })
   if (!participation) throw new Error('Registration not found')
+
+  // Friend only rides along automatically if they were already riding with
+  // whichever driver the host had (or nobody) — i.e. not separately assigned.
+  const wasLinked = participation.friend
+    ? participation.friend.carDriverParticipantId === participation.carDriverParticipantId
+    : false
 
   await prisma.$transaction(async (tx) => {
     await tx.hikeParticipant.update({
@@ -117,12 +124,12 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
     })
 
     if (participation.friend) {
-      if (bringsCar) {
+      if (bringsCar && wasLinked) {
         await tx.hikeParticipant.update({
           where: { id: participation.friend.id },
           data: { carDriverParticipantId: participation.id },
         })
-      } else if (participation.friend.carDriverParticipantId === participation.id) {
+      } else if (!bringsCar && participation.friend.carDriverParticipantId === participation.id) {
         await tx.hikeParticipant.update({
           where: { id: participation.friend.id },
           data: { carDriverParticipantId: null },
@@ -140,12 +147,18 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, bringsCar: true, friend: { select: { id: true } } },
+    select: { id: true, bringsCar: true, carDriverParticipantId: true, friend: { select: { id: true, carDriverParticipantId: true } } },
   })
   if (!participation) throw new Error('Not registered for this hike')
   if (participation.bringsCar) throw new Error('Drivers cannot join another car')
 
-  const neededSeats = participation.friend ? 2 : 1
+  // Move the friend along only while they're still linked (riding with the
+  // same driver, or both unassigned) — once separately assigned, they stay put.
+  const linked = participation.friend
+    ? participation.friend.carDriverParticipantId === participation.carDriverParticipantId
+    : false
+  const movingIds = linked && participation.friend ? [participation.id, participation.friend.id] : [participation.id]
+  const neededSeats = movingIds.length
 
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
@@ -153,23 +166,67 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
       select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
     })
     if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
-    const takenSeats = driver.carPassengers.length
+    const takenSeats = driver.carPassengers.filter(p => !movingIds.includes(p.id)).length
     if (driver.carSeats !== null && takenSeats + neededSeats > driver.carSeats) throw new Error('Car is full')
   }
 
-  await prisma.$transaction([
-    prisma.hikeParticipant.update({
-      where: { id: participation.id },
-      data: { carDriverParticipantId: driverParticipantId },
-    }),
-    ...(participation.friend
-      ? [prisma.hikeParticipant.update({
-          where: { id: participation.friend.id },
-          data: { carDriverParticipantId: driverParticipantId },
-        })]
-      : []),
-  ])
+  await prisma.$transaction(
+    movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { carDriverParticipantId: driverParticipantId } }))
+  )
 
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
+export async function assignFriendCarDriver(hikeId: string, driverParticipantId: string | null) {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error('Not authenticated')
+
+  const participation = await prisma.hikeParticipant.findUnique({
+    where: { hikeId_userId: { hikeId, userId: session.user.id } },
+    select: { friend: { select: { id: true } } },
+  })
+  if (!participation?.friend) throw new Error('No friend registered')
+  const friendId = participation.friend.id
+
+  if (driverParticipantId !== null) {
+    const driver = await prisma.hikeParticipant.findUnique({
+      where: { id: driverParticipantId },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
+    })
+    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
+    const takenSeats = driver.carPassengers.filter(p => p.id !== friendId).length
+    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) throw new Error('Car is full')
+  }
+
+  await prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverParticipantId } })
+
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
+export async function adminAssignCarDriver(hikeId: string, participantId: string, driverParticipantId: string | null) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const participant = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: { hikeId: true, bringsCar: true },
+  })
+  if (!participant || participant.hikeId !== hikeId) throw new Error('Invalid participant')
+  if (participant.bringsCar) throw new Error('Drivers cannot be assigned as a passenger')
+
+  if (driverParticipantId !== null) {
+    const driver = await prisma.hikeParticipant.findUnique({
+      where: { id: driverParticipantId },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
+    })
+    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
+    const takenSeats = driver.carPassengers.filter(p => p.id !== participantId).length
+    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) throw new Error('Car is full')
+  }
+
+  await prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
@@ -179,12 +236,15 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, friend: { select: { id: true } } },
+    select: { id: true, roomId: true, friend: { select: { id: true, roomId: true } } },
   })
   if (!participation) throw new Error('Not registered for this hike')
 
-  const friendId = participation.friend?.id ?? null
-  const neededSeats = friendId ? 2 : 1
+  // Move the friend along only while they're still linked (same room, or both
+  // unassigned) — once separately assigned, they stay put.
+  const linked = participation.friend ? participation.friend.roomId === participation.roomId : false
+  const movingIds = linked && participation.friend ? [participation.id, participation.friend.id] : [participation.id]
+  const neededSeats = movingIds.length
 
   if (roomId !== null) {
     const room = await prisma.hikeRoom.findUnique({
@@ -192,14 +252,39 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
       select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
     })
     if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
-    const taken = room.occupants.filter(o => o.id !== participation.id && o.id !== friendId).length
+    const taken = room.occupants.filter(o => !movingIds.includes(o.id)).length
     if (taken + neededSeats > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.$transaction([
-    prisma.hikeParticipant.update({ where: { id: participation.id }, data: { roomId } }),
-    ...(friendId ? [prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })] : []),
-  ])
+  await prisma.$transaction(
+    movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { roomId } }))
+  )
+
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+}
+
+export async function assignFriendRoom(hikeId: string, roomId: string | null) {
+  const session = await getServerSession(authOptions)
+  if (!session) throw new Error('Not authenticated')
+
+  const participation = await prisma.hikeParticipant.findUnique({
+    where: { hikeId_userId: { hikeId, userId: session.user.id } },
+    select: { friend: { select: { id: true } } },
+  })
+  if (!participation?.friend) throw new Error('No friend registered')
+  const friendId = participation.friend.id
+
+  if (roomId !== null) {
+    const room = await prisma.hikeRoom.findUnique({
+      where: { id: roomId },
+      select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
+    })
+    if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
+    const taken = room.occupants.filter(o => o.id !== friendId).length
+    if (taken + 1 > room.capacity) throw new Error('Room is full')
+  }
+
+  await prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
@@ -214,23 +299,17 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
   })
   if (!participant || participant.hikeId !== hikeId) throw new Error('Invalid participant')
 
-  const { hostId, friendId } = await resolvePair(prisma, participantId)
-  const neededSeats = friendId ? 2 : 1
-
   if (roomId !== null) {
     const room = await prisma.hikeRoom.findUnique({
       where: { id: roomId },
       select: { hikeId: true, capacity: true, occupants: { select: { id: true } } },
     })
     if (!room || room.hikeId !== hikeId) throw new Error('Invalid room')
-    const taken = room.occupants.filter(o => o.id !== hostId && o.id !== friendId).length
-    if (taken + neededSeats > room.capacity) throw new Error('Room is full')
+    const taken = room.occupants.filter(o => o.id !== participantId).length
+    if (taken + 1 > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.$transaction([
-    prisma.hikeParticipant.update({ where: { id: hostId }, data: { roomId } }),
-    ...(friendId ? [prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })] : []),
-  ])
+  await prisma.hikeParticipant.update({ where: { id: participantId }, data: { roomId } })
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
@@ -315,7 +394,7 @@ export async function createHike(data: {
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
-      status: 'upcoming',
+      status: 'draft',
       createdById: session.user.id,
     },
   })
