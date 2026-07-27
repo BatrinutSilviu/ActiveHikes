@@ -21,7 +21,6 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
         peoplePerCar: true,
         carsNeeded: true,
         maxParticipants: true,
-        status: true,
         participants: {
           where: { status: 'confirmed' },
           select: {
@@ -47,7 +46,6 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
   const drivers = hike.participants
     .filter(p => p.bringsCar && p.carSeats != null)
     .map(p => ({ id: p.id, name: pName(p), seats: p.carSeats! }))
-  const isActive = hike.status === 'upcoming' || hike.status === 'ongoing'
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -69,11 +67,9 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
           dict={dc}
         />
 
-        {isActive && (
-          <CarAllocatorPanel hikeId={hike.id} dict={d.admin.hike.carAllocator} />
-        )}
+        <CarAllocatorPanel hikeId={hike.id} dict={d.admin.hike.carAllocator} />
 
-        {isActive && drivers.length > 0 && (
+        {drivers.length > 0 && (
           <div>
             <h2 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
               <Users size={18} className="text-emerald-600" /> {dc.assignTitle}
