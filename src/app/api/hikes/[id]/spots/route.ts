@@ -5,12 +5,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params
 
   const [hike, confirmed, waitlist] = await Promise.all([
-    prisma.hike.findUnique({ where: { id }, select: { maxParticipants: true } }),
+    prisma.hike.findUnique({ where: { id }, select: { maxParticipants: true, status: true } }),
     prisma.hikeParticipant.count({ where: { hikeId: id, status: 'confirmed' } }),
     prisma.hikeParticipant.count({ where: { hikeId: id, status: 'waitlist' } }),
   ])
 
-  if (!hike) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (!hike || hike.status === 'draft') return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   return NextResponse.json({
     confirmedCount: confirmed,

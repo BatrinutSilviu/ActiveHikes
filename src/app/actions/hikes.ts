@@ -25,19 +25,21 @@ export async function joinHike(
 
   const trimmedFriendName = friendName?.trim() || null
 
+  const isAdmin = session.user.role === 'admin'
+
   await prisma.$transaction(async (tx) => {
     // Lock the hike row so concurrent joins are serialized
-    const hikes = await tx.$queryRaw<{ maxParticipants: number }[]>`
-      SELECT "maxParticipants" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
+    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string }[]>`
+      SELECT "maxParticipants", "status" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
     `
     if (!hikes.length) throw new Error('Hike not found')
+    if (hikes[0].status === 'draft' && !isAdmin) throw new Error('Hike not found')
 
     const confirmed = await tx.hikeParticipant.count({
       where: { hikeId, status: 'confirmed' },
     })
 
     const neededSpots = trimmedFriendName ? 2 : 1
-    const isAdmin = session.user.role === 'admin'
     const isFull = confirmed + neededSpots > hikes[0].maxParticipants
     const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending'
     const confirmedAt = isAdmin ? new Date() : undefined
@@ -315,7 +317,7 @@ export async function createHike(data: {
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
-      status: 'upcoming',
+      status: 'draft',
       createdById: session.user.id,
     },
   })

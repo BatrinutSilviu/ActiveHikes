@@ -271,7 +271,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.status}</label>
         <select value={form.status} onChange={e => set('status', e.target.value)} className={cls}>
-          {(['upcoming', 'ongoing', 'completed', 'cancelled'] as const).map(s => (
+          {(['draft', 'upcoming', 'ongoing', 'completed', 'cancelled'] as const).map(s => (
             <option key={s} value={s}>{dict.statuses[s] ?? s}</option>
           ))}
         </select>

@@ -19,6 +19,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
       select: {
         id: true,
         title: true,
+        status: true,
         rooms: {
           orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
           include: {
@@ -32,6 +33,7 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
   ])
 
   if (!hike) notFound()
+  if (hike.status === 'draft' && session?.user?.role !== 'admin') notFound()
 
   const rooms = hike.rooms.map(r => ({
     id: r.id,

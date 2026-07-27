@@ -7,4 +7,8 @@ export async function expireOverduePending() {
     where: { status: 'pending', paymentDeadline: { lt: new Date() } },
     data: { status: 'expired' },
   })
+  await prisma.viaFerrataParticipant.updateMany({
+    where: { status: 'pending', paymentDeadline: { lt: new Date() } },
+    data: { status: 'expired' },
+  })
 }
