@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
 import { Upload, X } from 'lucide-react'
+import { HikeStatus } from '@prisma/client'
 
 type HikeData = {
   id: string
@@ -14,6 +15,7 @@ type HikeData = {
   meetingTime: string | null
   durationHours: number | null
   difficulty: string | null
+  status: HikeStatus
   coverImageUrl: string | null
   externalPhotosUrl: string | null
   whatsappGroupUrl: string | null
@@ -54,6 +56,7 @@ type HikeEditDict = {
   durationPlaceholder: string
   difficulty: string
   selectDifficulty: string
+  status: string
   maxParticipants: string
   entryFee: string
   mountainRange: string
@@ -96,6 +99,7 @@ type HikeEditDict = {
   savedSuccessfully: string
   saveChanges: string
   saving: string
+  statuses: Record<string, string>
   difficulties: Record<string, string>
 }
 
@@ -112,6 +116,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
     meetingTime: hike.meetingTime ?? '',
     durationHours: hike.durationHours != null ? String(hike.durationHours) : '',
     difficulty: hike.difficulty ?? '',
+    status: hike.status,
     externalPhotosUrl: hike.externalPhotosUrl ?? '',
     whatsappGroupUrl: hike.whatsappGroupUrl ?? '',
     accommodationDetails: hike.accommodationDetails ?? '',
@@ -182,6 +187,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
         meetingTime: form.meetingTime || null,
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
         difficulty: form.difficulty || null,
+        status: form.status as HikeStatus,
         externalPhotosUrl: form.externalPhotosUrl || null,
         whatsappGroupUrl: form.whatsappGroupUrl || null,
         accommodationDetails: form.accommodationDetails || null,
@@ -259,6 +265,16 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
             {DIFFICULTIES.map(d => <option key={d} value={d}>{dict.difficulties[d] ?? d}</option>)}
           </select>
         </div>
+      </div>
+
+      {/* Status & participants */}
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.status}</label>
+        <select value={form.status} onChange={e => set('status', e.target.value)} className={cls}>
+          {(['upcoming', 'ongoing', 'completed', 'cancelled'] as const).map(s => (
+            <option key={s} value={s}>{dict.statuses[s] ?? s}</option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

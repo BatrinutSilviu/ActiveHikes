@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { assignCarDriver, assignFriendCarDriver } from '@/app/actions/hikes'
+import { assignCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
 
 type Participant = {
@@ -27,7 +27,6 @@ type AttendeeSectionDict = {
   leave: string
   yourCar: string
   friendOf: string
-  you: string
 }
 
 function pName(p: Participant) {
@@ -38,14 +37,12 @@ export default function AttendeeSection({
   hikeId,
   participants: initialParticipants,
   userParticipantId,
-  userFriendParticipantId,
   isUpcoming,
   dict,
 }: {
   hikeId: string
   participants: Participant[]
   userParticipantId: string | null
-  userFriendParticipantId?: string | null
   isUpcoming: boolean
   dict: AttendeeSectionDict
 }) {
@@ -73,18 +70,10 @@ export default function AttendeeSection({
 
   const userParticipant = participants.find(p => p.id === userParticipantId)
   const userIsDiver = userParticipant?.bringsCar ?? false
-  const friendParticipant = participants.find(p => p.id === userFriendParticipantId)
 
   const assign = (driverParticipantId: string | null) => {
     startTransition(async () => {
       await assignCarDriver(hikeId, driverParticipantId)
-      await refetch()
-    })
-  }
-
-  const assignFriend = (driverParticipantId: string | null) => {
-    startTransition(async () => {
-      await assignFriendCarDriver(hikeId, driverParticipantId)
       await refetch()
     })
   }
@@ -109,7 +98,6 @@ export default function AttendeeSection({
             const isFull = left <= 0
             const isMyDriver = userParticipant?.carDriverParticipantId === driver.id
             const isMyOwnCar = userParticipantId === driver.id
-            const isFriendsDriver = friendParticipant?.carDriverParticipantId === driver.id
 
             return (
               <div key={driver.id}
@@ -145,37 +133,17 @@ export default function AttendeeSection({
                     )}
 
                     {isUpcoming && userParticipantId && !userIsDiver && !isMyOwnCar && (
-                      <div className="flex items-center gap-1.5">
-                        {friendParticipant && <span className="text-xs text-stone-400">{dict.you}</span>}
-                        {isMyDriver ? (
-                          <button onClick={() => assign(null)} disabled={isPending}
-                            className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">
-                            <X size={12} /> {dict.leave}
-                          </button>
-                        ) : !isFull && (
-                          <button onClick={() => assign(driver.id)} disabled={isPending}
-                            className="flex items-center gap-1 text-xs text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors">
-                            <Car size={12} /> {dict.hopIn}
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {isUpcoming && friendParticipant && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-stone-400">{pName(friendParticipant)}</span>
-                        {isFriendsDriver ? (
-                          <button onClick={() => assignFriend(null)} disabled={isPending}
-                            className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">
-                            <X size={12} /> {dict.leave}
-                          </button>
-                        ) : !isFull && (
-                          <button onClick={() => assignFriend(driver.id)} disabled={isPending}
-                            className="flex items-center gap-1 text-xs text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors">
-                            <Car size={12} /> {dict.hopIn}
-                          </button>
-                        )}
-                      </div>
+                      isMyDriver ? (
+                        <button onClick={() => assign(null)} disabled={isPending}
+                          className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">
+                          <X size={12} /> {dict.leave}
+                        </button>
+                      ) : !isFull && (
+                        <button onClick={() => assign(driver.id)} disabled={isPending}
+                          className="flex items-center gap-1 text-xs text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors">
+                          <Car size={12} /> {dict.hopIn}
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

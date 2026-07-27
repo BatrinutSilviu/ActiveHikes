@@ -4,27 +4,19 @@ import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'luc
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
-import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await expireOverduePending()
 
-  const [d, hikeCount, viaFerrataCount, hikePendingCount, viaFerrataPendingCount, userCount, draftHikes, upcomingHikes, pastHikes, upcomingViaFerrata] = await Promise.all([
+  const [d, hikeCount, pendingCount, userCount, upcomingHikes, pastHikes] = await Promise.all([
     getDictionary(lang),
     prisma.hike.count(),
-    prisma.viaFerrata.count(),
     prisma.hikeParticipant.count({ where: { status: 'pending' } }),
-    prisma.viaFerrataParticipant.count({ where: { status: 'pending' } }),
     prisma.user.count({ where: { role: 'user' } }),
-    prisma.hike.findMany({
-      where: { status: 'draft' },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
-    }),
     prisma.hike.findMany({
       where: { status: { in: ['upcoming', 'ongoing'] } },
       orderBy: { date: 'asc' },
@@ -36,15 +28,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       orderBy: { date: 'desc' },
       select: { id: true, title: true, date: true, endDate: true, status: true },
     }),
-    prisma.viaFerrata.findMany({
-      where: { status: { in: ['upcoming', 'ongoing'] } },
-      orderBy: { date: 'asc' },
-      take: 5,
-      select: { id: true, title: true, date: true, maxParticipants: true },
-    }),
   ])
-
-  const pendingCount = hikePendingCount + viaFerrataPendingCount
 
   const da = d.admin.dashboard
 
@@ -65,7 +49,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg shadow-emerald-200">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -75,16 +59,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
           </div>
           <div className="text-4xl font-black">{hikeCount}</div>
           <div className="text-emerald-100 text-sm font-medium mt-1">{da.totalHikes}</div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center">
-              <Mountain size={20} className="text-stone-600" />
-            </div>
-          </div>
-          <div className="text-4xl font-black text-stone-900">{viaFerrataCount}</div>
-          <div className="text-stone-500 text-sm font-medium mt-1">{da.totalViaFerrata}</div>
         </div>
 
         <div className={`rounded-2xl p-6 shadow-sm border ${pendingCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-stone-100'}`}>
@@ -114,37 +88,11 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
         <QuickLink href={`/${lang}/admin/hikes/new`} icon={<Plus size={17} />} label={da.createHike} />
-        <QuickLink href={`/${lang}/admin/via-ferrata/new`} icon={<Plus size={17} />} label={da.newViaFerrata} />
         <QuickLink href={`/${lang}/admin/bank-accounts`} icon={<CreditCard size={17} />} label={da.bankAccounts} />
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
-        <QuickLink href={`/${lang}/admin/via-ferrata-participants`} icon={<Users size={17} />} label={da.allViaFerrataParticipants} />
       </div>
-
-      {/* Draft hikes list */}
-      {draftHikes.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm mb-6">
-          <div className="px-6 py-4 border-b border-amber-100">
-            <h2 className="font-bold text-amber-800">{da.draftHikes}</h2>
-          </div>
-          <div className="divide-y divide-amber-100">
-            {draftHikes.map(hike => (
-              <Link key={hike.id} href={`/${lang}/admin/hikes/${hike.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-amber-100/50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{hike.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-amber-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Upcoming hikes list */}
       <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm">
@@ -167,36 +115,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
                   <div className="text-stone-400 text-xs mt-0.5">
                     {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     {' · '}{hike.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Upcoming Via Ferrata list */}
-      <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mt-6">
-        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-          <h2 className="font-bold text-stone-900">{da.upcomingViaFerrata}</h2>
-          <Link href={`/${lang}/admin/via-ferrata/new`} className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 transition-colors">{da.addNew}</Link>
-        </div>
-        {upcomingViaFerrata.length === 0 ? (
-          <div className="px-6 py-12 text-center text-stone-400">
-            <Mountain size={32} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm">{da.noUpcomingViaFerrata}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-50">
-            {upcomingViaFerrata.map(event => (
-              <Link key={event.id} href={`/${lang}/admin/via-ferrata/${event.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{event.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {new Date(event.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{event.maxParticipants} {da.spots}
                   </div>
                 </div>
                 <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />

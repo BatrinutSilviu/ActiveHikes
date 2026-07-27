@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantManager from '@/components/admin/ParticipantManager'
 import HikeEditForm from '@/components/admin/HikeEditForm'
-import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import PhotoUploader from '@/components/admin/PhotoUploader'
 import JoinButton from '@/components/hikes/JoinButton'
 import { ArrowLeft, Car, BedDouble, ChevronRight } from 'lucide-react'
@@ -11,14 +10,13 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { expireOverduePending } from '@/lib/expireParticipants'
-import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await expireOverduePending()
 
   const [d, session, hike] = await Promise.all([
     getDictionary(lang),
@@ -116,10 +114,6 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <Link href={`/${lang}/hikes/${hike.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">
           {da.viewPublicPage}
         </Link>
-      </div>
-
-      <div className="mb-8">
-        <HikeStatusControl hikeId={hike.id} status={hike.status} dict={d.admin.hikeStatus} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

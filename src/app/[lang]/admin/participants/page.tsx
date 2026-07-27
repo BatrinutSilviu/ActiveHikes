@@ -4,7 +4,6 @@ import { ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
-import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -19,7 +18,7 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await expireOverduePending()
 
   const [d, participants] = await Promise.all([
     getDictionary(lang),

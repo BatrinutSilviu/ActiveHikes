@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import CarConfigForm from '@/components/admin/CarConfigForm'
 import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
-import ManualCarAssignmentList from '@/components/admin/ManualCarAssignmentList'
-import { ArrowLeft, Users } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
 export default async function AdminHikeCarsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -15,39 +14,13 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
     getDictionary(lang),
     prisma.hike.findUnique({
       where: { id },
-      select: {
-        id: true,
-        title: true,
-        peoplePerCar: true,
-        carsNeeded: true,
-        maxParticipants: true,
-        status: true,
-        participants: {
-          where: { status: 'confirmed' },
-          select: {
-            id: true,
-            friendName: true,
-            hostParticipantId: true,
-            bringsCar: true,
-            carSeats: true,
-            carDriverParticipantId: true,
-            user: { select: { name: true } },
-            friend: { select: { id: true, friendName: true } },
-            host: { select: { user: { select: { name: true } } } },
-          },
-        },
-      },
+      select: { id: true, title: true, peoplePerCar: true, carsNeeded: true, maxParticipants: true, status: true },
     }),
   ])
 
   if (!hike) notFound()
 
   const dc = d.admin.carsPage
-  const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
-  const drivers = hike.participants
-    .filter(p => p.bringsCar && p.carSeats != null)
-    .map(p => ({ id: p.id, name: pName(p), seats: p.carSeats! }))
-  const isActive = hike.status === 'upcoming' || hike.status === 'ongoing'
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -69,31 +42,8 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
           dict={dc}
         />
 
-        {isActive && (
+        {hike.status === 'upcoming' && (
           <CarAllocatorPanel hikeId={hike.id} dict={d.admin.hike.carAllocator} />
-        )}
-
-        {isActive && drivers.length > 0 && (
-          <div>
-            <h2 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
-              <Users size={18} className="text-emerald-600" /> {dc.assignTitle}
-            </h2>
-            <ManualCarAssignmentList
-              hikeId={hike.id}
-              participants={hike.participants.map(p => ({
-                id: p.id,
-                friendName: p.friendName,
-                hostParticipantId: p.hostParticipantId,
-                hostName: p.host?.user?.name ?? null,
-                linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
-                bringsCar: p.bringsCar,
-                carDriverParticipantId: p.carDriverParticipantId,
-                user: p.user,
-              }))}
-              drivers={drivers}
-              dict={dc}
-            />
-          </div>
         )}
       </div>
     </div>
