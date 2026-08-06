@@ -615,6 +615,7 @@
       "title": "Cars",
       "backToHike": "← Back to hike",
       "viewCarpoolPage": "View public carpool page →",
+      "exportCsv": "Export as CSV",
       "peoplePerCar": "People per car",
       "carsNeeded": "Minimum number of cars",
       "save": "Save",

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import CarConfigForm from '@/components/admin/CarConfigForm'
 import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
 import ManualCarAssignmentList from '@/components/admin/ManualCarAssignmentList'
-import { ArrowLeft, Users } from 'lucide-react'
+import { ArrowLeft, Users, Download } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 
 export default async function AdminHikeCarsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
@@ -76,9 +76,17 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
 
         {drivers.length > 0 && (
           <div>
-            <h2 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
-              <Users size={18} className="text-emerald-600" /> {dc.assignTitle}
-            </h2>
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h2 className="text-lg font-bold text-stone-800 flex items-center gap-2">
+                <Users size={18} className="text-emerald-600" /> {dc.assignTitle}
+              </h2>
+              <a
+                href={`/api/hikes/${hike.id}/cars/export`}
+                className="flex items-center gap-1.5 text-sm font-medium text-stone-600 hover:text-stone-900 border border-stone-200 rounded-lg px-3 py-1.5 hover:bg-stone-50 transition-colors shrink-0"
+              >
+                <Download size={14} /> {dc.exportCsv}
+              </a>
+            </div>
             <ManualCarAssignmentList
               hikeId={hike.id}
               participants={hike.participants.map(p => ({
