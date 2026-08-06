@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantManager from '@/components/admin/ParticipantManager'
+import PickupLocationsMap from '@/components/admin/PickupLocationsMapWrapper'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import PhotoUploader from '@/components/admin/PhotoUploader'
@@ -82,6 +83,15 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
 
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
+  const pickupPins = participants
+    .filter(p => p.pickupLat != null && p.pickupLng != null)
+    .map(p => ({
+      id: p.id,
+      label: p.user?.name ?? p.friendName ?? '?',
+      lat: p.pickupLat!,
+      lng: p.pickupLng!,
+    }))
+
   const confirmedCount = counts.confirmed
   const spotsLeft = hike.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
@@ -135,6 +145,15 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <div>
           <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
           <ParticipantManager participants={participants} hikeId={hike.id} maxParticipants={hike.maxParticipants} dict={da} />
+
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-stone-800 mb-4">{da.pickupLocationsTitle}</h2>
+            {pickupPins.length > 0 ? (
+              <PickupLocationsMap pins={pickupPins} dict={da} />
+            ) : (
+              <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400">{da.noPickupLocations}</div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-6">
