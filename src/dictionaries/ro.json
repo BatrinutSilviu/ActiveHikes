@@ -576,6 +576,9 @@
       "loadingAddress": "Se încarcă adresa…",
       "addressUnavailable": "Adresă indisponibilă",
       "openInMaps": "Deschide în Google Maps",
+      "driverLabel": "șofer",
+      "legendDriver": "Punct de plecare șofer",
+      "legendPassenger": "Punct de preluare pasager",
       "joined": "Înscris",
       "bringsCar": "Conduce",
       "payBy": "Plătește până la",
@@ -611,6 +614,7 @@
     "carsPage": {
       "title": "Mașini",
       "backToHike": "← Înapoi la drumeție",
+      "viewCarpoolPage": "Vezi pagina publică de mașini →",
       "peoplePerCar": "Persoane per mașină",
       "carsNeeded": "Număr minim de mașini",
       "save": "Salvează",

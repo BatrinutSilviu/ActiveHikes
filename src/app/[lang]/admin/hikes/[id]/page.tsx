@@ -90,6 +90,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       label: p.user?.name ?? p.friendName ?? '?',
       lat: p.pickupLat!,
       lng: p.pickupLng!,
+      isDriver: p.bringsCar,
     }))
 
   const confirmedCount = counts.confirmed

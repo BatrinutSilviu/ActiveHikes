@@ -576,6 +576,9 @@
       "loadingAddress": "Loading address…",
       "addressUnavailable": "Address unavailable",
       "openInMaps": "Open in Google Maps",
+      "driverLabel": "driver",
+      "legendDriver": "Driver's departure point",
+      "legendPassenger": "Passenger pickup point",
       "joined": "Joined",
       "bringsCar": "Driving",
       "payBy": "Pay by",
@@ -611,6 +614,7 @@
     "carsPage": {
       "title": "Cars",
       "backToHike": "← Back to hike",
+      "viewCarpoolPage": "View public carpool page →",
       "peoplePerCar": "People per car",
       "carsNeeded": "Minimum number of cars",
       "save": "Save",

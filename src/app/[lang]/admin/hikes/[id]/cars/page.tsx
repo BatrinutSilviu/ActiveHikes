@@ -53,9 +53,14 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
         <ArrowLeft size={16} /> {dc.backToHike}
       </Link>
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-stone-900">{dc.title}</h1>
-        <p className="text-stone-500 mt-1">{hike.title}</p>
+      <div className="flex items-start justify-between gap-3 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-stone-900">{dc.title}</h1>
+          <p className="text-stone-500 mt-1">{hike.title}</p>
+        </div>
+        <Link href={`/${lang}/hikes/${hike.id}/carpool`} className="text-emerald-600 hover:underline text-sm font-medium shrink-0" target="_blank">
+          {dc.viewCarpoolPage}
+        </Link>
       </div>
 
       <div className="space-y-6">
