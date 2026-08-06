@@ -24,6 +24,9 @@ export async function updateParticipantStatus(
       status: newStatus,
       confirmedAt: newStatus === 'confirmed' ? new Date() : undefined,
       paymentDeadline: newStatus === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
+      // No longer confirmed → free up the car seat they were occupying, so it
+      // doesn't keep counting against the driver's capacity.
+      ...(newStatus !== 'confirmed' ? { carDriverParticipantId: null } : {}),
     },
   })
 

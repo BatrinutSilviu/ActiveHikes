@@ -163,7 +163,7 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
       where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
     })
     if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
     const takenSeats = driver.carPassengers.filter(p => !movingIds.includes(p.id)).length
@@ -191,7 +191,7 @@ export async function assignFriendCarDriver(hikeId: string, driverParticipantId:
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
       where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
     })
     if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
     const takenSeats = driver.carPassengers.filter(p => p.id !== friendId).length
@@ -217,7 +217,7 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
       where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
+      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
     })
     if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) return { error: 'Invalid driver' }
     const takenSeats = driver.carPassengers.filter(p => p.id !== participantId).length
