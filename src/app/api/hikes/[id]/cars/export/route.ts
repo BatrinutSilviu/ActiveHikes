@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
-type Row = { driver: string; seats: string; passenger: string; phone: string }
+type Row = { driver: string; seats: string; passenger: string }
 
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`
@@ -11,8 +11,8 @@ function csvEscape(value: string) {
 }
 
 function toCsv(rows: Row[]) {
-  const header = ['Driver', 'Seats', 'Passenger', 'Phone']
-  const lines = [header, ...rows.map(r => [r.driver, r.seats, r.passenger, r.phone])]
+  const header = ['Driver', 'Seats', 'Passenger']
+  const lines = [header, ...rows.map(r => [r.driver, r.seats, r.passenger])]
   return lines.map(line => line.map(csvEscape).join(',')).join('\n')
 }
 
@@ -35,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         bringsCar: true,
         carSeats: true,
         carDriverParticipantId: true,
-        user: { select: { name: true, phone: true } },
+        user: { select: { name: true } },
       },
       orderBy: { joinedAt: 'asc' },
     }),
@@ -44,7 +44,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!hike) return NextResponse.json({ error: 'Hike not found' }, { status: 404 })
 
   const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
-  const phone = (p: { user: { phone: string | null } | null }) => p.user?.phone ?? ''
   const findById = (id: string) => participants.find(p => p.id === id)
 
   const drivers = participants.filter(p => p.bringsCar && p.carSeats != null)
@@ -59,7 +58,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       if (seen.has(p.id) || p.hostParticipantId !== null) continue
       const friend = carPassengers.find(f => f.hostParticipantId === p.id)
       const label = friend ? `${pName(p)} + ${pName(friend)} (friend)` : pName(p)
-      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: label, phone: phone(p) })
+      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: label })
       seen.add(p.id)
       if (friend) seen.add(friend.id)
     }
@@ -72,13 +71,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         driver: pName(driver),
         seats: String(driver.carSeats),
         passenger: `${pName(p)} (friend of ${host ? pName(host) : '?'})`,
-        phone: phone(p),
       })
       seen.add(p.id)
     }
 
     if (carPassengers.length === 0) {
-      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: '', phone: phone(driver) })
+      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: '' })
     }
   }
 
@@ -87,7 +85,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (seen.has(p.id)) continue
     const friend = participants.find(f => f.hostParticipantId === p.id && !f.bringsCar && f.carDriverParticipantId === null)
     const label = friend ? `${pName(p)} + ${pName(friend)} (friend)` : pName(p)
-    rows.push({ driver: '', seats: '', passenger: label, phone: phone(p) })
+    rows.push({ driver: '', seats: '', passenger: label })
     seen.add(p.id)
     if (friend) seen.add(friend.id)
   }
@@ -98,7 +96,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (seen.has(p.id) || p.bringsCar) continue
     const host = p.hostParticipantId ? findById(p.hostParticipantId) : null
     const label = host ? `${pName(p)} (friend of ${pName(host)})` : pName(p)
-    rows.push({ driver: '', seats: '', passenger: label, phone: phone(p) })
+    rows.push({ driver: '', seats: '', passenger: label })
     seen.add(p.id)
   }
 
