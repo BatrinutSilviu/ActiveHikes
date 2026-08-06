@@ -203,31 +203,32 @@ export async function assignFriendCarDriver(hikeId: string, driverParticipantId:
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
-export async function adminAssignCarDriver(hikeId: string, participantId: string, driverParticipantId: string | null) {
+export async function adminAssignCarDriver(hikeId: string, participantId: string, driverParticipantId: string | null): Promise<{ error: string } | { success: true }> {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
 
   const participant = await prisma.hikeParticipant.findUnique({
     where: { id: participantId },
     select: { hikeId: true, bringsCar: true },
   })
-  if (!participant || participant.hikeId !== hikeId) throw new Error('Invalid participant')
-  if (participant.bringsCar) throw new Error('Drivers cannot be assigned as a passenger')
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if (participant.bringsCar) return { error: 'Drivers cannot be assigned as a passenger' }
 
   if (driverParticipantId !== null) {
     const driver = await prisma.hikeParticipant.findUnique({
       where: { id: driverParticipantId },
       select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { select: { id: true } } },
     })
-    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
+    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) return { error: 'Invalid driver' }
     const takenSeats = driver.carPassengers.filter(p => p.id !== participantId).length
-    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) throw new Error('Car is full')
+    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) return { error: 'Car is full' }
   }
 
   await prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } })
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  return { success: true }
 }
 
 export async function assignRoom(hikeId: string, roomId: string | null) {

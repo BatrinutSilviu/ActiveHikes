@@ -51,11 +51,11 @@ export default function ManualCarAssignmentList({
     setError('')
     setSavingId(p.id)
     startTransition(async () => {
-      try {
-        await adminAssignCarDriver(hikeId, p.id, driverId)
+      const result = await adminAssignCarDriver(hikeId, p.id, driverId)
+      if ('error' in result) {
+        setError(result.error)
+      } else {
         setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, carDriverParticipantId: driverId } : item))
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : dict.error)
       }
       setSavingId(null)
     })
