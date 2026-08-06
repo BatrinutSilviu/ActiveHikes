@@ -84,7 +84,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
 
   const pickupPins = participants
-    .filter(p => p.pickupLat != null && p.pickupLng != null)
+    .filter(p => p.status === 'confirmed' && p.pickupLat != null && p.pickupLng != null)
     .map(p => ({
       id: p.id,
       label: p.user?.name ?? p.friendName ?? '?',
