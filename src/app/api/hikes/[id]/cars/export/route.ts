@@ -46,58 +46,33 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
   const findById = (id: string) => participants.find(p => p.id === id)
 
+  const passengerLabel = (p: (typeof participants)[number]) => {
+    const host = p.hostParticipantId ? findById(p.hostParticipantId) : null
+    return host ? `${pName(p)} (friend of ${pName(host)})` : pName(p)
+  }
+
   const drivers = participants.filter(p => p.bringsCar && p.carSeats != null)
   const rows: Row[] = []
-  const seen = new Set<string>()
+  const placed = new Set<string>()
 
   for (const driver of drivers) {
     const carPassengers = participants.filter(p => p.carDriverParticipantId === driver.id)
 
-    // Hosts first, combined with their friend when the friend rides the same car
-    for (const p of carPassengers) {
-      if (seen.has(p.id) || p.hostParticipantId !== null) continue
-      const friend = carPassengers.find(f => f.hostParticipantId === p.id)
-      const label = friend ? `${pName(p)} + ${pName(friend)} (friend)` : pName(p)
-      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: label })
-      seen.add(p.id)
-      if (friend) seen.add(friend.id)
-    }
-
-    // Friends riding separately from their host (host assigned elsewhere or unassigned)
-    for (const p of carPassengers) {
-      if (seen.has(p.id) || p.hostParticipantId === null) continue
-      const host = findById(p.hostParticipantId)
-      rows.push({
-        driver: pName(driver),
-        seats: String(driver.carSeats),
-        passenger: `${pName(p)} (friend of ${host ? pName(host) : '?'})`,
-      })
-      seen.add(p.id)
-    }
-
     if (carPassengers.length === 0) {
       rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: '' })
     }
+
+    for (const p of carPassengers) {
+      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: passengerLabel(p) })
+      placed.add(p.id)
+    }
+    placed.add(driver.id)
   }
 
-  const unassigned = participants.filter(p => !p.bringsCar && p.carDriverParticipantId === null && p.hostParticipantId === null)
-  for (const p of unassigned) {
-    if (seen.has(p.id)) continue
-    const friend = participants.find(f => f.hostParticipantId === p.id && !f.bringsCar && f.carDriverParticipantId === null)
-    const label = friend ? `${pName(p)} + ${pName(friend)} (friend)` : pName(p)
-    rows.push({ driver: '', seats: '', passenger: label })
-    seen.add(p.id)
-    if (friend) seen.add(friend.id)
-  }
-
-  // Catch-all: anyone not yet placed (e.g. a friend riding separately from an
-  // unassigned host, or vice versa) still gets a row instead of vanishing.
+  // Everyone not driving or riding in a car — one row per person
   for (const p of participants) {
-    if (seen.has(p.id) || p.bringsCar) continue
-    const host = p.hostParticipantId ? findById(p.hostParticipantId) : null
-    const label = host ? `${pName(p)} (friend of ${pName(host)})` : pName(p)
-    rows.push({ driver: '', seats: '', passenger: label })
-    seen.add(p.id)
+    if (placed.has(p.id)) continue
+    rows.push({ driver: '', seats: '', passenger: passengerLabel(p) })
   }
 
   const csv = toCsv(rows)
