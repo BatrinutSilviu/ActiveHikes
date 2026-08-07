@@ -25,7 +25,7 @@ type ParticipantManagerDict = {
   confirming: string
   spotsFilled: string
   noRegistrations: string
-  noSpotsAlert: string
+  overLimitConfirm: string
   joined: string
   payBy: string
   friendOf: string
@@ -124,8 +124,7 @@ export default function ViaFerrataParticipantManager({
     if (newStatus === 'confirmed') {
       const additional = [p, sibling].filter((x): x is Participant => !!x && x.status !== 'confirmed').length
       if (confirmedCount + additional > maxParticipants) {
-        alert(dict.noSpotsAlert)
-        return
+        if (!confirm(dict.overLimitConfirm)) return
       }
     }
 
