@@ -99,11 +99,17 @@ NEXTAUTH_URL=https://hikes.yourdomain.com
 NEXTAUTH_SECRET=run-openssl-rand-base64-32-and-paste-here
 GOOGLE_CLIENT_ID=          # optional
 GOOGLE_CLIENT_SECRET=      # optional
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM=ActiveHikes <noreply@yourdomain.com>
 ```
 
 `DOMAIN` must be a hostname pointing at this VPS (a DNS A/AAAA record) — it's used in the
 Traefik routing label in `docker-compose.yml`. It can be a subdomain distinct from any other
 project already running behind the same Traefik.
+
+`RESEND_API_KEY` and `EMAIL_FROM` are used for password reset emails. Get an API key from
+[resend.com](https://resend.com), verify a sending domain there, and set `EMAIL_FROM` to an
+address on that domain.
 
 ### 4. Build and start
 

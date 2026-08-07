@@ -324,7 +324,31 @@
       "noAccount": "Don't have an account?",
       "signUp": "Sign up",
       "invalidCredentials": "Invalid email or password.",
-      "oauthError": "This email is registered with a password. Please sign in with email instead."
+      "oauthError": "This email is registered with a password. Please sign in with email instead.",
+      "forgotPassword": "Forgot password?",
+      "resetSuccess": "Password updated. You can sign in now."
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "We'll email you a link to set a new one",
+      "email": "Email",
+      "sendLink": "Send reset link",
+      "sending": "Sending…",
+      "sentMessage": "If that email is registered, we've sent a link to reset your password.",
+      "backToLogin": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a new password for your account",
+      "newPassword": "New password",
+      "passwordNote": "Min. 8 characters",
+      "confirmPassword": "Confirm password",
+      "passwordMismatch": "Passwords don't match.",
+      "genericError": "Something went wrong.",
+      "missingToken": "This reset link is invalid. Please request a new one.",
+      "save": "Save password",
+      "saving": "Saving…",
+      "backToLogin": "Back to sign in"
     },
     "signup": {
       "title": "Create an account",

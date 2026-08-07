@@ -324,7 +324,31 @@
       "noAccount": "Nu ai cont?",
       "signUp": "Înregistrare",
       "invalidCredentials": "Email sau parolă incorectă.",
-      "oauthError": "Acest email este înregistrat cu parolă. Te rugăm să te autentifici cu email."
+      "oauthError": "Acest email este înregistrat cu parolă. Te rugăm să te autentifici cu email.",
+      "forgotPassword": "Ai uitat parola?",
+      "resetSuccess": "Parolă actualizată. Te poți autentifica acum."
+    },
+    "forgotPassword": {
+      "title": "Resetează-ți parola",
+      "subtitle": "Îți trimitem un link pentru a-ți seta o parolă nouă",
+      "email": "Email",
+      "sendLink": "Trimite link de resetare",
+      "sending": "Se trimite…",
+      "sentMessage": "Dacă acest email este înregistrat, ți-am trimis un link pentru resetarea parolei.",
+      "backToLogin": "Înapoi la autentificare"
+    },
+    "resetPassword": {
+      "title": "Setează o parolă nouă",
+      "subtitle": "Alege o parolă nouă pentru contul tău",
+      "newPassword": "Parolă nouă",
+      "passwordNote": "Minim 8 caractere",
+      "confirmPassword": "Confirmă parola",
+      "passwordMismatch": "Parolele nu coincid.",
+      "genericError": "A apărut o eroare.",
+      "missingToken": "Acest link de resetare este invalid. Solicită unul nou.",
+      "save": "Salvează parola",
+      "saving": "Se salvează…",
+      "backToLogin": "Înapoi la autentificare"
     },
     "signup": {
       "title": "Creează un cont",

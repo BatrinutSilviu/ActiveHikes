@@ -19,6 +19,7 @@ function LoginForm() {
 
   const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`
   const authError = searchParams.get('error')
+  const resetSuccess = searchParams.get('reset') === 'success'
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +56,11 @@ function LoginForm() {
               {d.oauthError}
             </div>
           )}
+          {resetSuccess && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 mb-5 text-emerald-800 text-sm">
+              {d.resetSuccess}
+            </div>
+          )}
 
           {/* Google */}
           <button onClick={() => signIn('google', { callbackUrl })}
@@ -83,7 +89,12 @@ function LoginForm() {
                 placeholder="you@example.com" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1.5">{d.password}</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide">{d.password}</label>
+                <Link href={`/${lang}/auth/forgot-password`} className="text-xs font-semibold text-emerald-600 hover:underline">
+                  {d.forgotPassword}
+                </Link>
+              </div>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
                 className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-stone-50 focus:bg-white transition-colors"
                 placeholder="••••••••" />

@@ -12,7 +12,7 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **Waitlist**: once the participant limit is hit, new registrations go to `waitlist` automatically; admin can promote them manually
 - **After the hike**: admin uploads featured photos (shown in a gallery on the hike page), pastes a Google Photos link for the full album, uploads the actual GPX track, and marks the hike as `completed`
 - **Users** see their registrations and status on their profile page
-- No email notifications — everything is checked manually through the app
+- No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional email sent is the password reset link.
 
 ## Tech stack
 
@@ -21,6 +21,7 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **NextAuth v4** — JWT sessions, Credentials provider + Google OAuth (optional)
 - **File uploads** — saved to `public/uploads/{bucket}/` on disk (Docker volume in prod)
 - **Server Actions** for mutations (`src/app/actions/`), API route for file uploads (`/api/upload`)
+- **Resend** — sends password reset emails (`RESEND_API_KEY`, `EMAIL_FROM` env vars)
 
 ## Running locally
 
@@ -63,6 +64,9 @@ src/middleware.ts             Route protection (admin + profile routes)
 src/app/actions/              Server Actions — hikes.ts, participants.ts, photos.ts, bank-accounts.ts
 src/app/api/upload/route.ts   File upload endpoint (saves to public/uploads/)
 src/app/api/auth/register/    User signup endpoint (validates full name, hashes password)
+src/app/api/auth/forgot-password/  Requests a password reset email
+src/app/api/auth/reset-password/   Consumes a reset token and sets a new password
+src/lib/mailer.ts              Resend email wrapper (password reset)
 .github/workflows/deploy.yml  Auto-deploy to VPS on push to main (see SETUP.md)
 ```
 
@@ -74,6 +78,8 @@ src/app/api/auth/register/    User signup endpoint (validates full name, hashes 
 /hikes/[id]           Hike detail, join button, payment info, photos, GPX download
 /auth/login           Login (email or Google)
 /auth/signup          Sign up
+/auth/forgot-password Request a password reset email
+/auth/reset-password  Set a new password from the emailed link
 /profile              User's registrations and their status
 /admin                Dashboard — stats, upcoming hikes list
 /admin/hikes/new      Create a hike
