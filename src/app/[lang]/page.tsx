@@ -4,15 +4,19 @@ import HikeCard from '@/components/HikeCard'
 import { Mountain, ArrowRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
+import { isPastEvent } from '@/lib/dates'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 async function getUpcomingHikes() {
   const hikes = await prisma.hike.findMany({
     where: { status: { in: ['upcoming', 'ongoing'] } },
     orderBy: { date: 'asc' },
-    take: 6,
     include: { participants: { select: { status: true } } },
   })
-  return hikes.map(h => ({
+  return hikes
+    .filter(h => !isPastEvent(h.status, h.date, h.endDate))
+    .slice(0, 6)
+    .map(h => ({
     ...h,
     date: h.date.toISOString(),
     endDate: h.endDate ? h.endDate.toISOString() : null,
@@ -30,6 +34,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
+  await advanceEventStatuses()
   const [d, upcomingHikes] = await Promise.all([getDictionary(lang), getUpcomingHikes()])
 
   return (

@@ -5,6 +5,8 @@ import { Mountain } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
+import { isPastEvent } from '@/lib/dates'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 async function getAllViaFerrata() {
   const events = await prisma.viaFerrata.findMany({
@@ -21,8 +23,8 @@ async function getAllViaFerrata() {
     participants: undefined,
   })
   return {
-    upcoming: events.filter(e => e.status === 'upcoming' || e.status === 'ongoing').reverse().map(serialize),
-    past: events.filter(e => e.status === 'completed' || e.status === 'cancelled').map(serialize),
+    upcoming: events.filter(e => !isPastEvent(e.status, e.date)).reverse().map(serialize),
+    past: events.filter(e => isPastEvent(e.status, e.date)).map(serialize),
   }
 }
 
@@ -36,6 +38,7 @@ export default async function ViaFerrataPage({
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
+  await advanceEventStatuses()
   const [d, { upcoming, past }, sp] = await Promise.all([
     getDictionary(lang),
     getAllViaFerrata(),

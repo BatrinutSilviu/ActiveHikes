@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Calendar, Users, Clock, Tent, Hotel, ChevronRight, Mountain, MapPin } from 'lucide-react'
-import { formatHikeDate } from '@/lib/dates'
+import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
 const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
 
@@ -58,7 +58,7 @@ const STATUS_TEXT: Record<string, string> = {
 export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lang: string; dict: HikeCardDict }) {
   const spotsLeft = hike.maxParticipants - hike.confirmedCount
   const isFull = spotsLeft <= 0
-  const isUpcoming = hike.status === 'upcoming'
+  const isUpcoming = !isPastEvent(hike.status, hike.date, hike.endDate)
   const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? hike.accommodationPrice : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? hike.accommodationDeposit : 0
   const confirmationPrice = hike.entryFee + accommodationDeposit

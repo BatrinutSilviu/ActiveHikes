@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Calendar, Users, Clock, ChevronRight, Mountain, MapPin } from 'lucide-react'
-import { formatHikeDate } from '@/lib/dates'
+import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
 const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
 
@@ -37,7 +37,7 @@ const STATUS_TEXT: Record<string, string> = {
 export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata: ViaFerrataCardData; lang: string; dict: ViaFerrataCardDict }) {
   const spotsLeft = viaFerrata.maxParticipants - viaFerrata.confirmedCount
   const isFull = spotsLeft <= 0
-  const isUpcoming = viaFerrata.status === 'upcoming'
+  const isUpcoming = !isPastEvent(viaFerrata.status, viaFerrata.date)
   const priceLabel = viaFerrata.price > 0 ? `${viaFerrata.price} RON` : dict.free
 
   return (

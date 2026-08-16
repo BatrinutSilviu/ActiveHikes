@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate } from '@/lib/dates'
+import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -29,8 +29,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
     }),
   ])
 
-  const upcoming = participations.filter(p => p.hike && ['upcoming', 'ongoing'].includes(p.hike.status) && p.status !== 'rejected')
-  const past = participations.filter(p => p.hike && ['completed', 'cancelled'].includes(p.hike.status) && p.status === 'confirmed')
+  const upcoming = participations.filter(p => p.hike && p.hike.status !== 'draft' && !isPastEvent(p.hike.status, p.hike.date, p.hike.endDate) && p.status !== 'rejected')
+  const past = participations.filter(p => p.hike && p.hike.status !== 'draft' && isPastEvent(p.hike.status, p.hike.date, p.hike.endDate) && p.status === 'confirmed')
 
   const dp = d.profile
   const statusLabels = dp.participationStatus as Record<string, string>

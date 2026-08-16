@@ -5,7 +5,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate } from '@/lib/dates'
+import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -13,7 +13,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
-  const [d, hikeCount, viaFerrataCount, hikePendingCount, viaFerrataPendingCount, userCount, draftHikes, upcomingHikes, pastHikes, upcomingViaFerrata] = await Promise.all([
+  const [d, hikeCount, viaFerrataCount, hikePendingCount, viaFerrataPendingCount, userCount, draftHikes, allHikes, allViaFerrata] = await Promise.all([
     getDictionary(lang),
     prisma.hike.count(),
     prisma.viaFerrata.count(),
@@ -26,23 +26,26 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
     }),
     prisma.hike.findMany({
-      where: { status: { in: ['upcoming', 'ongoing'] } },
-      orderBy: { date: 'asc' },
-      take: 5,
-      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
-    }),
-    prisma.hike.findMany({
-      where: { status: { in: ['completed', 'cancelled'] } },
-      orderBy: { date: 'desc' },
-      select: { id: true, title: true, date: true, endDate: true, status: true },
+      where: { status: { not: 'draft' } },
+      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true, status: true },
     }),
     prisma.viaFerrata.findMany({
-      where: { status: { in: ['upcoming', 'ongoing'] } },
-      orderBy: { date: 'asc' },
-      take: 5,
-      select: { id: true, title: true, date: true, maxParticipants: true },
+      select: { id: true, title: true, date: true, maxParticipants: true, status: true },
     }),
   ])
+
+  const upcomingHikes = allHikes
+    .filter(h => !isPastEvent(h.status, h.date, h.endDate))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 5)
+  const pastHikes = allHikes
+    .filter(h => isPastEvent(h.status, h.date, h.endDate))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 5)
+  const upcomingViaFerrata = allViaFerrata
+    .filter(e => !isPastEvent(e.status, e.date))
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .slice(0, 5)
 
   const pendingCount = hikePendingCount + viaFerrataPendingCount
 
@@ -226,7 +229,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
                   <div className="text-stone-400 text-xs mt-0.5">
                     {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     {' · '}
-                    <span className={hike.status === 'completed' ? 'text-emerald-600' : 'text-red-400'}>
+                    <span className={hike.status === 'completed' ? 'text-emerald-600' : hike.status === 'cancelled' ? 'text-red-400' : 'text-amber-500'}>
                       {hike.status}
                     </span>
                   </div>
