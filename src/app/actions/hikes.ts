@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { Difficulty, HikeStatus } from '@prisma/client'
+import { Difficulty, HikeStatus, HikeType } from '@prisma/client'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
@@ -138,7 +138,7 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
     }
   })
 
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function assignCarDriver(hikeId: string, driverParticipantId: string | null) {
@@ -174,7 +174,7 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
     movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { carDriverParticipantId: driverParticipantId } }))
   )
 
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function assignFriendCarDriver(hikeId: string, driverParticipantId: string | null) {
@@ -200,7 +200,7 @@ export async function assignFriendCarDriver(hikeId: string, driverParticipantId:
 
   await prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverParticipantId } })
 
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 export async function adminAssignCarDriver(hikeId: string, participantId: string, driverParticipantId: string | null): Promise<{ error: string } | { success: true }> {
@@ -226,8 +226,7 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
 
   await prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } })
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
   return { success: true }
 }
 
@@ -317,6 +316,7 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
 }
 
 export async function createHike(data: {
+  type?: HikeType
   title: string
   destination: string
   description?: string
@@ -357,54 +357,62 @@ export async function createHike(data: {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
+  const type = data.type ?? 'hike'
+  // Via Ferrata events don't support camping/accommodation/rooms/difficulty —
+  // ignore those fields server-side even if the client sent stale values.
+  const isHike = type === 'hike'
+
   const hike = await prisma.hike.create({
     data: {
+      type,
       title: data.title,
       destination: data.destination,
       description: data.description || null,
       date: new Date(data.date),
-      endDate: data.endDate ? new Date(data.endDate) : null,
+      endDate: isHike && data.endDate ? new Date(data.endDate) : null,
       meetingTime: data.meetingTime || null,
       entryFee: data.entryFee,
       maxParticipants: data.maxParticipants,
-      mountainRange: data.mountainRange || null,
+      mountainRange: isHike ? (data.mountainRange || null) : null,
       startingPoint: data.startingPoint || null,
       meetingPoint: data.meetingPoint || null,
       durationHours: data.durationHours ?? null,
-      hasCamping: data.hasCamping,
-      campingDetails: data.campingDetails || null,
-      campingUrl: data.campingUrl || null,
-      campingPrice: data.campingPrice ?? null,
-      hasAccommodation: data.hasAccommodation,
+      hasCamping: isHike ? data.hasCamping : false,
+      campingDetails: isHike ? (data.campingDetails || null) : null,
+      campingUrl: isHike ? (data.campingUrl || null) : null,
+      campingPrice: isHike ? (data.campingPrice ?? null) : null,
+      hasAccommodation: isHike ? data.hasAccommodation : false,
       peoplePerCar: data.peoplePerCar ?? 5,
       carsNeeded: data.carsNeeded ?? null,
-      accommodationDetails: data.accommodationDetails || null,
-      accommodationUrl: data.accommodationUrl || null,
-      accommodationPrice: data.accommodationPrice ?? null,
-      accommodationDeposit: data.accommodationDeposit ?? null,
-      doubleRoomCount: data.doubleRoomCount ?? 0,
-      tripleRoomCount: data.tripleRoomCount ?? 0,
-      quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
-      breakfastTime: data.breakfastTime || null,
-      dinnerTime: data.dinnerTime || null,
-      checkInTime: data.checkInTime || null,
-      checkOutTime: data.checkOutTime || null,
-      difficulty: (data.difficulty as Difficulty) || null,
-      coverImageUrl: data.coverImageUrl || null,
-      gpxApproximateUrl: data.gpxApproximateUrl || null,
+      accommodationDetails: isHike ? (data.accommodationDetails || null) : null,
+      accommodationUrl: isHike ? (data.accommodationUrl || null) : null,
+      accommodationPrice: isHike ? (data.accommodationPrice ?? null) : null,
+      accommodationDeposit: isHike ? (data.accommodationDeposit ?? null) : null,
+      doubleRoomCount: isHike ? (data.doubleRoomCount ?? 0) : 0,
+      tripleRoomCount: isHike ? (data.tripleRoomCount ?? 0) : 0,
+      quadrupleRoomCount: isHike ? (data.quadrupleRoomCount ?? 0) : 0,
+      breakfastTime: isHike ? (data.breakfastTime || null) : null,
+      dinnerTime: isHike ? (data.dinnerTime || null) : null,
+      checkInTime: isHike ? (data.checkInTime || null) : null,
+      checkOutTime: isHike ? (data.checkOutTime || null) : null,
+      difficulty: isHike ? ((data.difficulty as Difficulty) || null) : null,
+      coverImageUrl: isHike ? (data.coverImageUrl || null) : null,
+      gpxApproximateUrl: isHike ? (data.gpxApproximateUrl || null) : null,
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
-      status: 'draft',
+      status: isHike ? 'draft' : 'upcoming',
       createdById: session.user.id,
     },
   })
 
-  await syncHikeRooms(hike.id, {
-    doubleRoomCount: data.doubleRoomCount ?? 0,
-    tripleRoomCount: data.tripleRoomCount ?? 0,
-    quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
-  })
+  if (isHike) {
+    await syncHikeRooms(hike.id, {
+      doubleRoomCount: data.doubleRoomCount ?? 0,
+      tripleRoomCount: data.tripleRoomCount ?? 0,
+      quadrupleRoomCount: data.quadrupleRoomCount ?? 0,
+    })
+  }
 
   return hike.id
 }
@@ -474,8 +482,7 @@ export async function updateHike(
     })
   }
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -666,6 +673,5 @@ export async function applyCarAllocation(
     })
   )
 
-  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
-  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateParticipantCountPaths(hikeId)
 }

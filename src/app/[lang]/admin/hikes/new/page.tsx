@@ -1,18 +1,31 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useState, useTransition, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createHike } from '@/app/actions/hikes'
+import { HikeType } from '@prisma/client'
 import { Upload, X } from 'lucide-react'
 import { useDict, useLocale } from '@/hooks/useDict'
 
 export default function NewHikePage() {
+  return <Suspense fallback={null}><NewHikeForm /></Suspense>
+}
+
+function NewHikeForm() {
   const router = useRouter()
   const lang = useLocale()
+  const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
-  const d = useDict().admin.newHike
+  const dict = useDict()
+  const d = dict.admin.newHike
+  const dv = dict.admin.viaFerrataEdit
   const timeLocale = lang === 'en' ? 'en-GB' : 'ro-RO'
+
+  const [eventType, setEventType] = useState<HikeType>(
+    searchParams.get('type') === 'via_ferrata' ? 'via_ferrata' : 'hike'
+  )
+  const isHike = eventType === 'hike'
 
   const computeCars = (participants: string, perCar: string) => {
     const p = parseInt(participants)
@@ -64,6 +77,7 @@ export default function NewHikePage() {
         if (coverFile) coverImageUrl = await uploadFile(coverFile, 'hike-covers')
         if (gpxApproxFile) gpxApproximateUrl = await uploadFile(gpxApproxFile, 'hike-gpx')
         const hikeId = await createHike({
+          type: eventType,
           title: form.title, destination: form.destination,
           description: form.description || undefined, date: form.date,
           endDate: form.end_date || undefined,
@@ -96,7 +110,7 @@ export default function NewHikePage() {
           externalPhotosUrl: form.external_photos_url || undefined,
           whatsappGroupUrl: form.whatsapp_group_url || undefined,
         })
-        router.push(`/${lang}/admin/hikes/${hikeId}`)
+        router.push(isHike ? `/${lang}/admin/hikes/${hikeId}` : `/${lang}/admin/via-ferrata/${hikeId}`)
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
       }
@@ -112,7 +126,13 @@ export default function NewHikePage() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Section title={d.basicInfo}>
-          <Field label={d.hikeTitle} required>
+          <Field label={d.eventType}>
+            <select value={eventType} onChange={e => setEventType(e.target.value as HikeType)} className={input}>
+              <option value="hike">{d.eventTypeHike}</option>
+              <option value="via_ferrata">{d.eventTypeViaFerrata}</option>
+            </select>
+          </Field>
+          <Field label={isHike ? d.hikeTitle : dv.title} required>
             <input value={form.title} onChange={e => set('title', e.target.value)} required placeholder={d.titlePlaceholder} className={input} />
           </Field>
           <Field label={d.destination} required>
@@ -125,21 +145,25 @@ export default function NewHikePage() {
             <Field label={d.date} required>
               <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={input} />
             </Field>
-            <Field label={d.endDate}>
-              <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} className={input} />
-            </Field>
+            {isHike && (
+              <Field label={d.endDate}>
+                <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} className={input} />
+              </Field>
+            )}
             <Field label={d.meetingTime}>
               <input type="time" lang={timeLocale} value={form.meeting_time} onChange={e => set('meeting_time', e.target.value)} className={input} />
             </Field>
           </div>
-          <Field label={d.difficulty}>
-            <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} className={input}>
-              <option value="">{d.selectDifficulty}</option>
-              {(['easy','easy_medium','medium','medium_hard','hard'] as const).map(k => (
-                <option key={k} value={k}>{diffs[k]}</option>
-              ))}
-            </select>
-          </Field>
+          {isHike && (
+            <Field label={d.difficulty}>
+              <select value={form.difficulty} onChange={e => set('difficulty', e.target.value)} className={input}>
+                <option value="">{d.selectDifficulty}</option>
+                {(['easy','easy_medium','medium','medium_hard','hard'] as const).map(k => (
+                  <option key={k} value={k}>{diffs[k]}</option>
+                ))}
+              </select>
+            </Field>
+          )}
         </Section>
 
         <Section title={d.participantsPayment}>
@@ -154,9 +178,11 @@ export default function NewHikePage() {
         </Section>
 
         <Section title={d.logistics}>
-          <Field label={d.mountainRange}>
-            <input value={form.mountain_range} onChange={e => set('mountain_range', e.target.value)} placeholder={d.mountainRangePlaceholder} className={input} />
-          </Field>
+          {isHike && (
+            <Field label={d.mountainRange}>
+              <input value={form.mountain_range} onChange={e => set('mountain_range', e.target.value)} placeholder={d.mountainRangePlaceholder} className={input} />
+            </Field>
+          )}
           <Field label={d.meetingPoint}>
             <input value={form.meeting_point} onChange={e => set('meeting_point', e.target.value)} placeholder={d.meetingPointPlaceholder} className={input} />
           </Field>
@@ -174,106 +200,112 @@ export default function NewHikePage() {
               <input type="number" value={form.cars_needed} onChange={e => set('cars_needed', e.target.value)} min="0" className={input} />
             </Field>
           </div>
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.has_camping} onChange={e => set('has_camping', e.target.checked)} className="w-4 h-4 accent-emerald-600" />
-              <span className="font-medium text-stone-700">{d.camping}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={form.has_accommodation} onChange={e => set('has_accommodation', e.target.checked)} className="w-4 h-4 accent-emerald-600" />
-              <span className="font-medium text-stone-700">{d.accommodation}</span>
-            </label>
-          </div>
-          {form.has_camping && (
+          {isHike && (
             <>
-              <Field label={d.campingDetails}>
-                <textarea value={form.camping_details} onChange={e => set('camping_details', e.target.value)} rows={2} placeholder={d.campingDetailsPlaceholder} className={input} />
-              </Field>
-              <Field label={d.campingUrl}>
-                <input type="url" value={form.camping_url} onChange={e => set('camping_url', e.target.value)} placeholder={d.campingUrlPlaceholder} className={input} />
-              </Field>
-              <Field label={d.campingPrice}>
-                <input type="number" value={form.camping_price} onChange={e => set('camping_price', e.target.value)} min="0" step="1" placeholder="—" className={input} />
-              </Field>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.has_camping} onChange={e => set('has_camping', e.target.checked)} className="w-4 h-4 accent-emerald-600" />
+                  <span className="font-medium text-stone-700">{d.camping}</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={form.has_accommodation} onChange={e => set('has_accommodation', e.target.checked)} className="w-4 h-4 accent-emerald-600" />
+                  <span className="font-medium text-stone-700">{d.accommodation}</span>
+                </label>
+              </div>
+              {form.has_camping && (
+                <>
+                  <Field label={d.campingDetails}>
+                    <textarea value={form.camping_details} onChange={e => set('camping_details', e.target.value)} rows={2} placeholder={d.campingDetailsPlaceholder} className={input} />
+                  </Field>
+                  <Field label={d.campingUrl}>
+                    <input type="url" value={form.camping_url} onChange={e => set('camping_url', e.target.value)} placeholder={d.campingUrlPlaceholder} className={input} />
+                  </Field>
+                  <Field label={d.campingPrice}>
+                    <input type="number" value={form.camping_price} onChange={e => set('camping_price', e.target.value)} min="0" step="1" placeholder="—" className={input} />
+                  </Field>
+                </>
+              )}
+              {form.has_accommodation && (
+                <>
+                  <Field label={d.accommodationDetails}>
+                    <textarea value={form.accommodation_details} onChange={e => set('accommodation_details', e.target.value)} rows={2} placeholder={d.accommodationPlaceholder} className={input} />
+                  </Field>
+                  <Field label={d.accommodationUrl}>
+                    <input type="url" value={form.accommodation_url} onChange={e => set('accommodation_url', e.target.value)} placeholder={d.accommodationUrlPlaceholder} className={input} />
+                  </Field>
+                </>
+              )}
+              {form.has_accommodation && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label={d.accommodationPrice}>
+                    <input type="number" value={form.accommodation_price} onChange={e => set('accommodation_price', e.target.value)} min="0" step="1" placeholder={d.accommodationPricePlaceholder} className={input} />
+                  </Field>
+                  <Field label={d.accommodationDeposit}>
+                    <input type="number" value={form.accommodation_deposit} onChange={e => set('accommodation_deposit', e.target.value)} min="0" step="1" placeholder={d.accommodationDepositPlaceholder} className={input} />
+                  </Field>
+                </div>
+              )}
+              {form.has_accommodation && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label={d.breakfastTime}>
+                    <input type="time" lang={timeLocale} value={form.breakfast_time} onChange={e => set('breakfast_time', e.target.value)} className={input} />
+                  </Field>
+                  <Field label={d.dinnerTime}>
+                    <input type="time" lang={timeLocale} value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
+                  </Field>
+                </div>
+              )}
+              {form.has_accommodation && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label={d.checkInTime}>
+                    <input type="time" lang={timeLocale} value={form.check_in_time} onChange={e => set('check_in_time', e.target.value)} className={input} />
+                  </Field>
+                  <Field label={d.checkOutTime}>
+                    <input type="time" lang={timeLocale} value={form.check_out_time} onChange={e => set('check_out_time', e.target.value)} className={input} />
+                  </Field>
+                </div>
+              )}
+              {form.has_accommodation && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Field label={d.doubleRoomCount}>
+                    <input type="number" value={form.double_room_count} onChange={e => set('double_room_count', e.target.value)} min="0" step="1" className={input} />
+                  </Field>
+                  <Field label={d.tripleRoomCount}>
+                    <input type="number" value={form.triple_room_count} onChange={e => set('triple_room_count', e.target.value)} min="0" step="1" className={input} />
+                  </Field>
+                  <Field label={d.quadrupleRoomCount}>
+                    <input type="number" value={form.quadruple_room_count} onChange={e => set('quadruple_room_count', e.target.value)} min="0" step="1" className={input} />
+                  </Field>
+                </div>
+              )}
             </>
-          )}
-          {form.has_accommodation && (
-            <>
-              <Field label={d.accommodationDetails}>
-                <textarea value={form.accommodation_details} onChange={e => set('accommodation_details', e.target.value)} rows={2} placeholder={d.accommodationPlaceholder} className={input} />
-              </Field>
-              <Field label={d.accommodationUrl}>
-                <input type="url" value={form.accommodation_url} onChange={e => set('accommodation_url', e.target.value)} placeholder={d.accommodationUrlPlaceholder} className={input} />
-              </Field>
-            </>
-          )}
-          {form.has_accommodation && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={d.accommodationPrice}>
-                <input type="number" value={form.accommodation_price} onChange={e => set('accommodation_price', e.target.value)} min="0" step="1" placeholder={d.accommodationPricePlaceholder} className={input} />
-              </Field>
-              <Field label={d.accommodationDeposit}>
-                <input type="number" value={form.accommodation_deposit} onChange={e => set('accommodation_deposit', e.target.value)} min="0" step="1" placeholder={d.accommodationDepositPlaceholder} className={input} />
-              </Field>
-            </div>
-          )}
-          {form.has_accommodation && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={d.breakfastTime}>
-                <input type="time" lang={timeLocale} value={form.breakfast_time} onChange={e => set('breakfast_time', e.target.value)} className={input} />
-              </Field>
-              <Field label={d.dinnerTime}>
-                <input type="time" lang={timeLocale} value={form.dinner_time} onChange={e => set('dinner_time', e.target.value)} className={input} />
-              </Field>
-            </div>
-          )}
-          {form.has_accommodation && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label={d.checkInTime}>
-                <input type="time" lang={timeLocale} value={form.check_in_time} onChange={e => set('check_in_time', e.target.value)} className={input} />
-              </Field>
-              <Field label={d.checkOutTime}>
-                <input type="time" lang={timeLocale} value={form.check_out_time} onChange={e => set('check_out_time', e.target.value)} className={input} />
-              </Field>
-            </div>
-          )}
-          {form.has_accommodation && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label={d.doubleRoomCount}>
-                <input type="number" value={form.double_room_count} onChange={e => set('double_room_count', e.target.value)} min="0" step="1" className={input} />
-              </Field>
-              <Field label={d.tripleRoomCount}>
-                <input type="number" value={form.triple_room_count} onChange={e => set('triple_room_count', e.target.value)} min="0" step="1" className={input} />
-              </Field>
-              <Field label={d.quadrupleRoomCount}>
-                <input type="number" value={form.quadruple_room_count} onChange={e => set('quadruple_room_count', e.target.value)} min="0" step="1" className={input} />
-              </Field>
-            </div>
           )}
         </Section>
 
-        <Section title={d.essentials}>
-          <Field label={d.essentialsLabel}>
+        <Section title={isHike ? d.essentials : dv.routes}>
+          <Field label={isHike ? d.essentialsLabel : dv.routes}>
             <textarea value={form.essentials} onChange={e => set('essentials', e.target.value)} rows={5}
-              placeholder={d.essentialsPlaceholder} className={input} />
-            <p className="text-xs text-stone-400 mt-1.5">{d.essentialsHint}</p>
+              placeholder={isHike ? d.essentialsPlaceholder : dv.routesPlaceholder} className={input} />
+            <p className="text-xs text-stone-400 mt-1.5">{isHike ? d.essentialsHint : dv.routesHint}</p>
           </Field>
         </Section>
 
-        <Section title={d.mediaRoutes}>
-          <Field label={d.coverPhoto}>
-            <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
-          </Field>
-          <Field label={d.approximateGpx}>
-            <FileInput accept=".gpx,.kml" file={gpxApproxFile} onFile={setGpxApproxFile} hint={d.approximateGpxHint} uploadLabel={d.clickToUpload} />
-          </Field>
-          <Field label={d.whatsappGroupUrl}>
-            <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
-          </Field>
-          <Field label={d.externalAlbum}>
-            <input type="url" value={form.external_photos_url} onChange={e => set('external_photos_url', e.target.value)} placeholder={d.externalAlbumPlaceholder} className={input} />
-          </Field>
-        </Section>
+        {isHike && (
+          <Section title={d.mediaRoutes}>
+            <Field label={d.coverPhoto}>
+              <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
+            </Field>
+            <Field label={d.approximateGpx}>
+              <FileInput accept=".gpx,.kml" file={gpxApproxFile} onFile={setGpxApproxFile} hint={d.approximateGpxHint} uploadLabel={d.clickToUpload} />
+            </Field>
+            <Field label={d.whatsappGroupUrl}>
+              <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
+            </Field>
+            <Field label={d.externalAlbum}>
+              <input type="url" value={form.external_photos_url} onChange={e => set('external_photos_url', e.target.value)} placeholder={d.externalAlbumPlaceholder} className={input} />
+            </Field>
+          </Section>
+        )}
 
         {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">{error}</div>}
 

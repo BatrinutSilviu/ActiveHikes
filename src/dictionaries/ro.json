@@ -83,32 +83,6 @@
       "cancelled": "Anulată"
     }
   },
-  "viaFerrataJoinButton": {
-    "bringFriend": "Aduc un prieten",
-    "friendNamePlaceholder": "Numele complet al prietenului",
-    "agreeToTermsLabel": "Sunt de acord cu",
-    "termsLinkText": "Termenii și condițiile",
-    "loginToJoin": "Autentifică-te pentru a te înscrie",
-    "registerNow": "Înscrie-te",
-    "joinWaitlist": "Listă de așteptare",
-    "registering": "Se înregistrează…",
-    "cancelRegistration": "Anulează înregistrarea",
-    "registerAgain": "Înscrie-te din nou",
-    "cancelling": "Se anulează…",
-    "cancelConfirm": "Ești sigur că vrei să anulezi înregistrarea?",
-    "cancelError": "Nu s-a putut anula. Încearcă din nou.",
-    "payWithin": "Plătește în",
-    "paymentWindowExpired": "Timpul de plată a expirat.",
-    "waitlistPosition": "Ești #{position} din {count} pe lista de așteptare",
-    "joinError": "A apărut o eroare. Încearcă din nou.",
-    "status": {
-      "pending": { "label": "Înregistrare în așteptare", "desc": "Transferă taxa de participare pentru a-ți confirma locul." },
-      "confirmed": { "label": "Ești confirmat!", "desc": "Locul tău este rezervat. Ne vedem acolo!" },
-      "rejected": { "label": "Înregistrare respinsă", "desc": "Înregistrarea ta nu a fost acceptată." },
-      "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." },
-      "expired": { "label": "Înregistrare expirată", "desc": "Nu ai plătit la timp. Te rugăm să te înscrii din nou." }
-    }
-  },
   "hikeCard": {
     "full": "Complet",
     "joined": "înscriși",
@@ -399,7 +373,6 @@
       "newViaFerrata": "Via Ferrata nou",
       "bankAccounts": "Metode de plată",
       "allParticipants": "Toți participanții",
-      "allViaFerrataParticipants": "Toți participanții Via Ferrata",
       "upcomingHikes": "Drumeții Viitoare",
       "upcomingViaFerrata": "Via Ferrata Viitoare",
       "addNew": "+ Adaugă",
@@ -413,6 +386,9 @@
     "newHike": {
       "title": "Creare Drumeție Nouă",
       "subtitle": "Completează detaliile pentru drumeția viitoare",
+      "eventType": "Tip",
+      "eventTypeHike": "Drumeție",
+      "eventTypeViaFerrata": "Via Ferrata",
       "basicInfo": "Informații de Bază",
       "hikeTitle": "Titlul drumeției",
       "destination": "Destinație",
@@ -487,30 +463,6 @@
       "none": "Niciunul.",
       "friendOf": "Prieten cu"
     },
-    "viaFerrataNew": {
-      "title": "Creare Via Ferrata Nou",
-      "subtitle": "Completează detaliile pentru evenimentul viitor",
-      "basicInfo": "Informații de Bază",
-      "eventTitle": "Titlul evenimentului",
-      "titlePlaceholder": "ex. Via Ferrata Costila",
-      "location": "Locație",
-      "locationPlaceholder": "ex. Munții Bucegi",
-      "description": "Descriere",
-      "descriptionPlaceholder": "Descrie evenimentul…",
-      "date": "Data",
-      "duration": "Durată (ore)",
-      "durationPlaceholder": "ex. 5",
-      "participantsPayment": "Participanți și Plată",
-      "maxParticipants": "Număr maxim participanți",
-      "price": "Preț (RON)",
-      "routes": "Trasee",
-      "routesLabel": "Trasee",
-      "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
-      "routesHint": "Un traseu pe linie — afișat ca listă pe pagina evenimentului.",
-      "cancel": "Anulare",
-      "create": "Creare eveniment",
-      "creating": "Se creează…"
-    },
     "viaFerrataEdit": {
       "title": "Titlul evenimentului",
       "titlePlaceholder": "ex. Via Ferrata Costila",
@@ -521,6 +473,12 @@
       "date": "Data",
       "duration": "Durată (ore)",
       "durationPlaceholder": "ex. 5",
+      "startingPoint": "Punct de start (traseu)",
+      "startingPointPlaceholder": "ex. Parcarea Costila",
+      "meetingPoint": "Loc de întâlnire în oraș",
+      "meetingPointPlaceholder": "ex. Parcul Floreasca, București",
+      "meetingTime": "Ora de întâlnire",
+      "meetingTimePlaceholder": "ex. 07:00",
       "status": "Status",
       "maxParticipants": "Număr maxim participanți",
       "price": "Preț (RON)",
@@ -532,13 +490,6 @@
       "saving": "Se salvează…",
       "statuses": { "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" },
       "ongoingIsAutomatic": "\"În desfășurare\" se stabilește automat când ajunge data evenimentului."
-    },
-    "viaFerrataParticipants": {
-      "title": "Toți Participanții Via Ferrata",
-      "pendingSection": "În așteptarea confirmării",
-      "othersSection": "Toți ceilalți",
-      "none": "Niciunul.",
-      "friendOf": "Prieten cu"
     },
     "viaFerrata": {
       "backToDashboard": "Înapoi la panou",
@@ -573,6 +524,7 @@
         "expired": "Expirat"
       },
       "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
+      "manageCars": "Gestionează mașinile",
       "documents": {
         "title": "Documente",
         "hint": "Încarcă documentele pe care participanții trebuie să le completeze (declarații, formulare de răspundere etc.) — apar pe pagina evenimentului pentru descărcare.",

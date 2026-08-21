@@ -1,20 +1,23 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { updateViaFerrata } from '@/app/actions/viaFerrata'
-import { ViaFerrataStatus } from '@prisma/client'
+import { updateHike } from '@/app/actions/hikes'
+import { HikeStatus } from '@prisma/client'
 
 type ViaFerrataData = {
   id: string
   title: string
-  location: string
+  destination: string
   description: string | null
   date: string
-  price: number
+  entryFee: number
   maxParticipants: number
   durationHours: number | null
-  routes: string[]
-  status: ViaFerrataStatus
+  startingPoint: string | null
+  meetingPoint: string | null
+  meetingTime: string | null
+  essentials: string[]
+  status: HikeStatus
 }
 
 type ViaFerrataEditDict = {
@@ -33,6 +36,12 @@ type ViaFerrataEditDict = {
   routes: string
   routesPlaceholder: string
   routesHint: string
+  startingPoint: string
+  startingPointPlaceholder: string
+  meetingPoint: string
+  meetingPointPlaceholder: string
+  meetingTime: string
+  meetingTimePlaceholder: string
   savedSuccessfully: string
   saveChanges: string
   saving: string
@@ -43,14 +52,17 @@ type ViaFerrataEditDict = {
 export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: ViaFerrataData; dict: ViaFerrataEditDict }) {
   const [form, setForm] = useState({
     title: viaFerrata.title,
-    location: viaFerrata.location,
+    location: viaFerrata.destination,
     description: viaFerrata.description ?? '',
     date: viaFerrata.date.slice(0, 10),
     durationHours: viaFerrata.durationHours != null ? String(viaFerrata.durationHours) : '',
     status: viaFerrata.status,
     maxParticipants: String(viaFerrata.maxParticipants),
-    price: String(viaFerrata.price),
-    routes: viaFerrata.routes.join('\n'),
+    price: String(viaFerrata.entryFee),
+    routes: viaFerrata.essentials.join('\n'),
+    startingPoint: viaFerrata.startingPoint ?? '',
+    meetingPoint: viaFerrata.meetingPoint ?? '',
+    meetingTime: viaFerrata.meetingTime ?? '',
   })
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -60,16 +72,19 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      await updateViaFerrata(viaFerrata.id, {
+      await updateHike(viaFerrata.id, {
         title: form.title,
-        location: form.location,
+        destination: form.location,
         description: form.description || null,
         date: form.date,
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
-        status: form.status as ViaFerrataStatus,
+        status: form.status as HikeStatus,
         maxParticipants: parseInt(form.maxParticipants),
-        price: parseFloat(form.price),
-        routes: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
+        entryFee: parseFloat(form.price),
+        essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
+        startingPoint: form.startingPoint || null,
+        meetingPoint: form.meetingPoint || null,
+        meetingTime: form.meetingTime || null,
       })
 
       setSuccess(true)
@@ -104,6 +119,21 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.duration}</label>
           <input type="number" value={form.durationHours} onChange={e => set('durationHours', e.target.value)} min="0" step="0.5" placeholder={dict.durationPlaceholder} className={cls} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.startingPoint}</label>
+          <input value={form.startingPoint} onChange={e => set('startingPoint', e.target.value)} placeholder={dict.startingPointPlaceholder} className={cls} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingPoint}</label>
+          <input value={form.meetingPoint} onChange={e => set('meetingPoint', e.target.value)} placeholder={dict.meetingPointPlaceholder} className={cls} />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>
+        <input value={form.meetingTime} onChange={e => set('meetingTime', e.target.value)} placeholder={dict.meetingTimePlaceholder} className={cls} />
       </div>
 
       <div>

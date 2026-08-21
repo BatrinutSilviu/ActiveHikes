@@ -13,23 +13,23 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
-  const [d, hikeCount, viaFerrataCount, hikePendingCount, viaFerrataPendingCount, userCount, draftHikes, allHikes, allViaFerrata] = await Promise.all([
+  const [d, hikeCount, viaFerrataCount, pendingCount, userCount, draftHikes, allHikes, allViaFerrata] = await Promise.all([
     getDictionary(lang),
-    prisma.hike.count(),
-    prisma.viaFerrata.count(),
+    prisma.hike.count({ where: { type: 'hike' } }),
+    prisma.hike.count({ where: { type: 'via_ferrata' } }),
     prisma.hikeParticipant.count({ where: { status: 'pending' } }),
-    prisma.viaFerrataParticipant.count({ where: { status: 'pending' } }),
     prisma.user.count({ where: { role: 'user' } }),
     prisma.hike.findMany({
-      where: { status: 'draft' },
+      where: { type: 'hike', status: 'draft' },
       orderBy: { createdAt: 'desc' },
       select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
     }),
     prisma.hike.findMany({
-      where: { status: { not: 'draft' } },
+      where: { type: 'hike', status: { not: 'draft' } },
       select: { id: true, title: true, date: true, endDate: true, maxParticipants: true, status: true },
     }),
-    prisma.viaFerrata.findMany({
+    prisma.hike.findMany({
+      where: { type: 'via_ferrata' },
       select: { id: true, title: true, date: true, maxParticipants: true, status: true },
     }),
   ])
@@ -46,8 +46,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
     .filter(e => !isPastEvent(e.status, e.date))
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .slice(0, 5)
-
-  const pendingCount = hikePendingCount + viaFerrataPendingCount
 
   const da = d.admin.dashboard
 
@@ -122,7 +120,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
         <QuickLink href={`/${lang}/admin/via-ferrata/new`} icon={<Plus size={17} />} label={da.newViaFerrata} />
         <QuickLink href={`/${lang}/admin/bank-accounts`} icon={<CreditCard size={17} />} label={da.bankAccounts} />
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
-        <QuickLink href={`/${lang}/admin/via-ferrata-participants`} icon={<Users size={17} />} label={da.allViaFerrataParticipants} />
       </div>
 
       {/* Draft hikes list */}

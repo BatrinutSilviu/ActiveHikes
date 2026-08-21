@@ -5,9 +5,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params
 
   const [viaFerrata, confirmed, waitlist] = await Promise.all([
-    prisma.viaFerrata.findUnique({ where: { id }, select: { maxParticipants: true } }),
-    prisma.viaFerrataParticipant.count({ where: { viaFerrataId: id, status: 'confirmed' } }),
-    prisma.viaFerrataParticipant.count({ where: { viaFerrataId: id, status: 'waitlist' } }),
+    prisma.hike.findFirst({ where: { id, type: 'via_ferrata' }, select: { maxParticipants: true } }),
+    prisma.hikeParticipant.count({ where: { hikeId: id, status: 'confirmed' } }),
+    prisma.hikeParticipant.count({ where: { hikeId: id, status: 'waitlist' } }),
   ])
 
   if (!viaFerrata) return NextResponse.json({ error: 'Not found' }, { status: 404 })

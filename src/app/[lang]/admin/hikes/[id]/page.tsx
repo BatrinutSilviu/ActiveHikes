@@ -24,8 +24,8 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
   const [d, session, hike] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
-    prisma.hike.findUnique({
-      where: { id },
+    prisma.hike.findFirst({
+      where: { id, type: 'hike' },
       include: {
         participants: {
         include: {

@@ -50,11 +50,9 @@ enum RoomType {
   quadruple
 }
 
-enum ViaFerrataStatus {
-  upcoming
-  ongoing
-  completed
-  cancelled
+enum HikeType {
+  hike
+  via_ferrata
 }
 
 // ─── NextAuth required models ─────────────────────────────────────────────────
@@ -112,13 +110,11 @@ model User {
   participations HikeParticipant[]
   uploadedPhotos HikePhoto[]
   createdHikes   Hike[]
-
-  createdViaFerratas       ViaFerrata[]
-  viaFerrataParticipations ViaFerrataParticipant[]
 }
 
 model Hike {
   id                   String      @id @default(cuid())
+  type                 HikeType    @default(hike)
   title                String
   destination          String
   description          String?
@@ -164,6 +160,7 @@ model Hike {
   participants HikeParticipant[]
   photos       HikePhoto[]
   rooms        HikeRoom[]
+  documents    HikeDocument[]
 }
 
 model HikeParticipant {
@@ -220,54 +217,14 @@ model HikePhoto {
   uploadedBy User? @relation(fields: [uploadedById], references: [id])
 }
 
-model ViaFerrata {
-  id              String           @id @default(cuid())
-  title           String
-  location        String
-  description     String?
-  date            DateTime         @db.Date
-  price           Decimal          @default(0) @db.Decimal(10, 2)
-  maxParticipants Int
-  durationHours   Decimal?         @db.Decimal(4, 1)
-  routes          String[]         @default([])
-  status          ViaFerrataStatus @default(upcoming)
-  createdById     String?
-  createdAt       DateTime         @default(now())
+model HikeDocument {
+  id        String   @id @default(cuid())
+  hikeId    String
+  name      String
+  url       String
+  createdAt DateTime @default(now())
 
-  createdBy    User?                   @relation(fields: [createdById], references: [id])
-  participants ViaFerrataParticipant[]
-  documents    ViaFerrataDocument[]
-}
-
-model ViaFerrataDocument {
-  id           String   @id @default(cuid())
-  viaFerrataId String
-  name         String
-  url          String
-  createdAt    DateTime @default(now())
-
-  viaFerrata ViaFerrata @relation(fields: [viaFerrataId], references: [id], onDelete: Cascade)
-}
-
-model ViaFerrataParticipant {
-  id                String            @id @default(cuid())
-  viaFerrataId      String
-  userId            String?
-  status            ParticipantStatus @default(pending)
-  joinedAt          DateTime          @default(now())
-  confirmedAt       DateTime?
-  paymentDeadline   DateTime?
-  agreedToTermsAt   DateTime?
-  adminNotes        String?
-  friendName        String?
-  hostParticipantId String?           @unique
-
-  viaFerrata ViaFerrata             @relation(fields: [viaFerrataId], references: [id], onDelete: Cascade)
-  user       User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  host       ViaFerrataParticipant? @relation("VFHostFriend", fields: [hostParticipantId], references: [id], onDelete: Cascade)
-  friend     ViaFerrataParticipant? @relation("VFHostFriend")
-
-  @@unique([viaFerrataId, userId])
+  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
 }
 
 model BankAccount {

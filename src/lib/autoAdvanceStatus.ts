@@ -15,13 +15,4 @@ export async function advanceEventStatuses() {
     where: { status: 'ongoing', date: { gt: today } },
     data: { status: 'upcoming' },
   })
-
-  await prisma.viaFerrata.updateMany({
-    where: { status: 'upcoming', date: { lte: today } },
-    data: { status: 'ongoing' },
-  })
-  await prisma.viaFerrata.updateMany({
-    where: { status: 'ongoing', date: { gt: today } },
-    data: { status: 'upcoming' },
-  })
 }

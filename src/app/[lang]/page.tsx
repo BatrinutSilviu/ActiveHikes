@@ -9,7 +9,7 @@ import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 async function getUpcomingHikes() {
   const hikes = await prisma.hike.findMany({
-    where: { status: { in: ['upcoming', 'ongoing'] } },
+    where: { type: 'hike', status: { in: ['upcoming', 'ongoing'] } },
     orderBy: { date: 'asc' },
     include: { participants: { select: { status: true } } },
   })

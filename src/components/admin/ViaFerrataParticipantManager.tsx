@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateViaFerrataParticipantStatus, confirmAllPendingViaFerrata, adminAddViaFerrataParticipant, adminImportViaFerrataParticipant, removeViaFerrataFriend } from '@/app/actions/viaFerrataParticipants'
+import { updateParticipantStatus, confirmAllPending, adminAddParticipant, adminImportParticipant, removeFriend } from '@/app/actions/participants'
 import { Check, X, List, CheckCheck, Timer, UserPlus, UserMinus } from 'lucide-react'
 
 type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
@@ -85,7 +85,7 @@ export default function ViaFerrataParticipantManager({
     setIsAdding(true)
     startTransition(async () => {
       try {
-        await adminAddViaFerrataParticipant(viaFerrataId, newEmail)
+        await adminAddParticipant(viaFerrataId, newEmail)
         setNewEmail('')
         router.refresh()
       } catch (err: unknown) {
@@ -105,7 +105,7 @@ export default function ViaFerrataParticipantManager({
     setIsImporting(true)
     startTransition(async () => {
       try {
-        await adminImportViaFerrataParticipant(viaFerrataId, newName)
+        await adminImportParticipant(viaFerrataId, newName)
         setNewName('')
         router.refresh()
       } catch (err: unknown) {
@@ -130,7 +130,7 @@ export default function ViaFerrataParticipantManager({
 
     setLoadingId(p.id)
     startTransition(async () => {
-      await updateViaFerrataParticipantStatus(p.id, newStatus, viaFerrataId)
+      await updateParticipantStatus(p.id, newStatus, viaFerrataId)
       setItems(prev => prev.map(item => (item.id === p.id || item.id === siblingId) ? { ...item, status: newStatus } : item))
       setLoadingId(null)
     })
@@ -140,7 +140,7 @@ export default function ViaFerrataParticipantManager({
 
   const handleConfirmAll = async () => {
     setBulkLoading(true)
-    const result = await confirmAllPendingViaFerrata(viaFerrataId)
+    const result = await confirmAllPending(viaFerrataId)
     if (result.confirmed > 0) router.refresh()
     setBulkLoading(false)
   }
@@ -150,7 +150,7 @@ export default function ViaFerrataParticipantManager({
     if (!confirm(dict.removeFriendConfirm)) return
     setRemovingFriendId(hostId)
     startTransition(async () => {
-      await removeViaFerrataFriend(viaFerrataId, hostId)
+      await removeFriend(viaFerrataId, hostId)
       router.refresh()
     })
   }

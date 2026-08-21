@@ -9,18 +9,22 @@ import { isPastEvent } from '@/lib/dates'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 async function getAllViaFerrata() {
-  const events = await prisma.viaFerrata.findMany({
+  const events = await prisma.hike.findMany({
+    where: { type: 'via_ferrata' },
     orderBy: { date: 'desc' },
     include: { participants: { select: { status: true } } },
   })
   const serialize = (e: typeof events[0]) => ({
-    ...e,
+    id: e.id,
+    title: e.title,
+    location: e.destination,
     date: e.date.toISOString(),
-    price: Number(e.price),
+    price: Number(e.entryFee),
+    maxParticipants: e.maxParticipants,
     durationHours: e.durationHours ? Number(e.durationHours) : null,
+    status: e.status,
     confirmedCount: e.participants.filter(p => p.status === 'confirmed').length,
     waitlistCount: e.participants.filter(p => p.status === 'waitlist').length,
-    participants: undefined,
   })
   return {
     upcoming: events.filter(e => !isPastEvent(e.status, e.date)).reverse().map(serialize),

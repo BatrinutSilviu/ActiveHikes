@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addViaFerrataDocument, deleteViaFerrataDocument } from '@/app/actions/viaFerrataDocuments'
+import { addDocument, deleteDocument } from '@/app/actions/documents'
 import { Upload, Trash2, X, FileText } from 'lucide-react'
 
 type ViaFerrataDoc = { id: string; url: string; name: string }
@@ -41,7 +41,7 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
     const docName = name.trim() || selectedFile.name
 
     startTransition(async () => {
-      await addViaFerrataDocument(viaFerrataId, url, docName)
+      await addDocument(viaFerrataId, url, docName)
       setDocuments(prev => [...prev, { id: Date.now().toString(), url, name: docName }])
       setSelectedFile(null)
       setName('')
@@ -52,7 +52,7 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
   const handleDelete = (document: ViaFerrataDoc) => {
     if (!confirm(dict.deleteConfirm)) return
     startTransition(async () => {
-      await deleteViaFerrataDocument(document.id, viaFerrataId)
+      await deleteDocument(document.id, viaFerrataId)
       setDocuments(prev => prev.filter(d => d.id !== document.id))
     })
   }

@@ -23,8 +23,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
-  const hike = await prisma.hike.findUnique({
-    where: { id },
+  const hike = await prisma.hike.findFirst({
+    where: { id, type: 'hike' },
     include: {
       participants: {
         select: { id: true, userId: true, status: true, friendName: true, hostParticipantId: true, bringsCar: true, carSeats: true, carDriverParticipantId: true, user: { select: { name: true } } },

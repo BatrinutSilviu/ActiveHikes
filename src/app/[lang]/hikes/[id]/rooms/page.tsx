@@ -14,8 +14,8 @@ export default async function HikeRoomsPage({ params }: { params: Promise<{ lang
   const [d, session, hike] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
-    prisma.hike.findUnique({
-      where: { id },
+    prisma.hike.findFirst({
+      where: { id, type: 'hike' },
       select: {
         id: true,
         title: true,

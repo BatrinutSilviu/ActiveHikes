@@ -28,7 +28,7 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
       include: {
         user: { select: { name: true, email: true, phone: true } },
         host: { select: { user: { select: { name: true } } } },
-        hike: { select: { id: true, title: true, date: true, endDate: true } },
+        hike: { select: { id: true, type: true, title: true, date: true, endDate: true } },
       },
     }),
   ])
@@ -64,14 +64,17 @@ function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { 
   return (
     <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden divide-y divide-stone-50">
       {participants.map((p: any) => (
-        <Link key={p.id} href={`/${lang}/admin/hikes/${p.hike.id}`}
+        <Link key={p.id} href={`/${lang}/admin/${p.hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'}/${p.hike.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">
             <div className="font-medium text-stone-800">{p.user?.name ?? p.friendName}</div>
             <div className="text-stone-400 text-xs">
               {p.hostParticipantId ? `${friendOf} ${p.host?.user?.name ?? '?'}` : p.user?.email}
             </div>
-            <div className="text-stone-500 text-sm mt-0.5 truncate">{p.hike.title}</div>
+            <div className="text-stone-500 text-sm mt-0.5 truncate">
+              {p.hike.title}
+              {p.hike.type === 'via_ferrata' && <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-600">· VF</span>}
+            </div>
             <div className="text-stone-400 text-xs">{formatHikeDate(p.hike.date, p.hike.endDate, dateLocale, {})}</div>
           </div>
           <span className={`text-xs font-semibold px-2 py-1 rounded-full capitalize shrink-0 ${STATUS_BADGE[p.status]}`}>{p.status}</span>

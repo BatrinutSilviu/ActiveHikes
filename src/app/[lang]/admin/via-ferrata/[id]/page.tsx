@@ -4,8 +4,8 @@ import Link from 'next/link'
 import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
-import JoinButtonVF from '@/components/viaFerrata/JoinButtonVF'
-import { ArrowLeft } from 'lucide-react'
+import JoinButton from '@/components/hikes/JoinButton'
+import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -21,8 +21,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
   const [d, session, viaFerrata] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
-    prisma.viaFerrata.findUnique({
-      where: { id },
+    prisma.hike.findFirst({
+      where: { id, type: 'via_ferrata' },
       include: {
         participants: {
           include: {
@@ -61,7 +61,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
   const participants = viaFerrata.participants.map(p => ({
     id: p.id,
     userId: p.userId,
-    viaFerrataId: p.viaFerrataId,
+    viaFerrataId: p.hikeId,
     status: p.status,
     joinedAt: p.joinedAt.toISOString(),
     paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
@@ -78,13 +78,19 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
   const isFull = spotsLeft <= 0
 
   const viaFerrataData = {
-    ...viaFerrata,
+    id: viaFerrata.id,
+    title: viaFerrata.title,
+    destination: viaFerrata.destination,
+    description: viaFerrata.description,
     date: viaFerrata.date.toISOString(),
-    createdAt: viaFerrata.createdAt.toISOString(),
-    price: Number(viaFerrata.price),
+    entryFee: Number(viaFerrata.entryFee),
+    maxParticipants: viaFerrata.maxParticipants,
     durationHours: viaFerrata.durationHours ? Number(viaFerrata.durationHours) : null,
-    participants: undefined,
-    documents: undefined,
+    startingPoint: viaFerrata.startingPoint,
+    meetingPoint: viaFerrata.meetingPoint,
+    meetingTime: viaFerrata.meetingTime,
+    essentials: viaFerrata.essentials,
+    status: viaFerrata.status,
   }
 
   const documents = viaFerrata.documents.map(document => ({
@@ -103,7 +109,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
         <div>
           <h1 className="text-3xl font-bold text-stone-900">{viaFerrata.title}</h1>
           <p className="text-stone-500 mt-1">
-            {viaFerrata.location} · {new Date(viaFerrata.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
+            {viaFerrata.destination} · {new Date(viaFerrata.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
         <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">
@@ -129,25 +135,38 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
-            <ViaFerrataEditForm viaFerrata={viaFerrataData as any} dict={d.admin.viaFerrataEdit} />
+            <ViaFerrataEditForm viaFerrata={viaFerrataData} dict={d.admin.viaFerrataEdit} />
           </div>
 
           <ViaFerrataDocumentUploader viaFerrataId={viaFerrata.id} existingDocuments={documents} dict={da.documents} />
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>
-            <JoinButtonVF
-              viaFerrataId={viaFerrata.id}
+            <JoinButton
+              hikeId={viaFerrata.id}
               userId={session?.user?.id ?? null}
               isFull={isFull}
               participationStatus={adminParticipation?.status ?? null}
+              currentBringsCar={adminParticipation?.bringsCar ?? false}
+              currentCarSeats={adminParticipation?.carSeats ?? null}
+              currentPickupLat={adminParticipation?.pickupLat ?? null}
+              currentPickupLng={adminParticipation?.pickupLng ?? null}
               paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
               waitlistPosition={adminWaitlistPosition}
               waitlistCount={waitlistParticipants.length}
-              dict={d.viaFerrataJoinButton}
+              dict={d.joinButton}
               lang={lang}
             />
           </div>
+
+          <Link href={`/${lang}/admin/hikes/${viaFerrata.id}/cars`}
+            className="group flex items-center gap-3 bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl p-4 shadow-md shadow-sky-200 hover:shadow-lg hover:shadow-sky-300 hover:-translate-y-0.5 transition-all">
+            <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Car size={20} />
+            </span>
+            <span className="font-bold flex-1">{da.manageCars}</span>
+            <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>

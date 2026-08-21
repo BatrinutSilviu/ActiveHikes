@@ -2,12 +2,13 @@ import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
-import JoinButtonVF from '@/components/viaFerrata/JoinButtonVF'
+import Link from 'next/link'
+import JoinButton from '@/components/hikes/JoinButton'
 import SpotsCounterVF from '@/components/viaFerrata/SpotsCounterVF'
 import ParticipantsCountVF from '@/components/viaFerrata/ParticipantsCountVF'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
-import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
@@ -20,8 +21,8 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
-  const viaFerrata = await prisma.viaFerrata.findUnique({
-    where: { id },
+  const viaFerrata = await prisma.hike.findFirst({
+    where: { id, type: 'via_ferrata' },
     include: {
       participants: {
         select: { id: true, userId: true, status: true, friendName: true, hostParticipantId: true, user: { select: { name: true } } },
@@ -36,8 +37,8 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
 
   let userParticipation = null
   if (session?.user?.id) {
-    userParticipation = await prisma.viaFerrataParticipant.findUnique({
-      where: { viaFerrataId_userId: { viaFerrataId: id, userId: session.user.id } },
+    userParticipation = await prisma.hikeParticipant.findUnique({
+      where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
       include: { friend: { select: { id: true, friendName: true } } },
     })
   }
@@ -53,10 +54,11 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   const spotsLeft = viaFerrata.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = viaFerrata.status === 'upcoming'
-  const price = Number(viaFerrata.price)
+  const price = Number(viaFerrata.entryFee)
   const displayPrice = price * priceMultiplier
 
   const dd = d.viaFerrataDetail
+  const hd = d.hikeDetail
   const dateLocale = d.locale
 
   return (
@@ -69,7 +71,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
         <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6 sm:pb-8">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-1 leading-tight drop-shadow">{viaFerrata.title}</h1>
           <p className="text-stone-300 flex items-center gap-1.5 text-base">
-            <MapPin size={15} /> {viaFerrata.location}
+            <MapPin size={15} /> {viaFerrata.destination}
           </p>
         </div>
       </div>
@@ -84,6 +86,15 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
             </InfoCard>
             <InfoCard icon={<Clock size={18} />} label={dd.durationLabel}>
               {viaFerrata.durationHours ? `${Number(viaFerrata.durationHours)} ${dd.durationUnit}` : dd.notSet}
+            </InfoCard>
+            <InfoCard icon={<Clock size={18} />} label={hd.meetingTimeLabel}>
+              {viaFerrata.meetingTime ?? dd.notSet}
+            </InfoCard>
+            <InfoCard icon={<Car size={18} />} label={hd.meetingPointLabel}>
+              {viaFerrata.meetingPoint ?? dd.notSet}
+            </InfoCard>
+            <InfoCard icon={<Navigation size={18} />} label={hd.startingPointLabel}>
+              {viaFerrata.startingPoint ?? dd.notSet}
             </InfoCard>
             <InfoCard icon={<Users size={18} />} label={dd.participantsLabel}>
               {isUpcoming ? (
@@ -125,22 +136,36 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
               dict={d.spots}
             />
 
-            <JoinButtonVF
-              viaFerrataId={viaFerrata.id}
+            <JoinButton
+              hikeId={viaFerrata.id}
               userId={session?.user?.id ?? null}
               isFull={isFull}
               participationStatus={userParticipation?.status ?? null}
+              currentBringsCar={userParticipation?.bringsCar ?? false}
+              currentCarSeats={userParticipation?.carSeats ?? null}
+              currentPickupLat={userParticipation?.pickupLat ?? null}
+              currentPickupLng={userParticipation?.pickupLng ?? null}
               paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
               waitlistPosition={userWaitlistPosition}
               waitlistCount={waitlistCount}
-              dict={d.viaFerrataJoinButton}
+              dict={d.joinButton}
               lang={lang}
             />
           </div>
         )}
 
         <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
-          <EssentialsSection items={viaFerrata.routes} title={dd.routesTitle} />
+          <Link
+            href={`/${lang}/via-ferrata/${viaFerrata.id}/carpool`}
+            className="flex items-center justify-between gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl p-4 font-semibold shadow-sm transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Car size={18} /> {hd.participantsSectionTitle}
+            </span>
+            <ExternalLink size={15} className="text-white/70" />
+          </Link>
+
+          <EssentialsSection items={viaFerrata.essentials} title={dd.routesTitle} />
           <DocumentsSection documents={viaFerrata.documents} title={dd.documentsTitle} hint={dd.documentsHint} />
         </div>
 

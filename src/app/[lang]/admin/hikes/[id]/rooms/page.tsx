@@ -12,8 +12,8 @@ export default async function AdminHikeRoomsPage({ params }: { params: Promise<{
 
   const [d, hike] = await Promise.all([
     getDictionary(lang),
-    prisma.hike.findUnique({
-      where: { id },
+    prisma.hike.findFirst({
+      where: { id, type: 'hike' },
       select: {
         id: true,
         title: true,

@@ -83,32 +83,6 @@
       "cancelled": "Cancelled"
     }
   },
-  "viaFerrataJoinButton": {
-    "bringFriend": "Bring a friend",
-    "friendNamePlaceholder": "Friend's full name",
-    "agreeToTermsLabel": "I agree to the",
-    "termsLinkText": "Terms & Conditions",
-    "loginToJoin": "Login to join",
-    "registerNow": "Register now",
-    "joinWaitlist": "Join waitlist",
-    "registering": "Registering…",
-    "cancelRegistration": "Cancel registration",
-    "registerAgain": "Register again",
-    "cancelling": "Cancelling…",
-    "cancelConfirm": "Are you sure you want to cancel your registration?",
-    "cancelError": "Could not cancel. Please try again.",
-    "payWithin": "Pay within",
-    "paymentWindowExpired": "Payment window elapsed.",
-    "waitlistPosition": "You're #{position} of {count} on the waitlist",
-    "joinError": "Something went wrong. Please try again.",
-    "status": {
-      "pending": { "label": "Registration pending", "desc": "Transfer the entry fee to confirm your spot." },
-      "confirmed": { "label": "You're in!", "desc": "Your spot is confirmed. See you there!" },
-      "rejected": { "label": "Registration rejected", "desc": "Your registration was not accepted." },
-      "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." },
-      "expired": { "label": "Registration expired", "desc": "You didn't pay in time. Please register again." }
-    }
-  },
   "hikeCard": {
     "full": "Full",
     "joined": "joined",
@@ -399,7 +373,6 @@
       "newViaFerrata": "New Via Ferrata",
       "bankAccounts": "Payment methods",
       "allParticipants": "All participants",
-      "allViaFerrataParticipants": "All Via Ferrata participants",
       "upcomingHikes": "Upcoming Hikes",
       "upcomingViaFerrata": "Upcoming Via Ferrata",
       "addNew": "+ Add new",
@@ -413,6 +386,9 @@
     "newHike": {
       "title": "Create New Hike",
       "subtitle": "Fill in the details for the upcoming hike",
+      "eventType": "Type",
+      "eventTypeHike": "Hike",
+      "eventTypeViaFerrata": "Via Ferrata",
       "basicInfo": "Basic Information",
       "hikeTitle": "Hike title",
       "destination": "Destination",
@@ -487,30 +463,6 @@
       "none": "None.",
       "friendOf": "Friend of"
     },
-    "viaFerrataNew": {
-      "title": "Create New Via Ferrata",
-      "subtitle": "Fill in the details for the upcoming event",
-      "basicInfo": "Basic Information",
-      "eventTitle": "Event title",
-      "titlePlaceholder": "e.g. Costila Via Ferrata",
-      "location": "Location",
-      "locationPlaceholder": "e.g. Bucegi Mountains",
-      "description": "Description",
-      "descriptionPlaceholder": "Describe the event…",
-      "date": "Date",
-      "duration": "Duration (hours)",
-      "durationPlaceholder": "e.g. 5",
-      "participantsPayment": "Participants & Payment",
-      "maxParticipants": "Max participants",
-      "price": "Price (RON)",
-      "routes": "Routes",
-      "routesLabel": "Routes",
-      "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
-      "routesHint": "One route per line — shown as a list on the event page.",
-      "cancel": "Cancel",
-      "create": "Create event",
-      "creating": "Creating…"
-    },
     "viaFerrataEdit": {
       "title": "Event title",
       "titlePlaceholder": "e.g. Costila Via Ferrata",
@@ -521,6 +473,12 @@
       "date": "Date",
       "duration": "Duration (hours)",
       "durationPlaceholder": "e.g. 5",
+      "startingPoint": "Starting point (trailhead)",
+      "startingPointPlaceholder": "e.g. Costila parking lot",
+      "meetingPoint": "City meeting point",
+      "meetingPointPlaceholder": "e.g. Floreasca Park, Bucharest",
+      "meetingTime": "Meeting time",
+      "meetingTimePlaceholder": "e.g. 07:00",
       "status": "Status",
       "maxParticipants": "Max participants",
       "price": "Price (RON)",
@@ -532,13 +490,6 @@
       "saving": "Saving…",
       "statuses": { "upcoming": "Upcoming", "ongoing": "Ongoing", "completed": "Completed", "cancelled": "Cancelled" },
       "ongoingIsAutomatic": "\"Ongoing\" is set automatically once the event date arrives."
-    },
-    "viaFerrataParticipants": {
-      "title": "All Via Ferrata Participants",
-      "pendingSection": "Pending confirmation",
-      "othersSection": "All others",
-      "none": "None.",
-      "friendOf": "Friend of"
     },
     "viaFerrata": {
       "backToDashboard": "Back to dashboard",
@@ -573,6 +524,7 @@
         "expired": "Expired"
       },
       "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
+      "manageCars": "Manage cars",
       "documents": {
         "title": "Documents",
         "hint": "Upload documents participants need to fill in (waivers, liability forms, etc.) — shown on the event page for download.",

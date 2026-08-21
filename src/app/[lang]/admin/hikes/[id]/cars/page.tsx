@@ -17,6 +17,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
       where: { id },
       select: {
         id: true,
+        type: true,
         title: true,
         peoplePerCar: true,
         carsNeeded: true,
@@ -42,6 +43,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
   if (!hike) notFound()
 
   const dc = d.admin.carsPage
+  const basePath = hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'
   const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
   const drivers = hike.participants
     .filter(p => p.bringsCar && p.carSeats != null)
@@ -49,7 +51,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
-      <Link href={`/${lang}/admin/hikes/${hike.id}`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
+      <Link href={`/${lang}/admin/${basePath}/${hike.id}`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
         <ArrowLeft size={16} /> {dc.backToHike}
       </Link>
 
@@ -58,7 +60,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
           <h1 className="text-3xl font-bold text-stone-900">{dc.title}</h1>
           <p className="text-stone-500 mt-1">{hike.title}</p>
         </div>
-        <Link href={`/${lang}/hikes/${hike.id}/carpool`} className="text-emerald-600 hover:underline text-sm font-medium shrink-0" target="_blank">
+        <Link href={`/${lang}/${basePath}/${hike.id}/carpool`} className="text-emerald-600 hover:underline text-sm font-medium shrink-0" target="_blank">
           {dc.viewCarpoolPage}
         </Link>
       </div>
