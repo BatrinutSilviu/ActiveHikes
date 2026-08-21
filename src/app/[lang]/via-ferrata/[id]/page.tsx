@@ -8,7 +8,7 @@ import SpotsCounterVF from '@/components/viaFerrata/SpotsCounterVF'
 import ParticipantsCountVF from '@/components/viaFerrata/ParticipantsCountVF'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
-import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation, Layers } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
@@ -107,6 +107,9 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
             </InfoCard>
             <InfoCard icon={<Navigation size={18} />} label={hd.startingPointLabel}>
               {viaFerrata.startingPoint ?? dd.notSet}
+            </InfoCard>
+            <InfoCard icon={<Layers size={18} />} label={dd.groupCountLabel}>
+              {viaFerrata.groupCount ?? dd.notSet}
             </InfoCard>
             <InfoCard icon={<Users size={18} />} label={dd.participantsLabel}>
               {isUpcoming ? (

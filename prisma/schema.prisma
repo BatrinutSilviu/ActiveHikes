@@ -145,6 +145,7 @@ model Hike {
   checkInTime           String?
   checkOutTime          String?
   meetingTime          String?
+  groupCount           Int?
   difficulty           Difficulty?
   status               HikeStatus  @default(upcoming)
   gpxApproximateUrl    String?

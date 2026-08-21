@@ -90,6 +90,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     startingPoint: viaFerrata.startingPoint,
     meetingPoint: viaFerrata.meetingPoint,
     meetingTime: viaFerrata.meetingTime,
+    groupCount: viaFerrata.groupCount,
     essentials: viaFerrata.essentials,
     status: viaFerrata.status,
     coverImageUrl: viaFerrata.coverImageUrl,

@@ -37,7 +37,7 @@ function NewHikeForm() {
     const max_participants = '20'
     const people_per_car = '5'
     return {
-      title: '', destination: '', description: '', date: '', end_date: '', meeting_time: '',
+      title: '', destination: '', description: '', date: '', end_date: '', meeting_time: '', group_count: '',
       entry_fee: '0', max_participants, mountain_range: '', meeting_point: '', starting_point: '', duration_hours: '',
       people_per_car, cars_needed: computeCars(max_participants, people_per_car),
       has_camping: false, camping_details: '', camping_url: '', camping_price: '', has_accommodation: false, accommodation_details: '',
@@ -82,6 +82,7 @@ function NewHikeForm() {
           description: form.description || undefined, date: form.date,
           endDate: form.end_date || undefined,
           meetingTime: form.meeting_time || undefined,
+          groupCount: form.group_count ? parseInt(form.group_count) : undefined,
           entryFee: parseFloat(form.entry_fee), maxParticipants: parseInt(form.max_participants),
           mountainRange: form.mountain_range || undefined,
           meetingPoint: form.meeting_point || undefined,
@@ -162,6 +163,11 @@ function NewHikeForm() {
                   <option key={k} value={k}>{diffs[k]}</option>
                 ))}
               </select>
+            </Field>
+          )}
+          {!isHike && (
+            <Field label={dv.groupCount}>
+              <input type="number" value={form.group_count} onChange={e => set('group_count', e.target.value)} min="1" step="1" placeholder={dv.groupCountPlaceholder} className={input} />
             </Field>
           )}
         </Section>

@@ -323,6 +323,7 @@ export async function createHike(data: {
   date: string
   endDate?: string
   meetingTime?: string
+  groupCount?: number
   entryFee: number
   maxParticipants: number
   mountainRange?: string
@@ -371,6 +372,7 @@ export async function createHike(data: {
       date: new Date(data.date),
       endDate: isHike && data.endDate ? new Date(data.endDate) : null,
       meetingTime: data.meetingTime || null,
+      groupCount: data.groupCount ?? null,
       entryFee: data.entryFee,
       maxParticipants: data.maxParticipants,
       mountainRange: isHike ? (data.mountainRange || null) : null,
@@ -427,6 +429,7 @@ export async function updateHike(
     date?: string
     endDate?: string | null
     meetingTime?: string | null
+    groupCount?: number | null
     durationHours?: number | null
     difficulty?: string | null
     status?: HikeStatus

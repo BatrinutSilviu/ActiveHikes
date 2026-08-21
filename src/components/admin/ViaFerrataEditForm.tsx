@@ -16,6 +16,7 @@ type ViaFerrataData = {
   startingPoint: string | null
   meetingPoint: string | null
   meetingTime: string | null
+  groupCount: number | null
   essentials: string[]
   coverImageUrl: string | null
   totalPrice: number | null
@@ -50,6 +51,8 @@ type ViaFerrataEditDict = {
   meetingPointPlaceholder: string
   meetingTime: string
   meetingTimePlaceholder: string
+  groupCount: string
+  groupCountPlaceholder: string
   savedSuccessfully: string
   saveChanges: string
   saving: string
@@ -70,6 +73,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     startingPoint: viaFerrata.startingPoint ?? '',
     meetingPoint: viaFerrata.meetingPoint ?? '',
     meetingTime: viaFerrata.meetingTime ?? '',
+    groupCount: viaFerrata.groupCount != null ? String(viaFerrata.groupCount) : '',
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
@@ -103,6 +107,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         startingPoint: form.startingPoint || null,
         meetingPoint: form.meetingPoint || null,
         meetingTime: form.meetingTime || null,
+        groupCount: form.groupCount ? parseInt(form.groupCount) : null,
         coverImageUrl,
       })
 
@@ -151,9 +156,15 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
           <input value={form.meetingPoint} onChange={e => set('meetingPoint', e.target.value)} placeholder={dict.meetingPointPlaceholder} className={cls} />
         </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>
-        <input value={form.meetingTime} onChange={e => set('meetingTime', e.target.value)} placeholder={dict.meetingTimePlaceholder} className={cls} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>
+          <input value={form.meetingTime} onChange={e => set('meetingTime', e.target.value)} placeholder={dict.meetingTimePlaceholder} className={cls} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.groupCount}</label>
+          <input type="number" value={form.groupCount} onChange={e => set('groupCount', e.target.value)} min="1" step="1" placeholder={dict.groupCountPlaceholder} className={cls} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
