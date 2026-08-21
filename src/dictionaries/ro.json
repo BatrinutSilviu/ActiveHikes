@@ -70,6 +70,8 @@
     "confirmed": "confirmați",
     "onWaitlist": "pe lista de așteptare",
     "routesTitle": "Trasee",
+    "documentsTitle": "Documente",
+    "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente în ziua evenimentului.",
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
@@ -570,7 +572,17 @@
         "rejected": "Respins",
         "expired": "Expirat"
       },
-      "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" }
+      "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
+      "documents": {
+        "title": "Documente",
+        "hint": "Încarcă documentele pe care participanții trebuie să le completeze (declarații, formulare de răspundere etc.) — apar pe pagina evenimentului pentru descărcare.",
+        "namePlaceholder": "Nume document (ex. Declarație pe proprie răspundere)",
+        "selectFile": "Apasă pentru a selecta un document",
+        "upload": "Încarcă documentul",
+        "uploading": "Se încarcă…",
+        "deleteConfirm": "Ștergi acest document?",
+        "noDocuments": "Niciun document încărcat încă."
+      }
     },
     "hike": {
       "backToDashboard": "Înapoi la panou",

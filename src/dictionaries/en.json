@@ -70,6 +70,8 @@
     "confirmed": "confirmed",
     "onWaitlist": "on the waitlist",
     "routesTitle": "Routes",
+    "documentsTitle": "Documents",
+    "documentsHint": "Please download, fill in, and bring these documents on the day of the event.",
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "friendDoublesFee": "This covers both you and your friend — double the usual amount.",
@@ -570,7 +572,17 @@
         "rejected": "Rejected",
         "expired": "Expired"
       },
-      "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" }
+      "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
+      "documents": {
+        "title": "Documents",
+        "hint": "Upload documents participants need to fill in (waivers, liability forms, etc.) — shown on the event page for download.",
+        "namePlaceholder": "Document name (e.g. Liability waiver)",
+        "selectFile": "Click to select a document",
+        "upload": "Upload document",
+        "uploading": "Uploading…",
+        "deleteConfirm": "Delete this document?",
+        "noDocuments": "No documents uploaded yet."
+      }
     },
     "hike": {
       "backToDashboard": "Back to dashboard",

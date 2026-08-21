@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
+import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import JoinButtonVF from '@/components/viaFerrata/JoinButtonVF'
 import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -31,6 +32,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           },
           orderBy: { joinedAt: 'asc' },
         },
+        documents: { orderBy: { createdAt: 'asc' } },
       },
     }),
   ])
@@ -82,7 +84,14 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     price: Number(viaFerrata.price),
     durationHours: viaFerrata.durationHours ? Number(viaFerrata.durationHours) : null,
     participants: undefined,
+    documents: undefined,
   }
+
+  const documents = viaFerrata.documents.map(document => ({
+    id: document.id,
+    url: document.url,
+    name: document.name,
+  }))
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
@@ -122,6 +131,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
             <ViaFerrataEditForm viaFerrata={viaFerrataData as any} dict={d.admin.viaFerrataEdit} />
           </div>
+
+          <ViaFerrataDocumentUploader viaFerrataId={viaFerrata.id} existingDocuments={documents} dict={da.documents} />
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>

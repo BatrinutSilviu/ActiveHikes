@@ -236,6 +236,17 @@ model ViaFerrata {
 
   createdBy    User?                   @relation(fields: [createdById], references: [id])
   participants ViaFerrataParticipant[]
+  documents    ViaFerrataDocument[]
+}
+
+model ViaFerrataDocument {
+  id           String   @id @default(cuid())
+  viaFerrataId String
+  name         String
+  url          String
+  createdAt    DateTime @default(now())
+
+  viaFerrata ViaFerrata @relation(fields: [viaFerrataId], references: [id], onDelete: Cascade)
 }
 
 model ViaFerrataParticipant {

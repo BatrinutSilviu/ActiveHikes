@@ -6,6 +6,7 @@ import JoinButtonVF from '@/components/viaFerrata/JoinButtonVF'
 import SpotsCounterVF from '@/components/viaFerrata/SpotsCounterVF'
 import ParticipantsCountVF from '@/components/viaFerrata/ParticipantsCountVF'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
+import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
 import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
@@ -26,6 +27,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
         select: { id: true, userId: true, status: true, friendName: true, hostParticipantId: true, user: { select: { name: true } } },
         orderBy: { joinedAt: 'asc' },
       },
+      documents: { orderBy: { createdAt: 'asc' } },
     },
   })
   if (!viaFerrata) notFound()
@@ -139,6 +141,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
 
         <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
           <EssentialsSection items={viaFerrata.routes} title={dd.routesTitle} />
+          <DocumentsSection documents={viaFerrata.documents} title={dd.documentsTitle} hint={dd.documentsHint} />
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
