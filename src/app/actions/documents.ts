@@ -22,6 +22,21 @@ export async function addDocument(hikeId: string, url: string, name: string) {
   revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
 }
 
+export async function renameDocument(documentId: string, hikeId: string, name: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const trimmedName = name.trim()
+  if (!trimmedName) throw new Error('Name is required')
+
+  await prisma.hikeDocument.update({ where: { id: documentId }, data: { name: trimmedName } })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/admin/via-ferrata/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
+}
+
 export async function deleteDocument(documentId: string, hikeId: string) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')

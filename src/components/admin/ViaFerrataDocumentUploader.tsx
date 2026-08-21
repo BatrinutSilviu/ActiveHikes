@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addDocument, deleteDocument } from '@/app/actions/documents'
-import { Upload, Trash2, X, FileText, Link as LinkIcon } from 'lucide-react'
+import { addDocument, deleteDocument, renameDocument } from '@/app/actions/documents'
+import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check } from 'lucide-react'
 
 type ViaFerrataDoc = { id: string; url: string; name: string }
 
@@ -33,7 +33,32 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
   const [linkUrl, setLinkUrl] = useState('')
   const [name, setName] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState('')
   const [, startTransition] = useTransition()
+
+  const startEdit = (document: ViaFerrataDoc) => {
+    setEditingId(document.id)
+    setEditingName(document.name)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditingName('')
+  }
+
+  const saveEdit = () => {
+    if (!editingId) return
+    const trimmedName = editingName.trim()
+    if (!trimmedName) return
+    const id = editingId
+    startTransition(async () => {
+      await renameDocument(id, viaFerrataId, trimmedName)
+      setDocuments(prev => prev.map(d => d.id === id ? { ...d, name: trimmedName } : d))
+      setEditingId(null)
+      setEditingName('')
+    })
+  }
 
   const switchMode = (next: 'file' | 'link') => {
     setMode(next)
@@ -98,13 +123,37 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
               ) : (
                 <LinkIcon size={16} className="text-stone-400 shrink-0" />
               )}
-              <a href={document.url} target="_blank" rel="noopener noreferrer"
-                className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
-                {document.name}
-              </a>
-              <button onClick={() => handleDelete(document)} className="text-stone-400 hover:text-red-500 shrink-0">
-                <Trash2 size={16} />
-              </button>
+              {editingId === document.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                    autoFocus
+                    className="flex-1 border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <button onClick={saveEdit} disabled={!editingName.trim()} className="text-emerald-600 hover:text-emerald-700 shrink-0 disabled:opacity-50">
+                    <Check size={16} />
+                  </button>
+                  <button onClick={cancelEdit} className="text-stone-400 hover:text-red-500 shrink-0">
+                    <X size={16} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <a href={document.url} target="_blank" rel="noopener noreferrer"
+                    className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
+                    {document.name}
+                  </a>
+                  <button onClick={() => startEdit(document)} className="text-stone-400 hover:text-emerald-600 shrink-0">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={() => handleDelete(document)} className="text-stone-400 hover:text-red-500 shrink-0">
+                    <Trash2 size={16} />
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>
