@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Calendar, Users, Clock, ChevronRight, Mountain, MapPin } from 'lucide-react'
+import { Calendar, Users, Clock, ChevronRight, Mountain, MapPin, DollarSign } from 'lucide-react'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
 const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
@@ -10,6 +10,8 @@ type ViaFerrataCardData = {
   location: string
   date: string
   price: number
+  totalPrice: number | null
+  advanceFee: number | null
   maxParticipants: number
   durationHours: number | null
   status: string
@@ -25,6 +27,7 @@ type ViaFerrataCardDict = {
   viewDetails: string
   free: string
   onWaitlist: string
+  totalPriceShort: string
   status: Record<string, string>
 }
 
@@ -39,7 +42,11 @@ export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata:
   const spotsLeft = viaFerrata.maxParticipants - viaFerrata.confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = !isPastEvent(viaFerrata.status, viaFerrata.date)
-  const priceLabel = viaFerrata.price > 0 ? `${viaFerrata.price} RON` : dict.free
+  const advanceFee = viaFerrata.advanceFee ?? 0
+  const totalExtra = viaFerrata.totalPrice ?? 0
+  const confirmationPrice = viaFerrata.price + advanceFee
+  const totalPrice = viaFerrata.price + totalExtra
+  const priceLabel = confirmationPrice > 0 ? `${confirmationPrice} RON` : dict.free
 
   return (
     <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`}
@@ -80,6 +87,11 @@ export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata:
       </div>
 
       <div className="px-5 py-3.5">
+        {totalPrice > confirmationPrice && (
+          <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
+            <DollarSign size={12} /> {dict.totalPriceShort}: {totalPrice} RON
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
             <span className="flex items-center gap-1">

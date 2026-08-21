@@ -386,8 +386,9 @@ export async function createHike(data: {
       carsNeeded: data.carsNeeded ?? null,
       accommodationDetails: isHike ? (data.accommodationDetails || null) : null,
       accommodationUrl: isHike ? (data.accommodationUrl || null) : null,
-      accommodationPrice: isHike ? (data.accommodationPrice ?? null) : null,
-      accommodationDeposit: isHike ? (data.accommodationDeposit ?? null) : null,
+      // Reused for Via Ferrata as the total price / advance fee, not accommodation.
+      accommodationPrice: data.accommodationPrice ?? null,
+      accommodationDeposit: data.accommodationDeposit ?? null,
       doubleRoomCount: isHike ? (data.doubleRoomCount ?? 0) : 0,
       tripleRoomCount: isHike ? (data.tripleRoomCount ?? 0) : 0,
       quadrupleRoomCount: isHike ? (data.quadrupleRoomCount ?? 0) : 0,

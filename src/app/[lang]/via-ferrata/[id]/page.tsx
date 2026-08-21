@@ -57,8 +57,13 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   const spotsLeft = viaFerrata.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = viaFerrata.status === 'upcoming' || (viaFerrata.status === 'draft' && isAdmin)
-  const price = Number(viaFerrata.entryFee)
-  const displayPrice = price * priceMultiplier
+  const entryFee = Number(viaFerrata.entryFee)
+  const totalExtra = viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : 0
+  const advanceFee = viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : 0
+  const confirmationPrice = entryFee + advanceFee
+  const totalPrice = entryFee + totalExtra
+  const displayConfirmationPrice = confirmationPrice * priceMultiplier
+  const displayTotalPrice = totalPrice * priceMultiplier
 
   const dd = d.viaFerrataDetail
   const hd = d.hikeDetail
@@ -118,7 +123,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
               )}
             </InfoCard>
             <InfoCard icon={<DollarSign size={18} />} label={dd.priceLabel}>
-              {price > 0 ? `${price} RON` : dd.free}
+              {entryFee > 0 ? `${entryFee} RON` : dd.free}
             </InfoCard>
           </div>
         </div>
@@ -126,11 +131,33 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
         {isUpcoming && (
           <div className="order-2 lg:col-start-3 lg:row-start-1 self-start bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
             <div className="text-center mb-5">
-              <div className="text-4xl font-black tracking-tight text-stone-900">
-                {displayPrice > 0 ? `${displayPrice} RON` : dd.free}
-              </div>
-              {displayPrice > 0 && (
-                <p className="text-stone-400 text-sm mt-1">{hasFriend ? dd.forYouAndFriend : dd.perPerson}</p>
+              {totalPrice > confirmationPrice ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{displayTotalPrice} RON</div>
+                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{hd.totalPriceLabel}</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{displayConfirmationPrice} RON</div>
+                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{hd.confirmationPriceLabel}</div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-4xl font-black tracking-tight text-stone-900">
+                    {displayConfirmationPrice > 0 ? `${displayConfirmationPrice} RON` : dd.free}
+                  </div>
+                  {displayConfirmationPrice > 0 && (
+                    <p className="text-stone-400 text-sm mt-1">{hasFriend ? dd.forYouAndFriend : dd.perPerson}</p>
+                  )}
+                </>
+              )}
+              {advanceFee > 0 && (
+                <p className="text-stone-400 text-xs mt-2 leading-relaxed">
+                  {dd.feeBreakdown
+                    .replace('{entryFee}', String(entryFee * priceMultiplier))
+                    .replace('{deposit}', String(advanceFee * priceMultiplier))}
+                </p>
               )}
               {hasFriend && (
                 <p className="text-emerald-600 text-xs font-medium mt-2 leading-relaxed">{dd.friendDoublesFee}</p>
@@ -177,17 +204,24 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
-          {price > 0 && bankAccounts.length > 0 && (
+          {confirmationPrice > 0 && bankAccounts.length > 0 && (
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
               <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
                 <DollarSign size={16} /> {dd.paymentTitle}
               </h3>
               <p className="text-amber-700 text-sm mb-4">
-                {dd.paymentDesc.replace('{fee}', String(displayPrice))}
+                {dd.paymentDesc.replace('{fee}', String(displayConfirmationPrice))}
               </p>
               {hasFriend && (
                 <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
                   {dd.friendDoublesFee}
+                </p>
+              )}
+              {advanceFee > 0 && (
+                <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
+                  {dd.feeBreakdown
+                    .replace('{entryFee}', String(entryFee * priceMultiplier))
+                    .replace('{deposit}', String(advanceFee * priceMultiplier))}
                 </p>
               )}
               {bankAccounts.map(account => {

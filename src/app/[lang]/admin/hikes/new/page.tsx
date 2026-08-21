@@ -175,6 +175,16 @@ function NewHikeForm() {
               <input type="number" value={form.entry_fee} onChange={e => set('entry_fee', e.target.value)} min="0" step="0.5" className={input} />
             </Field>
           </div>
+          {!isHike && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label={dv.totalPrice}>
+                <input type="number" value={form.accommodation_price} onChange={e => set('accommodation_price', e.target.value)} min="0" step="1" placeholder={dv.totalPricePlaceholder} className={input} />
+              </Field>
+              <Field label={dv.advanceFee}>
+                <input type="number" value={form.accommodation_deposit} onChange={e => set('accommodation_deposit', e.target.value)} min="0" step="1" placeholder={dv.advanceFeePlaceholder} className={input} />
+              </Field>
+            </div>
+          )}
         </Section>
 
         <Section title={d.logistics}>

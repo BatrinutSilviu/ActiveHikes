@@ -18,6 +18,8 @@ type ViaFerrataData = {
   meetingTime: string | null
   essentials: string[]
   coverImageUrl: string | null
+  totalPrice: number | null
+  advanceFee: number | null
 }
 
 type ViaFerrataEditDict = {
@@ -32,6 +34,10 @@ type ViaFerrataEditDict = {
   durationPlaceholder: string
   maxParticipants: string
   price: string
+  totalPrice: string
+  totalPricePlaceholder: string
+  advanceFee: string
+  advanceFeePlaceholder: string
   routes: string
   routesPlaceholder: string
   routesHint: string
@@ -58,6 +64,8 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     durationHours: viaFerrata.durationHours != null ? String(viaFerrata.durationHours) : '',
     maxParticipants: String(viaFerrata.maxParticipants),
     price: String(viaFerrata.entryFee),
+    totalPrice: viaFerrata.totalPrice != null ? String(viaFerrata.totalPrice) : '',
+    advanceFee: viaFerrata.advanceFee != null ? String(viaFerrata.advanceFee) : '',
     routes: viaFerrata.essentials.join('\n'),
     startingPoint: viaFerrata.startingPoint ?? '',
     meetingPoint: viaFerrata.meetingPoint ?? '',
@@ -89,6 +97,8 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
         maxParticipants: parseInt(form.maxParticipants),
         entryFee: parseFloat(form.price),
+        accommodationPrice: form.totalPrice ? parseFloat(form.totalPrice) : null,
+        accommodationDeposit: form.advanceFee ? parseFloat(form.advanceFee) : null,
         essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
         startingPoint: form.startingPoint || null,
         meetingPoint: form.meetingPoint || null,
@@ -154,6 +164,17 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.price}</label>
           <input type="number" value={form.price} onChange={e => set('price', e.target.value)} min="0" step="0.5" className={cls} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.totalPrice}</label>
+          <input type="number" value={form.totalPrice} onChange={e => set('totalPrice', e.target.value)} min="0" step="1" placeholder={dict.totalPricePlaceholder} className={cls} />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.advanceFee}</label>
+          <input type="number" value={form.advanceFee} onChange={e => set('advanceFee', e.target.value)} min="0" step="1" placeholder={dict.advanceFeePlaceholder} className={cls} />
         </div>
       </div>
 

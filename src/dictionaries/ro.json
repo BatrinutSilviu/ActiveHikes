@@ -46,6 +46,7 @@
     "viewDetails": "Vezi detalii",
     "free": "Gratuit",
     "onWaitlist": "pe listă",
+    "totalPriceShort": "Total",
     "status": {
       "upcoming": "Viitoare",
       "ongoing": "În desfășurare",
@@ -75,6 +76,7 @@
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
+    "feeBreakdown": "{entryFee} RON preț + {deposit} RON avans",
     "payWithRevolut": "Plătește cu Revolut",
     "status": {
       "upcoming": "Viitoare",
@@ -482,6 +484,10 @@
       "meetingTimePlaceholder": "ex. 07:00",
       "maxParticipants": "Număr maxim participanți",
       "price": "Preț (RON)",
+      "totalPrice": "Preț total (RON)",
+      "totalPricePlaceholder": "ex. 250",
+      "advanceFee": "Avans (RON)",
+      "advanceFeePlaceholder": "ex. 100",
       "routes": "Trasee",
       "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
       "routesHint": "Un traseu pe linie — afișat ca listă pe pagina evenimentului.",

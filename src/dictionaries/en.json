@@ -46,6 +46,7 @@
     "viewDetails": "View details",
     "free": "Free",
     "onWaitlist": "waitlisted",
+    "totalPriceShort": "Total",
     "status": {
       "upcoming": "Upcoming",
       "ongoing": "Ongoing",
@@ -75,6 +76,7 @@
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "friendDoublesFee": "This covers both you and your friend — double the usual amount.",
+    "feeBreakdown": "{entryFee} RON price + {deposit} RON advance",
     "payWithRevolut": "Pay with Revolut",
     "status": {
       "upcoming": "Upcoming",
@@ -482,6 +484,10 @@
       "meetingTimePlaceholder": "e.g. 07:00",
       "maxParticipants": "Max participants",
       "price": "Price (RON)",
+      "totalPrice": "Total price (RON)",
+      "totalPricePlaceholder": "e.g. 250",
+      "advanceFee": "Advance fee (RON)",
+      "advanceFeePlaceholder": "e.g. 100",
       "routes": "Routes",
       "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
       "routesHint": "One route per line — shown as a list on the event page.",

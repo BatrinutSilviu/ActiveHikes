@@ -93,6 +93,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     essentials: viaFerrata.essentials,
     status: viaFerrata.status,
     coverImageUrl: viaFerrata.coverImageUrl,
+    totalPrice: viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : null,
+    advanceFee: viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : null,
   }
 
   const documents = viaFerrata.documents.map(document => ({
