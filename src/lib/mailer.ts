@@ -1,9 +1,15 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy — RESEND_API_KEY is a runtime secret, not available during `next build`,
+// and the Resend constructor throws immediately if it's missing.
+let resend: Resend | null = null
+function getResendClient() {
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY)
+  return resend
+}
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
-  await resend.emails.send({
+  await getResendClient().emails.send({
     from: process.env.EMAIL_FROM!,
     to,
     subject: 'Reset your ActiveHikes password',
