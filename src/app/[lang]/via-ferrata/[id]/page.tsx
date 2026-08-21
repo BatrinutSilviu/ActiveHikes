@@ -64,9 +64,13 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Mountain size={72} className="text-white/10" />
-        </div>
+        {viaFerrata.coverImageUrl ? (
+          <img src={viaFerrata.coverImageUrl} alt={viaFerrata.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Mountain size={72} className="text-white/10" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6 sm:pb-8">
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-1 leading-tight drop-shadow">{viaFerrata.title}</h1>

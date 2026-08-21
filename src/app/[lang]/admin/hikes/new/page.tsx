@@ -290,22 +290,24 @@ function NewHikeForm() {
           </Field>
         </Section>
 
-        {isHike && (
-          <Section title={d.mediaRoutes}>
-            <Field label={d.coverPhoto}>
-              <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
-            </Field>
-            <Field label={d.approximateGpx}>
-              <FileInput accept=".gpx,.kml" file={gpxApproxFile} onFile={setGpxApproxFile} hint={d.approximateGpxHint} uploadLabel={d.clickToUpload} />
-            </Field>
-            <Field label={d.whatsappGroupUrl}>
-              <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
-            </Field>
-            <Field label={d.externalAlbum}>
-              <input type="url" value={form.external_photos_url} onChange={e => set('external_photos_url', e.target.value)} placeholder={d.externalAlbumPlaceholder} className={input} />
-            </Field>
-          </Section>
-        )}
+        <Section title={d.mediaRoutes}>
+          <Field label={d.coverPhoto}>
+            <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
+          </Field>
+          {isHike && (
+            <>
+              <Field label={d.approximateGpx}>
+                <FileInput accept=".gpx,.kml" file={gpxApproxFile} onFile={setGpxApproxFile} hint={d.approximateGpxHint} uploadLabel={d.clickToUpload} />
+              </Field>
+              <Field label={d.whatsappGroupUrl}>
+                <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
+              </Field>
+              <Field label={d.externalAlbum}>
+                <input type="url" value={form.external_photos_url} onChange={e => set('external_photos_url', e.target.value)} placeholder={d.externalAlbumPlaceholder} className={input} />
+              </Field>
+            </>
+          )}
+        </Section>
 
         {error && <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">{error}</div>}
 

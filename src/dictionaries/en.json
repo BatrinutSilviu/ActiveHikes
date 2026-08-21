@@ -485,6 +485,9 @@
       "routes": "Routes",
       "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
       "routesHint": "One route per line — shown as a list on the event page.",
+      "coverPhoto": "Cover photo",
+      "coverPhotoSet": "✓ Cover photo already set",
+      "changeCoverPhoto": "Click to change cover photo",
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
       "saving": "Saving…",
@@ -527,13 +530,18 @@
       "manageCars": "Manage cars",
       "documents": {
         "title": "Documents",
-        "hint": "Upload documents participants need to fill in (waivers, liability forms, etc.) — shown on the event page for download.",
+        "hint": "Upload documents (or add a link) participants need to fill in (waivers, liability forms, etc.) — shown on the event page.",
         "namePlaceholder": "Document name (e.g. Liability waiver)",
         "selectFile": "Click to select a document",
         "upload": "Upload document",
         "uploading": "Uploading…",
+        "uploadFileTab": "Upload file",
+        "addLinkTab": "Add link",
+        "linkPlaceholder": "https://forms.google.com/…",
+        "addLink": "Add link",
+        "adding": "Adding…",
         "deleteConfirm": "Delete this document?",
-        "noDocuments": "No documents uploaded yet."
+        "noDocuments": "No documents added yet."
       }
     },
     "hike": {

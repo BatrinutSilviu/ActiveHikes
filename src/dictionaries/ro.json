@@ -485,6 +485,9 @@
       "routes": "Trasee",
       "routesPlaceholder": "Costila\nBucegi - Vf. Omu",
       "routesHint": "Un traseu pe linie — afișat ca listă pe pagina evenimentului.",
+      "coverPhoto": "Fotografie de copertă",
+      "coverPhotoSet": "✓ Fotografia de copertă este setată",
+      "changeCoverPhoto": "Click pentru a schimba fotografia de copertă",
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…",
@@ -527,13 +530,18 @@
       "manageCars": "Gestionează mașinile",
       "documents": {
         "title": "Documente",
-        "hint": "Încarcă documentele pe care participanții trebuie să le completeze (declarații, formulare de răspundere etc.) — apar pe pagina evenimentului pentru descărcare.",
+        "hint": "Încarcă documente (sau adaugă un link) pe care participanții trebuie să le completeze (declarații, formulare de răspundere etc.) — apar pe pagina evenimentului.",
         "namePlaceholder": "Nume document (ex. Declarație pe proprie răspundere)",
         "selectFile": "Apasă pentru a selecta un document",
         "upload": "Încarcă documentul",
         "uploading": "Se încarcă…",
+        "uploadFileTab": "Încarcă fișier",
+        "addLinkTab": "Adaugă link",
+        "linkPlaceholder": "https://forms.google.com/…",
+        "addLink": "Adaugă link",
+        "adding": "Se adaugă…",
         "deleteConfirm": "Ștergi acest document?",
-        "noDocuments": "Niciun document încărcat încă."
+        "noDocuments": "Niciun document adăugat încă."
       }
     },
     "hike": {

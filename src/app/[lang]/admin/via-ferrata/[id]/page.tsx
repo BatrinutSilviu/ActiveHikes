@@ -91,6 +91,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     meetingTime: viaFerrata.meetingTime,
     essentials: viaFerrata.essentials,
     status: viaFerrata.status,
+    coverImageUrl: viaFerrata.coverImageUrl,
   }
 
   const documents = viaFerrata.documents.map(document => ({

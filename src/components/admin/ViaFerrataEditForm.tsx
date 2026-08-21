@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
 import { HikeStatus } from '@prisma/client'
+import { Upload, X } from 'lucide-react'
 
 type ViaFerrataData = {
   id: string
@@ -18,6 +19,7 @@ type ViaFerrataData = {
   meetingTime: string | null
   essentials: string[]
   status: HikeStatus
+  coverImageUrl: string | null
 }
 
 type ViaFerrataEditDict = {
@@ -36,6 +38,9 @@ type ViaFerrataEditDict = {
   routes: string
   routesPlaceholder: string
   routesHint: string
+  coverPhoto: string
+  coverPhotoSet: string
+  changeCoverPhoto: string
   startingPoint: string
   startingPointPlaceholder: string
   meetingPoint: string
@@ -64,6 +69,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     meetingPoint: viaFerrata.meetingPoint ?? '',
     meetingTime: viaFerrata.meetingTime ?? '',
   })
+  const [coverFile, setCoverFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -72,6 +78,15 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
+      let coverImageUrl = viaFerrata.coverImageUrl
+      if (coverFile) {
+        const fd = new FormData()
+        fd.append('file', coverFile)
+        fd.append('bucket', 'hike-covers')
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        coverImageUrl = (await res.json()).url
+      }
+
       await updateHike(viaFerrata.id, {
         title: form.title,
         destination: form.location,
@@ -85,8 +100,10 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         startingPoint: form.startingPoint || null,
         meetingPoint: form.meetingPoint || null,
         meetingTime: form.meetingTime || null,
+        coverImageUrl,
       })
 
+      setCoverFile(null)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     })
@@ -162,6 +179,28 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         <textarea value={form.routes} onChange={e => set('routes', e.target.value)}
           rows={5} placeholder={dict.routesPlaceholder} className={cls} />
         <p className="text-xs text-stone-400 mt-1.5">{dict.routesHint}</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.coverPhoto}</label>
+        {coverFile ? (
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+            <span className="text-emerald-700 text-sm flex-1 truncate">{coverFile.name}</span>
+            <button type="button" onClick={() => setCoverFile(null)}><X size={14} className="text-stone-400" /></button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2 border border-dashed border-stone-200 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-300 transition-colors">
+            <Upload size={16} className="text-stone-400" />
+            <span className="text-stone-500 text-sm">{dict.changeCoverPhoto}</span>
+            <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && setCoverFile(e.target.files[0])} />
+          </label>
+        )}
+        {viaFerrata.coverImageUrl && !coverFile && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <img src={viaFerrata.coverImageUrl} alt="" className="w-12 h-8 object-cover rounded" />
+            <p className="text-xs text-emerald-600">{dict.coverPhotoSet}</p>
+          </div>
+        )}
       </div>
 
       {success && <p className="text-emerald-600 text-sm font-medium">{dict.savedSuccessfully}</p>}

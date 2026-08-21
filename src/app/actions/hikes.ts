@@ -396,7 +396,7 @@ export async function createHike(data: {
       checkInTime: isHike ? (data.checkInTime || null) : null,
       checkOutTime: isHike ? (data.checkOutTime || null) : null,
       difficulty: isHike ? ((data.difficulty as Difficulty) || null) : null,
-      coverImageUrl: isHike ? (data.coverImageUrl || null) : null,
+      coverImageUrl: data.coverImageUrl || null,
       gpxApproximateUrl: isHike ? (data.gpxApproximateUrl || null) : null,
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,

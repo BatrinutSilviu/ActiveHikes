@@ -15,6 +15,7 @@ type ViaFerrataCardData = {
   status: string
   confirmedCount: number
   waitlistCount: number
+  coverImageUrl: string | null
 }
 
 type ViaFerrataCardDict = {
@@ -45,9 +46,14 @@ export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata:
       className="group block bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
 
       <div className="relative h-60 overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-800 flex items-center justify-center">
-          <Mountain size={56} className="text-white/10" />
-        </div>
+        {viaFerrata.coverImageUrl ? (
+          <img src={viaFerrata.coverImageUrl} alt={viaFerrata.title}
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-800 flex items-center justify-center">
+            <Mountain size={56} className="text-white/10" />
+          </div>
+        )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
 

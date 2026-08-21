@@ -25,6 +25,7 @@ async function getAllViaFerrata() {
     status: e.status,
     confirmedCount: e.participants.filter(p => p.status === 'confirmed').length,
     waitlistCount: e.participants.filter(p => p.status === 'waitlist').length,
+    coverImageUrl: e.coverImageUrl,
   })
   return {
     upcoming: events.filter(e => !isPastEvent(e.status, e.date)).reverse().map(serialize),
