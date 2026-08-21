@@ -33,6 +33,9 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   })
   if (!viaFerrata) notFound()
 
+  const isAdmin = session?.user?.role === 'admin'
+  if (viaFerrata.status === 'draft' && !isAdmin) notFound()
+
   const bankAccounts = await prisma.bankAccount.findMany({ where: { isActive: true } })
 
   let userParticipation = null
@@ -53,7 +56,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
     : null
   const spotsLeft = viaFerrata.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
-  const isUpcoming = viaFerrata.status === 'upcoming'
+  const isUpcoming = viaFerrata.status === 'upcoming' || (viaFerrata.status === 'draft' && isAdmin)
   const price = Number(viaFerrata.entryFee)
   const displayPrice = price * priceMultiplier
 

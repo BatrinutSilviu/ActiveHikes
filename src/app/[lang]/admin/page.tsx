@@ -13,7 +13,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
-  const [d, hikeCount, viaFerrataCount, pendingCount, userCount, draftHikes, allHikes, allViaFerrata] = await Promise.all([
+  const [d, hikeCount, viaFerrataCount, pendingCount, userCount, draftHikes, allHikes, draftViaFerrata, allViaFerrata] = await Promise.all([
     getDictionary(lang),
     prisma.hike.count({ where: { type: 'hike' } }),
     prisma.hike.count({ where: { type: 'via_ferrata' } }),
@@ -29,7 +29,12 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       select: { id: true, title: true, date: true, endDate: true, maxParticipants: true, status: true },
     }),
     prisma.hike.findMany({
-      where: { type: 'via_ferrata' },
+      where: { type: 'via_ferrata', status: 'draft' },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, date: true, maxParticipants: true },
+    }),
+    prisma.hike.findMany({
+      where: { type: 'via_ferrata', status: { not: 'draft' } },
       select: { id: true, title: true, date: true, maxParticipants: true, status: true },
     }),
   ])
@@ -137,6 +142,30 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
                   <div className="text-stone-400 text-xs mt-0.5">
                     {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                     {' · '}{hike.maxParticipants} {da.spots}
+                  </div>
+                </div>
+                <ChevronRight size={17} className="text-amber-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Draft Via Ferrata list */}
+      {draftViaFerrata.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm mb-6">
+          <div className="px-6 py-4 border-b border-amber-100">
+            <h2 className="font-bold text-amber-800">{da.draftViaFerrata}</h2>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {draftViaFerrata.map(event => (
+              <Link key={event.id} href={`/${lang}/admin/via-ferrata/${event.id}`}
+                className="flex items-center justify-between px-6 py-4 hover:bg-amber-100/50 transition-colors group">
+                <div>
+                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{event.title}</div>
+                  <div className="text-stone-400 text-xs mt-0.5">
+                    {new Date(event.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {' · '}{event.maxParticipants} {da.spots}
                   </div>
                 </div>
                 <ChevronRight size={17} className="text-amber-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />

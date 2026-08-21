@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
-import { HikeStatus } from '@prisma/client'
 import { Upload, X } from 'lucide-react'
 
 type ViaFerrataData = {
@@ -18,7 +17,6 @@ type ViaFerrataData = {
   meetingPoint: string | null
   meetingTime: string | null
   essentials: string[]
-  status: HikeStatus
   coverImageUrl: string | null
 }
 
@@ -32,7 +30,6 @@ type ViaFerrataEditDict = {
   date: string
   duration: string
   durationPlaceholder: string
-  status: string
   maxParticipants: string
   price: string
   routes: string
@@ -50,8 +47,6 @@ type ViaFerrataEditDict = {
   savedSuccessfully: string
   saveChanges: string
   saving: string
-  statuses: Record<string, string>
-  ongoingIsAutomatic: string
 }
 
 export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: ViaFerrataData; dict: ViaFerrataEditDict }) {
@@ -61,7 +56,6 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     description: viaFerrata.description ?? '',
     date: viaFerrata.date.slice(0, 10),
     durationHours: viaFerrata.durationHours != null ? String(viaFerrata.durationHours) : '',
-    status: viaFerrata.status,
     maxParticipants: String(viaFerrata.maxParticipants),
     price: String(viaFerrata.entryFee),
     routes: viaFerrata.essentials.join('\n'),
@@ -93,7 +87,6 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         description: form.description || null,
         date: form.date,
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
-        status: form.status as HikeStatus,
         maxParticipants: parseInt(form.maxParticipants),
         entryFee: parseFloat(form.price),
         essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
@@ -151,16 +144,6 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>
         <input value={form.meetingTime} onChange={e => set('meetingTime', e.target.value)} placeholder={dict.meetingTimePlaceholder} className={cls} />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.status}</label>
-        <select value={form.status} onChange={e => set('status', e.target.value)} className={cls}>
-          {(['upcoming', 'ongoing', 'completed', 'cancelled'] as const).map(s => (
-            <option key={s} value={s} disabled={s === 'ongoing'}>{dict.statuses[s] ?? s}</option>
-          ))}
-        </select>
-        <p className="text-xs text-stone-400 mt-1">{dict.ongoingIsAutomatic}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

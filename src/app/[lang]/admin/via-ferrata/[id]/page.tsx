@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
+import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import JoinButton from '@/components/hikes/JoinButton'
 import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -116,6 +117,10 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
         <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">
           {da.viewPublicPage}
         </Link>
+      </div>
+
+      <div className="mb-8">
+        <HikeStatusControl hikeId={viaFerrata.id} status={viaFerrata.status} dict={d.admin.hikeStatus} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

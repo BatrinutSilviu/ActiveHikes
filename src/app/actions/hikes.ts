@@ -401,7 +401,7 @@ export async function createHike(data: {
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
-      status: isHike ? 'draft' : 'upcoming',
+      status: 'draft',
       createdById: session.user.id,
     },
   })

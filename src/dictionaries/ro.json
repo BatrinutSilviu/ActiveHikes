@@ -71,7 +71,7 @@
     "onWaitlist": "pe lista de așteptare",
     "routesTitle": "Trasee",
     "documentsTitle": "Documente",
-    "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente în ziua evenimentului.",
+    "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente înainte de ziua evenimentului.",
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
@@ -380,6 +380,7 @@
       "noUpcomingViaFerrata": "Nu există evenimente Via Ferrata viitoare.",
       "spots": "locuri",
       "draftHikes": "Ciorne",
+      "draftViaFerrata": "Via Ferrata (ciornă)",
       "pastHikes": "Drumeții Trecute",
       "noPast": "Nu există drumeții trecute."
     },
@@ -479,7 +480,6 @@
       "meetingPointPlaceholder": "ex. Parcul Floreasca, București",
       "meetingTime": "Ora de întâlnire",
       "meetingTimePlaceholder": "ex. 07:00",
-      "status": "Status",
       "maxParticipants": "Număr maxim participanți",
       "price": "Preț (RON)",
       "routes": "Trasee",
@@ -490,9 +490,7 @@
       "changeCoverPhoto": "Click pentru a schimba fotografia de copertă",
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
-      "saving": "Se salvează…",
-      "statuses": { "upcoming": "Viitoare", "ongoing": "În desfășurare", "completed": "Finalizată", "cancelled": "Anulată" },
-      "ongoingIsAutomatic": "\"În desfășurare\" se stabilește automat când ajunge data evenimentului."
+      "saving": "Se salvează…"
     },
     "viaFerrata": {
       "backToDashboard": "Înapoi la panou",

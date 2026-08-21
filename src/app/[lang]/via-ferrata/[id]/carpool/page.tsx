@@ -29,6 +29,7 @@ export default async function ViaFerrataCarpoolPage({ params }: { params: Promis
   ])
 
   if (!viaFerrata) notFound()
+  if (viaFerrata.status === 'draft' && session?.user?.role !== 'admin') notFound()
 
   const dd = d.hikeDetail
   const userParticipation = session?.user?.id
