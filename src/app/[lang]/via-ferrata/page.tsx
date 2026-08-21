@@ -19,7 +19,6 @@ async function getAllViaFerrata() {
     title: e.title,
     location: e.destination,
     date: e.date.toISOString(),
-    price: Number(e.entryFee),
     totalPrice: e.accommodationPrice ? Number(e.accommodationPrice) : null,
     advanceFee: e.accommodationDeposit ? Number(e.accommodationDeposit) : null,
     maxParticipants: e.maxParticipants,

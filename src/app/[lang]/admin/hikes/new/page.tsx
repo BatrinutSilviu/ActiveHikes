@@ -48,6 +48,7 @@ function NewHikeForm() {
     }
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
   const set = (field: string, value: string | boolean) => setForm(f => {
     const next = { ...f, [field]: value }
@@ -73,8 +74,10 @@ function NewHikeForm() {
     startTransition(async () => {
       try {
         let coverImageUrl: string | undefined
+        let coverImageUrl2: string | undefined
         let gpxApproximateUrl: string | undefined
         if (coverFile) coverImageUrl = await uploadFile(coverFile, 'hike-covers')
+        if (coverFile2) coverImageUrl2 = await uploadFile(coverFile2, 'hike-covers')
         if (gpxApproxFile) gpxApproximateUrl = await uploadFile(gpxApproxFile, 'hike-gpx')
         const hikeId = await createHike({
           type: eventType,
@@ -106,7 +109,7 @@ function NewHikeForm() {
           dinnerTime: form.dinner_time || undefined,
           checkInTime: form.check_in_time || undefined,
           checkOutTime: form.check_out_time || undefined,
-          difficulty: form.difficulty || undefined, coverImageUrl, gpxApproximateUrl,
+          difficulty: form.difficulty || undefined, coverImageUrl, coverImageUrl2, gpxApproximateUrl,
           essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
           externalPhotosUrl: form.external_photos_url || undefined,
           whatsappGroupUrl: form.whatsapp_group_url || undefined,
@@ -177,9 +180,11 @@ function NewHikeForm() {
             <Field label={d.maxParticipants} required>
               <input type="number" value={form.max_participants} onChange={e => set('max_participants', e.target.value)} required min="1" className={input} />
             </Field>
-            <Field label={d.entryFee}>
-              <input type="number" value={form.entry_fee} onChange={e => set('entry_fee', e.target.value)} min="0" step="0.5" className={input} />
-            </Field>
+            {isHike && (
+              <Field label={d.entryFee}>
+                <input type="number" value={form.entry_fee} onChange={e => set('entry_fee', e.target.value)} min="0" step="0.5" className={input} />
+              </Field>
+            )}
           </div>
           {!isHike && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -309,6 +314,9 @@ function NewHikeForm() {
         <Section title={d.mediaRoutes}>
           <Field label={d.coverPhoto}>
             <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
+          </Field>
+          <Field label={d.coverPhoto2}>
+            <FileInput accept="image/*" file={coverFile2} onFile={setCoverFile2} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
           </Field>
           {isHike && (
             <>

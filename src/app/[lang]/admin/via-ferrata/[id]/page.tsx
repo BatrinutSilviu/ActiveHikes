@@ -84,7 +84,6 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     destination: viaFerrata.destination,
     description: viaFerrata.description,
     date: viaFerrata.date.toISOString(),
-    entryFee: Number(viaFerrata.entryFee),
     maxParticipants: viaFerrata.maxParticipants,
     durationHours: viaFerrata.durationHours ? Number(viaFerrata.durationHours) : null,
     startingPoint: viaFerrata.startingPoint,
@@ -94,6 +93,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     essentials: viaFerrata.essentials,
     status: viaFerrata.status,
     coverImageUrl: viaFerrata.coverImageUrl,
+    coverImageUrl2: viaFerrata.coverImageUrl2,
     totalPrice: viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : null,
     advanceFee: viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : null,
   }

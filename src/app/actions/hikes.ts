@@ -350,6 +350,7 @@ export async function createHike(data: {
   checkOutTime?: string
   difficulty?: string
   coverImageUrl?: string
+  coverImageUrl2?: string
   gpxApproximateUrl?: string
   essentials?: string[]
   externalPhotosUrl?: string
@@ -400,6 +401,7 @@ export async function createHike(data: {
       checkOutTime: isHike ? (data.checkOutTime || null) : null,
       difficulty: isHike ? ((data.difficulty as Difficulty) || null) : null,
       coverImageUrl: data.coverImageUrl || null,
+      coverImageUrl2: data.coverImageUrl2 || null,
       gpxApproximateUrl: isHike ? (data.gpxApproximateUrl || null) : null,
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
@@ -442,6 +444,7 @@ export async function updateHike(
     gpxActualUrl?: string | null
     gpxApproximateUrl?: string | null
     coverImageUrl?: string | null
+    coverImageUrl2?: string | null
     mountainRange?: string | null
     meetingPoint?: string | null
     startingPoint?: string | null

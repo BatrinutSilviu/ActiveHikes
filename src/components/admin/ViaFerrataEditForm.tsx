@@ -10,7 +10,6 @@ type ViaFerrataData = {
   destination: string
   description: string | null
   date: string
-  entryFee: number
   maxParticipants: number
   durationHours: number | null
   startingPoint: string | null
@@ -19,6 +18,7 @@ type ViaFerrataData = {
   groupCount: number | null
   essentials: string[]
   coverImageUrl: string | null
+  coverImageUrl2: string | null
   totalPrice: number | null
   advanceFee: number | null
 }
@@ -34,7 +34,6 @@ type ViaFerrataEditDict = {
   duration: string
   durationPlaceholder: string
   maxParticipants: string
-  price: string
   totalPrice: string
   totalPricePlaceholder: string
   advanceFee: string
@@ -45,6 +44,9 @@ type ViaFerrataEditDict = {
   coverPhoto: string
   coverPhotoSet: string
   changeCoverPhoto: string
+  coverPhoto2: string
+  coverPhoto2Set: string
+  changeCoverPhoto2: string
   startingPoint: string
   startingPointPlaceholder: string
   meetingPoint: string
@@ -66,7 +68,6 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     date: viaFerrata.date.slice(0, 10),
     durationHours: viaFerrata.durationHours != null ? String(viaFerrata.durationHours) : '',
     maxParticipants: String(viaFerrata.maxParticipants),
-    price: String(viaFerrata.entryFee),
     totalPrice: viaFerrata.totalPrice != null ? String(viaFerrata.totalPrice) : '',
     advanceFee: viaFerrata.advanceFee != null ? String(viaFerrata.advanceFee) : '',
     routes: viaFerrata.essentials.join('\n'),
@@ -76,6 +77,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     groupCount: viaFerrata.groupCount != null ? String(viaFerrata.groupCount) : '',
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
 
@@ -85,12 +87,21 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     e.preventDefault()
     startTransition(async () => {
       let coverImageUrl = viaFerrata.coverImageUrl
+      let coverImageUrl2 = viaFerrata.coverImageUrl2
       if (coverFile) {
         const fd = new FormData()
         fd.append('file', coverFile)
         fd.append('bucket', 'hike-covers')
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
         coverImageUrl = (await res.json()).url
+      }
+
+      if (coverFile2) {
+        const fd = new FormData()
+        fd.append('file', coverFile2)
+        fd.append('bucket', 'hike-covers')
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        coverImageUrl2 = (await res.json()).url
       }
 
       await updateHike(viaFerrata.id, {
@@ -100,7 +111,6 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         date: form.date,
         durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
         maxParticipants: parseInt(form.maxParticipants),
-        entryFee: parseFloat(form.price),
         accommodationPrice: form.totalPrice ? parseFloat(form.totalPrice) : null,
         accommodationDeposit: form.advanceFee ? parseFloat(form.advanceFee) : null,
         essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
@@ -109,9 +119,11 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         meetingTime: form.meetingTime || null,
         groupCount: form.groupCount ? parseInt(form.groupCount) : null,
         coverImageUrl,
+        coverImageUrl2,
       })
 
       setCoverFile(null)
+      setCoverFile2(null)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     })
@@ -167,15 +179,9 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.maxParticipants}</label>
-          <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} min="1" className={cls} />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">{dict.price}</label>
-          <input type="number" value={form.price} onChange={e => set('price', e.target.value)} min="0" step="0.5" className={cls} />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.maxParticipants}</label>
+        <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} min="1" className={cls} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -214,6 +220,28 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
           <div className="mt-1.5 flex items-center gap-2">
             <img src={viaFerrata.coverImageUrl} alt="" className="w-12 h-8 object-cover rounded" />
             <p className="text-xs text-emerald-600">{dict.coverPhotoSet}</p>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.coverPhoto2}</label>
+        {coverFile2 ? (
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+            <span className="text-emerald-700 text-sm flex-1 truncate">{coverFile2.name}</span>
+            <button type="button" onClick={() => setCoverFile2(null)}><X size={14} className="text-stone-400" /></button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2 border border-dashed border-stone-200 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-300 transition-colors">
+            <Upload size={16} className="text-stone-400" />
+            <span className="text-stone-500 text-sm">{dict.changeCoverPhoto2}</span>
+            <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && setCoverFile2(e.target.files[0])} />
+          </label>
+        )}
+        {viaFerrata.coverImageUrl2 && !coverFile2 && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <img src={viaFerrata.coverImageUrl2} alt="" className="w-12 h-8 object-cover rounded" />
+            <p className="text-xs text-emerald-600">{dict.coverPhoto2Set}</p>
           </div>
         )}
       </div>

@@ -154,6 +154,7 @@ model Hike {
   externalPhotosUrl    String?
   whatsappGroupUrl     String?
   coverImageUrl        String?
+  coverImageUrl2       String?
   createdById          String?
   createdAt            DateTime    @default(now())
 

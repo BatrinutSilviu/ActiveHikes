@@ -9,7 +9,6 @@ type ViaFerrataCardData = {
   title: string
   location: string
   date: string
-  price: number
   totalPrice: number | null
   advanceFee: number | null
   maxParticipants: number
@@ -42,10 +41,8 @@ export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata:
   const spotsLeft = viaFerrata.maxParticipants - viaFerrata.confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = !isPastEvent(viaFerrata.status, viaFerrata.date)
-  const advanceFee = viaFerrata.advanceFee ?? 0
-  const totalExtra = viaFerrata.totalPrice ?? 0
-  const confirmationPrice = viaFerrata.price + advanceFee
-  const totalPrice = viaFerrata.price + totalExtra
+  const confirmationPrice = viaFerrata.advanceFee ?? 0
+  const totalPrice = viaFerrata.totalPrice ?? 0
   const priceLabel = confirmationPrice > 0 ? `${confirmationPrice} RON` : dict.free
 
   return (

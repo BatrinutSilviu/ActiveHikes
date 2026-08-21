@@ -15,6 +15,7 @@ type HikeData = {
   durationHours: number | null
   difficulty: string | null
   coverImageUrl: string | null
+  coverImageUrl2: string | null
   externalPhotosUrl: string | null
   whatsappGroupUrl: string | null
   accommodationDetails: string | null
@@ -85,6 +86,9 @@ type HikeEditDict = {
   coverPhoto: string
   coverPhotoSet: string
   changeCoverPhoto: string
+  coverPhoto2: string
+  coverPhoto2Set: string
+  changeCoverPhoto2: string
   whatsappGroupUrl: string
   whatsappGroupUrlPlaceholder: string
   externalPhotoAlbum: string
@@ -135,6 +139,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
     essentials: hike.essentials.join('\n'),
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
   const [gpxActualFile, setGpxActualFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
@@ -148,6 +153,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
       let gpxActualUrl = hike.gpxActualUrl
       let gpxApproximateUrl = hike.gpxApproximateUrl
       let coverImageUrl = hike.coverImageUrl
+      let coverImageUrl2 = hike.coverImageUrl2
 
       if (coverFile) {
         const fd = new FormData()
@@ -155,6 +161,14 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
         fd.append('bucket', 'hike-covers')
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
         coverImageUrl = (await res.json()).url
+      }
+
+      if (coverFile2) {
+        const fd = new FormData()
+        fd.append('file', coverFile2)
+        fd.append('bucket', 'hike-covers')
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        coverImageUrl2 = (await res.json()).url
       }
 
       if (gpxApproxFile) {
@@ -206,6 +220,7 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
         gpxActualUrl,
         gpxApproximateUrl,
         coverImageUrl,
+        coverImageUrl2,
       })
 
       setSuccess(true)
@@ -390,6 +405,29 @@ export default function HikeEditForm({ hike, dict, lang = 'ro' }: { hike: HikeDa
           <div className="mt-1.5 flex items-center gap-2">
             <img src={hike.coverImageUrl} alt="" className="w-12 h-8 object-cover rounded" />
             <p className="text-xs text-emerald-600">{dict.coverPhotoSet}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Second cover photo */}
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.coverPhoto2}</label>
+        {coverFile2 ? (
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5">
+            <span className="text-emerald-700 text-sm flex-1 truncate">{coverFile2.name}</span>
+            <button type="button" onClick={() => setCoverFile2(null)}><X size={14} className="text-stone-400" /></button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2 border border-dashed border-stone-200 rounded-xl px-4 py-3 cursor-pointer hover:border-emerald-300 transition-colors">
+            <Upload size={16} className="text-stone-400" />
+            <span className="text-stone-500 text-sm">{dict.changeCoverPhoto2}</span>
+            <input type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && setCoverFile2(e.target.files[0])} />
+          </label>
+        )}
+        {hike.coverImageUrl2 && !coverFile2 && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <img src={hike.coverImageUrl2} alt="" className="w-12 h-8 object-cover rounded" />
+            <p className="text-xs text-emerald-600">{dict.coverPhoto2Set}</p>
           </div>
         )}
       </div>

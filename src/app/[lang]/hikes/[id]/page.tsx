@@ -96,8 +96,13 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
         </div>
       )}
       <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
-        {hike.coverImageUrl ? (
-          <img src={hike.coverImageUrl} alt={hike.title} className="w-full h-full object-cover" />
+        {hike.coverImageUrl && hike.coverImageUrl2 ? (
+          <div className="absolute inset-0 flex">
+            <img src={hike.coverImageUrl} alt={hike.title} className="w-1/2 h-full object-cover" />
+            <img src={hike.coverImageUrl2} alt={hike.title} className="w-1/2 h-full object-cover" />
+          </div>
+        ) : hike.coverImageUrl || hike.coverImageUrl2 ? (
+          <img src={hike.coverImageUrl ?? hike.coverImageUrl2 ?? undefined} alt={hike.title} className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Mountain size={72} className="text-white/10" />

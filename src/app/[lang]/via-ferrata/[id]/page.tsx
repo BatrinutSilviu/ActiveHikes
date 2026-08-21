@@ -57,11 +57,9 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   const spotsLeft = viaFerrata.maxParticipants - confirmedCount
   const isFull = spotsLeft <= 0
   const isUpcoming = viaFerrata.status === 'upcoming' || (viaFerrata.status === 'draft' && isAdmin)
-  const entryFee = Number(viaFerrata.entryFee)
-  const totalExtra = viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : 0
+  const totalPrice = viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : 0
   const advanceFee = viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : 0
-  const confirmationPrice = entryFee + advanceFee
-  const totalPrice = entryFee + totalExtra
+  const confirmationPrice = advanceFee
   const displayConfirmationPrice = confirmationPrice * priceMultiplier
   const displayTotalPrice = totalPrice * priceMultiplier
 
@@ -72,8 +70,13 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
-        {viaFerrata.coverImageUrl ? (
-          <img src={viaFerrata.coverImageUrl} alt={viaFerrata.title} className="w-full h-full object-cover" />
+        {viaFerrata.coverImageUrl && viaFerrata.coverImageUrl2 ? (
+          <div className="absolute inset-0 flex">
+            <img src={viaFerrata.coverImageUrl} alt={viaFerrata.title} className="w-1/2 h-full object-cover" />
+            <img src={viaFerrata.coverImageUrl2} alt={viaFerrata.title} className="w-1/2 h-full object-cover" />
+          </div>
+        ) : viaFerrata.coverImageUrl || viaFerrata.coverImageUrl2 ? (
+          <img src={viaFerrata.coverImageUrl ?? viaFerrata.coverImageUrl2 ?? undefined} alt={viaFerrata.title} className="w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Mountain size={72} className="text-white/10" />
@@ -126,7 +129,7 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
               )}
             </InfoCard>
             <InfoCard icon={<DollarSign size={18} />} label={dd.priceLabel}>
-              {entryFee > 0 ? `${entryFee} RON` : dd.free}
+              {confirmationPrice > 0 ? `${confirmationPrice} RON` : dd.free}
             </InfoCard>
           </div>
         </div>
@@ -154,13 +157,6 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
                     <p className="text-stone-400 text-sm mt-1">{hasFriend ? dd.forYouAndFriend : dd.perPerson}</p>
                   )}
                 </>
-              )}
-              {advanceFee > 0 && (
-                <p className="text-stone-400 text-xs mt-2 leading-relaxed">
-                  {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee * priceMultiplier))
-                    .replace('{deposit}', String(advanceFee * priceMultiplier))}
-                </p>
               )}
               {hasFriend && (
                 <p className="text-emerald-600 text-xs font-medium mt-2 leading-relaxed">{dd.friendDoublesFee}</p>
@@ -220,11 +216,9 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
                   {dd.friendDoublesFee}
                 </p>
               )}
-              {advanceFee > 0 && (
+              {totalPrice > confirmationPrice && (
                 <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
-                  {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee * priceMultiplier))
-                    .replace('{deposit}', String(advanceFee * priceMultiplier))}
+                  {dd.remainingNote}
                 </p>
               )}
               {bankAccounts.map(account => {
