@@ -4,6 +4,7 @@ import Link from 'next/link'
 import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
+import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import JoinButton from '@/components/hikes/JoinButton'
 import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
@@ -33,17 +34,13 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           },
           orderBy: { joinedAt: 'asc' },
         },
-        documents: {
-          orderBy: { createdAt: 'asc' },
+        documents: { orderBy: { createdAt: 'asc' } },
+        documentSubmissions: {
           include: {
-            submissions: {
-              include: {
-                participant: { select: { friendName: true, user: { select: { name: true } } } },
-                previewAdmin: { select: { name: true } },
-              },
-              orderBy: { submittedAt: 'asc' },
-            },
+            participant: { select: { friendName: true, user: { select: { name: true } } } },
+            previewAdmin: { select: { name: true } },
           },
+          orderBy: { submittedAt: 'asc' },
         },
       },
     }),
@@ -114,13 +111,14 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     id: document.id,
     url: document.url,
     name: document.name,
-    submissions: document.submissions.map(submission => ({
-      id: submission.id,
-      url: submission.url,
-      participantName: submission.previewAdmin
-        ? `${da.documents.previewSubmissionLabel} (${submission.previewAdmin.name ?? '—'})`
-        : submission.participant?.friendName ?? submission.participant?.user?.name ?? '—',
-    })),
+  }))
+
+  const documentUploads = viaFerrata.documentSubmissions.map(submission => ({
+    id: submission.id,
+    url: submission.url,
+    fileName: submission.fileName,
+    participantName: submission.participant?.friendName ?? submission.participant?.user?.name ?? '—',
+    isPreview: !!submission.previewAdmin,
   }))
 
   return (
@@ -167,6 +165,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           </div>
 
           <ViaFerrataDocumentUploader viaFerrataId={viaFerrata.id} existingDocuments={documents} dict={da.documents} />
+
+          <ParticipantDocumentUploads uploads={documentUploads} dict={da.documentUploads} />
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>

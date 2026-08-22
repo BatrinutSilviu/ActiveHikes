@@ -164,6 +164,7 @@ model Hike {
   photos       HikePhoto[]
   rooms        HikeRoom[]
   documents    HikeDocument[]
+  documentSubmissions HikeDocumentSubmission[]
 }
 
 model HikeParticipant {
@@ -228,24 +229,24 @@ model HikeDocument {
   url       String
   createdAt DateTime @default(now())
 
-  hike        Hike                     @relation(fields: [hikeId], references: [id], onDelete: Cascade)
-  submissions HikeDocumentSubmission[]
+  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
 }
 
+// A participant's completed documents for an event — not tied to a specific
+// HikeDocument template, since one file can cover multiple forms and new
+// templates can be added later without needing a matching submission slot.
 model HikeDocumentSubmission {
   id             String   @id @default(cuid())
-  documentId     String
+  hikeId         String
   participantId  String?
   previewAdminId String?
+  fileName       String
   url            String
   submittedAt    DateTime @default(now())
 
-  document     HikeDocument     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
   participant  HikeParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
   previewAdmin User?            @relation(fields: [previewAdminId], references: [id], onDelete: Cascade)
-
-  @@unique([documentId, participantId])
-  @@unique([documentId, previewAdminId])
 }
 
 model BankAccount {

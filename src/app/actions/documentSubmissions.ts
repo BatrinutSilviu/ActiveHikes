@@ -24,51 +24,34 @@ function revalidateHikePaths(hikeId: string) {
   revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
 }
 
-export async function submitDocument(documentId: string, hikeId: string, url: string) {
+// A participant uploads one completed document for the event — not tied to a
+// specific template, so any number of files (covering any number of
+// templates, now or added later) all land in one list for that hike.
+export async function submitDocument(hikeId: string, url: string, fileName: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
-
-  const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
-  if (!document || document.hikeId !== hikeId) throw new Error('Document not found')
 
   const participant = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
   })
   if (!participant) throw new Error('Not registered for this event')
 
-  const existing = await prisma.hikeDocumentSubmission.findUnique({
-    where: { documentId_participantId: { documentId, participantId: participant.id } },
-  })
-  if (existing) await unlinkUpload(existing.url)
-
-  await prisma.hikeDocumentSubmission.upsert({
-    where: { documentId_participantId: { documentId, participantId: participant.id } },
-    create: { documentId, participantId: participant.id, url },
-    update: { url, submittedAt: new Date() },
+  await prisma.hikeDocumentSubmission.create({
+    data: { hikeId, participantId: participant.id, url, fileName },
   })
 
   revalidateHikePaths(hikeId)
 }
 
-// Lets an admin try out the upload flow on a hike's document as a dry run —
-// stored separately from real participant submissions (keyed by admin user,
-// not by a HikeParticipant row) so it never touches real participant data.
-export async function submitPreviewDocument(documentId: string, hikeId: string, url: string) {
+// Lets an admin try out the upload flow as a dry run — stored separately from
+// real participant submissions (keyed by admin user, not a HikeParticipant
+// row) so it never touches real participant data.
+export async function submitPreviewDocument(hikeId: string, url: string, fileName: string) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
-  if (!document || document.hikeId !== hikeId) throw new Error('Document not found')
-
-  const existing = await prisma.hikeDocumentSubmission.findUnique({
-    where: { documentId_previewAdminId: { documentId, previewAdminId: session.user.id } },
-  })
-  if (existing) await unlinkUpload(existing.url)
-
-  await prisma.hikeDocumentSubmission.upsert({
-    where: { documentId_previewAdminId: { documentId, previewAdminId: session.user.id } },
-    create: { documentId, previewAdminId: session.user.id, url },
-    update: { url, submittedAt: new Date() },
+  await prisma.hikeDocumentSubmission.create({
+    data: { hikeId, previewAdminId: session.user.id, url, fileName },
   })
 
   revalidateHikePaths(hikeId)

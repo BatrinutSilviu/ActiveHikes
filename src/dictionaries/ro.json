@@ -75,11 +75,12 @@
     "routesTitle": "Trasee",
     "documentsTitle": "Documente",
     "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente înainte de ziua evenimentului.",
-    "documentsUpload": {
-      "upload": "Încarcă documentul completat",
+    "documentUploads": {
+      "title": "Documentele tale completate",
+      "hint": "După ce completezi documentele de mai sus, încarcă-le aici — adaugă câte ai nevoie.",
+      "uploadButton": "Încarcă un document",
       "uploading": "Se încarcă…",
-      "submitted": "Încărcat",
-      "replace": "Înlocuiește"
+      "deleteConfirm": "Elimini acest document?"
     },
     "previewEnterLabel": "Previzualizare ca participant confirmat",
     "previewBannerText": "Mod previzualizare — vezi pagina așa cum ar arăta pentru un participant confirmat.",
@@ -566,9 +567,13 @@
         "addLink": "Adaugă link",
         "adding": "Se adaugă…",
         "deleteConfirm": "Ștergi acest document?",
-        "noDocuments": "Niciun document adăugat încă.",
-        "submissionsLabel": "Încărcat de",
-        "previewSubmissionLabel": "Încărcare test"
+        "noDocuments": "Niciun document adăugat încă."
+      },
+      "documentUploads": {
+        "title": "Documente încărcate de participanți",
+        "hint": "Documentele completate pe care participanții le-au încărcat pentru acest eveniment.",
+        "empty": "Niciun document încărcat încă.",
+        "previewLabel": "Încărcare test"
       }
     },
     "hike": {

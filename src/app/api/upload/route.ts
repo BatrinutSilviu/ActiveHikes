@@ -29,9 +29,15 @@ export async function POST(req: NextRequest) {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
   const filename = `${Date.now()}-${safeName}`
 
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', bucket)
+  // Participant document uploads are grouped in one folder per event, so all
+  // of a hike's submitted files are easy to find on disk.
+  const hikeId = formData.get('hikeId') as string | null
+  const safeHikeId = hikeId ? hikeId.replace(/[^a-zA-Z0-9]/g, '') : null
+  const bucketPath = isParticipantUpload && safeHikeId ? path.join(bucket, safeHikeId) : bucket
+
+  const uploadDir = path.join(process.cwd(), 'public', 'uploads', bucketPath)
   await mkdir(uploadDir, { recursive: true })
   await writeFile(path.join(uploadDir, filename), buffer)
 
-  return NextResponse.json({ url: `/uploads/${bucket}/${filename}` })
+  return NextResponse.json({ url: `/uploads/${bucketPath}/${filename}` })
 }

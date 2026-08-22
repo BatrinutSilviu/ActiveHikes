@@ -8,6 +8,7 @@ import SpotsCounterVF from '@/components/viaFerrata/SpotsCounterVF'
 import ParticipantsCountVF from '@/components/viaFerrata/ParticipantsCountVF'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
+import DocumentUploadsSection from '@/components/viaFerrata/DocumentUploadsSection'
 import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation, Layers, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
@@ -54,13 +55,11 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
   const canSubmitDocuments = isPreviewMode
     || (!!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired')
   const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
+  const hasFileDocument = viaFerrata.documents.some(document => document.url.startsWith('/uploads/'))
 
-  const previewSubmissions = isPreviewMode
-    ? await prisma.hikeDocumentSubmission.findMany({ where: { document: { hikeId: id }, previewAdminId: session!.user.id } })
-    : []
-  const documentSubmissionsByDocId = isPreviewMode
-    ? Object.fromEntries(previewSubmissions.map(s => [s.documentId, { id: s.id, url: s.url }]))
-    : Object.fromEntries((userParticipation?.documentSubmissions ?? []).map(s => [s.documentId, { id: s.id, url: s.url }]))
+  const mySubmissions = isPreviewMode
+    ? await prisma.hikeDocumentSubmission.findMany({ where: { hikeId: id, previewAdminId: session!.user.id } })
+    : userParticipation?.documentSubmissions ?? []
   const hasFriend = !!userParticipation?.friend
   const priceMultiplier = hasFriend ? 2 : 1
 
@@ -231,15 +230,19 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
 
           <EssentialsSection items={viaFerrata.essentials} title={dd.routesTitle} />
           <DocumentsSection
+          <DocumentsSection
             documents={viaFerrata.documents}
             title={dd.documentsTitle}
             hint={dd.documentsHint}
-            hikeId={viaFerrata.id}
-            canSubmit={canSubmitDocuments}
-            previewMode={isPreviewMode}
-            submissions={documentSubmissionsByDocId}
-            uploadDict={dd.documentsUpload}
           />
+          {canSubmitDocuments && hasFileDocument && (
+            <DocumentUploadsSection
+              hikeId={viaFerrata.id}
+              previewMode={isPreviewMode}
+              submissions={mySubmissions.map(s => ({ id: s.id, url: s.url, fileName: s.fileName }))}
+              dict={dd.documentUploads}
+            />
+          )}
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">

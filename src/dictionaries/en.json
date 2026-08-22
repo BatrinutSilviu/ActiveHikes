@@ -75,11 +75,12 @@
     "routesTitle": "Routes",
     "documentsTitle": "Documents",
     "documentsHint": "Please download, fill in, and bring these documents on the day of the event.",
-    "documentsUpload": {
-      "upload": "Upload your filled copy",
+    "documentUploads": {
+      "title": "Your completed documents",
+      "hint": "Once you've filled in the documents above, upload them here — add as many as you need.",
+      "uploadButton": "Upload a document",
       "uploading": "Uploading…",
-      "submitted": "Submitted",
-      "replace": "Replace"
+      "deleteConfirm": "Remove this document?"
     },
     "previewEnterLabel": "Preview as confirmed participant",
     "previewBannerText": "Preview mode — viewing this page as a confirmed participant would.",
@@ -566,9 +567,13 @@
         "addLink": "Add link",
         "adding": "Adding…",
         "deleteConfirm": "Delete this document?",
-        "noDocuments": "No documents added yet.",
-        "submissionsLabel": "Submitted by",
-        "previewSubmissionLabel": "Preview upload"
+        "noDocuments": "No documents added yet."
+      },
+      "documentUploads": {
+        "title": "Participant uploads",
+        "hint": "Completed documents participants have uploaded for this event.",
+        "empty": "No documents uploaded yet.",
+        "previewLabel": "Preview upload"
       }
     },
     "hike": {
