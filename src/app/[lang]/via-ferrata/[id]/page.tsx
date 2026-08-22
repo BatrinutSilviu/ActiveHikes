@@ -230,7 +230,6 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
 
           <EssentialsSection items={viaFerrata.essentials} title={dd.routesTitle} />
           <DocumentsSection
-          <DocumentsSection
             documents={viaFerrata.documents}
             title={dd.documentsTitle}
             hint={dd.documentsHint}
