@@ -71,6 +71,7 @@
     "oneSpotLeft": "1 loc liber",
     "confirmed": "confirmați",
     "onWaitlist": "pe lista de așteptare",
+    "joinWhatsApp": "Intră în grupul WhatsApp",
     "routesTitle": "Trasee",
     "documentsTitle": "Documente",
     "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente înainte de ziua evenimentului.",
@@ -500,6 +501,8 @@
       "coverPhoto2": "A doua fotografie de copertă (opțional)",
       "coverPhoto2Set": "✓ A doua fotografie de copertă este setată",
       "changeCoverPhoto2": "Click pentru a schimba a doua fotografie de copertă",
+      "whatsappGroupUrl": "Link grup WhatsApp",
+      "whatsappGroupUrlPlaceholder": "https://chat.whatsapp.com/…",
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…"

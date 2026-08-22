@@ -21,6 +21,7 @@ type ViaFerrataData = {
   coverImageUrl2: string | null
   totalPrice: number | null
   advanceFee: number | null
+  whatsappGroupUrl: string | null
 }
 
 type ViaFerrataEditDict = {
@@ -55,6 +56,8 @@ type ViaFerrataEditDict = {
   meetingTimePlaceholder: string
   groupCount: string
   groupCountPlaceholder: string
+  whatsappGroupUrl: string
+  whatsappGroupUrlPlaceholder: string
   savedSuccessfully: string
   saveChanges: string
   saving: string
@@ -75,6 +78,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     meetingPoint: viaFerrata.meetingPoint ?? '',
     meetingTime: viaFerrata.meetingTime ?? '',
     groupCount: viaFerrata.groupCount != null ? String(viaFerrata.groupCount) : '',
+    whatsappGroupUrl: viaFerrata.whatsappGroupUrl ?? '',
   })
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverFile2, setCoverFile2] = useState<File | null>(null)
@@ -118,6 +122,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         meetingPoint: form.meetingPoint || null,
         meetingTime: form.meetingTime || null,
         groupCount: form.groupCount ? parseInt(form.groupCount) : null,
+        whatsappGroupUrl: form.whatsappGroupUrl || null,
         coverImageUrl,
         coverImageUrl2,
       })
@@ -200,6 +205,11 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         <textarea value={form.routes} onChange={e => set('routes', e.target.value)}
           rows={5} placeholder={dict.routesPlaceholder} className={cls} />
         <p className="text-xs text-stone-400 mt-1.5">{dict.routesHint}</p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.whatsappGroupUrl}</label>
+        <input type="url" value={form.whatsappGroupUrl} onChange={e => set('whatsappGroupUrl', e.target.value)} placeholder={dict.whatsappGroupUrlPlaceholder} className={cls} />
       </div>
 
       <div>

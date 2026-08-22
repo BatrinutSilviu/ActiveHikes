@@ -71,6 +71,7 @@
     "oneSpotLeft": "1 spot left",
     "confirmed": "confirmed",
     "onWaitlist": "on the waitlist",
+    "joinWhatsApp": "Join the WhatsApp group",
     "routesTitle": "Routes",
     "documentsTitle": "Documents",
     "documentsHint": "Please download, fill in, and bring these documents on the day of the event.",
@@ -500,6 +501,8 @@
       "coverPhoto2": "Second cover photo (optional)",
       "coverPhoto2Set": "✓ Second cover photo already set",
       "changeCoverPhoto2": "Click to change second cover photo",
+      "whatsappGroupUrl": "WhatsApp group link",
+      "whatsappGroupUrlPlaceholder": "https://chat.whatsapp.com/…",
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
       "saving": "Saving…"

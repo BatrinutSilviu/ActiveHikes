@@ -8,7 +8,7 @@ import SpotsCounterVF from '@/components/viaFerrata/SpotsCounterVF'
 import ParticipantsCountVF from '@/components/viaFerrata/ParticipantsCountVF'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
 import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
-import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation, Layers } from 'lucide-react'
+import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation, Layers, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
@@ -203,6 +203,13 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
+          {viaFerrata.whatsappGroupUrl && userParticipation?.status === 'confirmed' && (
+            <a href={viaFerrata.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
+              <MessageCircle size={18} /> {dd.joinWhatsApp}
+            </a>
+          )}
+
           {confirmationPrice > 0 && bankAccounts.length > 0 && (
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
               <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
