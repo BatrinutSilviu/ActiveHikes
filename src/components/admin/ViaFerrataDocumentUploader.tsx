@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addDocument, deleteDocument, renameDocument } from '@/app/actions/documents'
+import { addDocument, deleteDocument, renameDocument, setDocumentRequiresUpload } from '@/app/actions/documents'
 import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check } from 'lucide-react'
 
-type ViaFerrataDoc = { id: string; url: string; name: string }
+type ViaFerrataDoc = { id: string; url: string; name: string; requiresUpload: boolean }
 
 type Dict = {
   title: string
@@ -20,6 +20,9 @@ type Dict = {
   adding: string
   deleteConfirm: string
   noDocuments: string
+  requiresUploadLabel: string
+  requiresUploadOn: string
+  requiresUploadOff: string
 }
 
 export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocuments, dict }: {
@@ -32,6 +35,7 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [linkUrl, setLinkUrl] = useState('')
   const [name, setName] = useState('')
+  const [requiresUpload, setRequiresUpload] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
@@ -65,16 +69,26 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
     setSelectedFile(null)
     setLinkUrl('')
     setName('')
+    setRequiresUpload(true)
   }
 
   const addDocumentEntry = (url: string, docName: string) => {
     startTransition(async () => {
-      await addDocument(viaFerrataId, url, docName)
-      setDocuments(prev => [...prev, { id: Date.now().toString(), url, name: docName }])
+      await addDocument(viaFerrataId, url, docName, requiresUpload)
+      setDocuments(prev => [...prev, { id: Date.now().toString(), url, name: docName, requiresUpload }])
       setSelectedFile(null)
       setLinkUrl('')
       setName('')
+      setRequiresUpload(true)
       setUploading(false)
+    })
+  }
+
+  const toggleRequiresUpload = (document: ViaFerrataDoc) => {
+    const next = !document.requiresUpload
+    startTransition(async () => {
+      await setDocumentRequiresUpload(document.id, viaFerrataId, next)
+      setDocuments(prev => prev.map(d => d.id === document.id ? { ...d, requiresUpload: next } : d))
     })
   }
 
@@ -146,6 +160,12 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
                     className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
                     {document.name}
                   </a>
+                  <button onClick={() => toggleRequiresUpload(document)}
+                    className={`shrink-0 text-[11px] font-semibold px-2 py-1 rounded-full transition-colors ${
+                      document.requiresUpload ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+                    }`}>
+                    {document.requiresUpload ? dict.requiresUploadOn : dict.requiresUploadOff}
+                  </button>
                   <button onClick={() => startEdit(document)} className="text-stone-400 hover:text-emerald-600 shrink-0">
                     <Pencil size={14} />
                   </button>
@@ -199,6 +219,11 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
             <input type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder={dict.namePlaceholder}
               className="w-full border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={requiresUpload} onChange={e => setRequiresUpload(e.target.checked)}
+                className="w-4 h-4 accent-emerald-600" />
+              <span className="text-sm text-stone-600">{dict.requiresUploadLabel}</span>
+            </label>
             <button onClick={mode === 'file' ? handleUpload : handleAddLink}
               disabled={uploading || (mode === 'link' && !name.trim())}
               className="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60">

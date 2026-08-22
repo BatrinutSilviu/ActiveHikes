@@ -567,7 +567,10 @@
         "addLink": "Add link",
         "adding": "Adding…",
         "deleteConfirm": "Delete this document?",
-        "noDocuments": "No documents added yet."
+        "noDocuments": "No documents added yet.",
+        "requiresUploadLabel": "Participants need to upload a completed copy of this",
+        "requiresUploadOn": "Upload required",
+        "requiresUploadOff": "No upload needed"
       },
       "documentUploads": {
         "title": "Participant uploads",

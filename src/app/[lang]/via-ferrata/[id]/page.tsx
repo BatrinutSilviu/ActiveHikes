@@ -55,7 +55,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
   const canSubmitDocuments = isPreviewMode
     || (!!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired')
   const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
-  const hasFileDocument = viaFerrata.documents.some(document => document.url.startsWith('/uploads/'))
+  const hasDocumentRequiringUpload = viaFerrata.documents.some(document => document.requiresUpload)
 
   const mySubmissions = isPreviewMode
     ? await prisma.hikeDocumentSubmission.findMany({ where: { hikeId: id, previewAdminId: session!.user.id } })
@@ -234,7 +234,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
             title={dd.documentsTitle}
             hint={dd.documentsHint}
           />
-          {canSubmitDocuments && hasFileDocument && (
+          {canSubmitDocuments && hasDocumentRequiringUpload && (
             <DocumentUploadsSection
               hikeId={viaFerrata.id}
               previewMode={isPreviewMode}

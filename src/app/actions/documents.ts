@@ -8,13 +8,25 @@ import { unlink } from 'fs/promises'
 import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
 
-export async function addDocument(hikeId: string, url: string, name: string) {
+export async function addDocument(hikeId: string, url: string, name: string, requiresUpload: boolean) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
   await prisma.hikeDocument.create({
-    data: { hikeId, url, name },
+    data: { hikeId, url, name, requiresUpload },
   })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/admin/via-ferrata/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
+}
+
+export async function setDocumentRequiresUpload(documentId: string, hikeId: string, requiresUpload: boolean) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  await prisma.hikeDocument.update({ where: { id: documentId }, data: { requiresUpload } })
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/admin/via-ferrata/${hikeId}`, revalidatePath)

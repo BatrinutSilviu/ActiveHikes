@@ -567,7 +567,10 @@
         "addLink": "Adaugă link",
         "adding": "Se adaugă…",
         "deleteConfirm": "Ștergi acest document?",
-        "noDocuments": "Niciun document adăugat încă."
+        "noDocuments": "Niciun document adăugat încă.",
+        "requiresUploadLabel": "Participanții trebuie să încarce o copie completată a acestuia",
+        "requiresUploadOn": "Necesită încărcare",
+        "requiresUploadOff": "Nu necesită încărcare"
       },
       "documentUploads": {
         "title": "Documente încărcate de participanți",

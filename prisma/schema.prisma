@@ -223,11 +223,12 @@ model HikePhoto {
 }
 
 model HikeDocument {
-  id        String   @id @default(cuid())
-  hikeId    String
-  name      String
-  url       String
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  hikeId         String
+  name           String
+  url            String
+  requiresUpload Boolean  @default(true)
+  createdAt      DateTime @default(now())
 
   hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
 }

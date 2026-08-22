@@ -111,6 +111,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     id: document.id,
     url: document.url,
     name: document.name,
+    requiresUpload: document.requiresUpload,
   }))
 
   const documentUploads = viaFerrata.documentSubmissions.map(submission => ({
