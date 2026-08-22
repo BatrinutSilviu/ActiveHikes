@@ -88,7 +88,7 @@ function DocumentRow({ document, hikeId, previewMode, submission, uploadDict, ca
         <span className="flex-1 truncate">{document.name}</span>
         {isFile ? <Download size={14} className="text-stone-400 shrink-0" /> : <ExternalLink size={14} className="text-stone-400 shrink-0" />}
       </a>
-      {canSubmit && uploadDict && (
+      {canSubmit && uploadDict && isFile && (
         <div className="flex items-center gap-2 pt-2 border-t border-stone-200">
           {submission && (
             <a href={submission.url} target="_blank" rel="noopener noreferrer"

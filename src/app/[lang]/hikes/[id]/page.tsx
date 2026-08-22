@@ -15,8 +15,12 @@ import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 
-export default async function HikeDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
+export default async function HikeDetailPage({ params, searchParams }: {
+  params: Promise<{ lang: string; id: string }>
+  searchParams: Promise<{ preview?: string }>
+}) {
   const { lang, id } = await params
+  const { preview } = await searchParams
   if (!hasLocale(lang)) notFound()
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
@@ -42,6 +46,8 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   const isAdmin = session?.user?.role === 'admin'
   if (hike.status === 'draft' && !isAdmin) notFound()
 
+  const isPreviewMode = isAdmin && preview === '1'
+
   const rooms = hike.rooms.map(r => ({
     id: r.id,
     type: r.type,
@@ -61,6 +67,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
   }
   const hasFriend = !!userParticipation?.friend
   const priceMultiplier = hasFriend ? 2 : 1
+  const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
 
   const confirmedCount = hike.participants.filter(p => p.status === 'confirmed').length
   const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
@@ -90,6 +97,21 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      {isPreviewMode ? (
+        <div className="flex items-center justify-between gap-3 bg-amber-500 text-white text-sm font-semibold rounded-2xl px-4 py-3 mb-6">
+          <span>{dd.previewBannerText}</span>
+          <Link href={`/${lang}/hikes/${hike.id}`} className="underline underline-offset-2 shrink-0">
+            {dd.previewExitLabel}
+          </Link>
+        </div>
+      ) : isAdmin && (
+        <div className="flex justify-end mb-6">
+          <Link href={`/${lang}/hikes/${hike.id}?preview=1`}
+            className="text-xs font-semibold text-stone-500 hover:text-emerald-600 underline underline-offset-2">
+            {dd.previewEnterLabel}
+          </Link>
+        </div>
+      )}
       {hike.status === 'draft' && (
         <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium">
           {dd.draftNotice}
@@ -396,7 +418,7 @@ export default async function HikeDetailPage({ params }: { params: Promise<{ lan
 
         {/* Rest of sidebar content — mobile order 3, desktop right column (after confirmation panel) */}
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
-          {hike.whatsappGroupUrl && userParticipation?.status === 'confirmed' && (
+          {hike.whatsappGroupUrl && showsAsConfirmed && (
             <a href={hike.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
               <MessageCircle size={18} /> {dd.joinWhatsApp}
