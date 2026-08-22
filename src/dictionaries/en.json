@@ -75,6 +75,12 @@
     "routesTitle": "Routes",
     "documentsTitle": "Documents",
     "documentsHint": "Please download, fill in, and bring these documents on the day of the event.",
+    "documentsUpload": {
+      "upload": "Upload your filled copy",
+      "uploading": "Uploading…",
+      "submitted": "Submitted",
+      "replace": "Replace"
+    },
     "paymentTitle": "Payment Info",
     "paymentDesc": "After registering, transfer {fee} RON to one of these accounts. Your spot will be confirmed once the payment is verified.",
     "friendDoublesFee": "This covers both you and your friend — double the usual amount.",
@@ -554,7 +560,8 @@
         "addLink": "Add link",
         "adding": "Adding…",
         "deleteConfirm": "Delete this document?",
-        "noDocuments": "No documents added yet."
+        "noDocuments": "No documents added yet.",
+        "submissionsLabel": "Submitted by"
       }
     },
     "hike": {

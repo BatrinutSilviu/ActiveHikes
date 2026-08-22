@@ -191,6 +191,7 @@ model HikeParticipant {
   room         HikeRoom?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
   host         HikeParticipant? @relation("HostFriend", fields: [hostParticipantId], references: [id], onDelete: Cascade)
   friend       HikeParticipant? @relation("HostFriend")
+  documentSubmissions HikeDocumentSubmission[]
 
   @@unique([hikeId, userId])
 }
@@ -226,7 +227,21 @@ model HikeDocument {
   url       String
   createdAt DateTime @default(now())
 
-  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  hike        Hike                     @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  submissions HikeDocumentSubmission[]
+}
+
+model HikeDocumentSubmission {
+  id            String   @id @default(cuid())
+  documentId    String
+  participantId String
+  url           String
+  submittedAt   DateTime @default(now())
+
+  document    HikeDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  participant HikeParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, participantId])
 }
 
 model BankAccount {

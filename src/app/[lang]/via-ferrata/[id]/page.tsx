@@ -42,9 +42,13 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   if (session?.user?.id) {
     userParticipation = await prisma.hikeParticipant.findUnique({
       where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
-      include: { friend: { select: { id: true, friendName: true } } },
+      include: { friend: { select: { id: true, friendName: true } }, documentSubmissions: true },
     })
   }
+  const canSubmitDocuments = !!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired'
+  const documentSubmissionsByDocId = Object.fromEntries(
+    (userParticipation?.documentSubmissions ?? []).map(s => [s.documentId, { id: s.id, url: s.url }]),
+  )
   const hasFriend = !!userParticipation?.friend
   const priceMultiplier = hasFriend ? 2 : 1
 
@@ -199,7 +203,15 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
           </Link>
 
           <EssentialsSection items={viaFerrata.essentials} title={dd.routesTitle} />
-          <DocumentsSection documents={viaFerrata.documents} title={dd.documentsTitle} hint={dd.documentsHint} />
+          <DocumentsSection
+            documents={viaFerrata.documents}
+            title={dd.documentsTitle}
+            hint={dd.documentsHint}
+            hikeId={viaFerrata.id}
+            participantId={canSubmitDocuments ? userParticipation!.id : undefined}
+            submissions={documentSubmissionsByDocId}
+            uploadDict={dd.documentsUpload}
+          />
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">

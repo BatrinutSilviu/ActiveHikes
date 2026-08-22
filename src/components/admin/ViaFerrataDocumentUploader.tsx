@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from 'react'
 import { addDocument, deleteDocument, renameDocument } from '@/app/actions/documents'
-import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check } from 'lucide-react'
+import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check, User } from 'lucide-react'
 
-type ViaFerrataDoc = { id: string; url: string; name: string }
+type DocumentSubmission = { id: string; url: string; participantName: string }
+type ViaFerrataDoc = { id: string; url: string; name: string; submissions?: DocumentSubmission[] }
 
 type Dict = {
   title: string
@@ -20,6 +21,7 @@ type Dict = {
   adding: string
   deleteConfirm: string
   noDocuments: string
+  submissionsLabel: string
 }
 
 export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocuments, dict }: {
@@ -117,42 +119,57 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
       {documents.length > 0 && (
         <div className="space-y-2">
           {documents.map(document => (
-            <div key={document.id} className="flex items-center gap-3 bg-stone-50 border border-stone-100 rounded-xl px-4 py-2.5">
-              {document.url.startsWith('/uploads/') ? (
-                <FileText size={16} className="text-stone-400 shrink-0" />
-              ) : (
-                <LinkIcon size={16} className="text-stone-400 shrink-0" />
-              )}
-              {editingId === document.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editingName}
-                    onChange={e => setEditingName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
-                    autoFocus
-                    className="flex-1 border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <button onClick={saveEdit} disabled={!editingName.trim()} className="text-emerald-600 hover:text-emerald-700 shrink-0 disabled:opacity-50">
-                    <Check size={16} />
-                  </button>
-                  <button onClick={cancelEdit} className="text-stone-400 hover:text-red-500 shrink-0">
-                    <X size={16} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <a href={document.url} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
-                    {document.name}
-                  </a>
-                  <button onClick={() => startEdit(document)} className="text-stone-400 hover:text-emerald-600 shrink-0">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={() => handleDelete(document)} className="text-stone-400 hover:text-red-500 shrink-0">
-                    <Trash2 size={16} />
-                  </button>
-                </>
+            <div key={document.id} className="bg-stone-50 border border-stone-100 rounded-xl px-4 py-2.5 space-y-2">
+              <div className="flex items-center gap-3">
+                {document.url.startsWith('/uploads/') ? (
+                  <FileText size={16} className="text-stone-400 shrink-0" />
+                ) : (
+                  <LinkIcon size={16} className="text-stone-400 shrink-0" />
+                )}
+                {editingId === document.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                      autoFocus
+                      className="flex-1 border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    <button onClick={saveEdit} disabled={!editingName.trim()} className="text-emerald-600 hover:text-emerald-700 shrink-0 disabled:opacity-50">
+                      <Check size={16} />
+                    </button>
+                    <button onClick={cancelEdit} className="text-stone-400 hover:text-red-500 shrink-0">
+                      <X size={16} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <a href={document.url} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
+                      {document.name}
+                    </a>
+                    <button onClick={() => startEdit(document)} className="text-stone-400 hover:text-emerald-600 shrink-0">
+                      <Pencil size={14} />
+                    </button>
+                    <button onClick={() => handleDelete(document)} className="text-stone-400 hover:text-red-500 shrink-0">
+                      <Trash2 size={16} />
+                    </button>
+                  </>
+                )}
+              </div>
+              {!!document.submissions?.length && (
+                <div className="pl-7 space-y-1">
+                  <p className="text-[11px] font-semibold text-stone-400 uppercase tracking-wide">
+                    {dict.submissionsLabel} ({document.submissions.length})
+                  </p>
+                  {document.submissions.map(submission => (
+                    <a key={submission.id} href={submission.url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs text-emerald-700 hover:underline">
+                      <User size={11} className="shrink-0" /> {submission.participantName}
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
           ))}

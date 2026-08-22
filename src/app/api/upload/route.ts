@@ -4,15 +4,22 @@ import { authOptions } from '@/lib/auth'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
+// Participants upload their filled-in documents to this bucket — every other
+// bucket (cover photos, GPX tracks, admin document templates, …) stays admin-only.
+const PARTICIPANT_UPLOAD_BUCKET = 'hike-document-submissions'
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') {
+  const formData = await req.formData()
+  const bucket = (formData.get('bucket') as string) || 'misc'
+
+  const isAdmin = session?.user?.role === 'admin'
+  const isParticipantUpload = !!session && bucket === PARTICIPANT_UPLOAD_BUCKET
+  if (!isAdmin && !isParticipantUpload) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const formData = await req.formData()
   const file = formData.get('file') as File | null
-  const bucket = (formData.get('bucket') as string) || 'misc'
 
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
