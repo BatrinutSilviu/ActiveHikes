@@ -12,17 +12,21 @@ type Dict = {
   uploadButton: string
   uploading: string
   deleteConfirm: string
+  countLabel: string
+  limitReached: string
 }
 
-export default function DocumentUploadsSection({ hikeId, previewMode, submissions, dict }: {
+export default function DocumentUploadsSection({ hikeId, previewMode, submissions, maxUploads, dict }: {
   hikeId: string
   previewMode: boolean
   submissions: Submission[]
+  maxUploads: number
   dict: Dict
 }) {
   const [items, setItems] = useState(submissions)
   const [uploading, setUploading] = useState(false)
   const [, startTransition] = useTransition()
+  const atLimit = items.length >= maxUploads
 
   const handleFile = async (file: File) => {
     setUploading(true)
@@ -53,7 +57,10 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
 
   return (
     <div className="bg-white border border-stone-100 rounded-2xl p-5 space-y-3">
-      <h3 className="font-bold text-stone-800">{dict.title}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-bold text-stone-800">{dict.title}</h3>
+        <span className="text-xs text-stone-400 shrink-0">{dict.countLabel.replace('{count}', String(items.length)).replace('{max}', String(maxUploads))}</span>
+      </div>
       <p className="text-stone-500 text-sm">{dict.hint}</p>
 
       {items.length > 0 && (
@@ -73,11 +80,15 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
         </ul>
       )}
 
-      <label className="flex items-center justify-center gap-2 border-2 border-dashed border-stone-200 rounded-xl py-3 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors text-sm font-semibold text-emerald-700">
-        <Upload size={16} />
-        {uploading ? dict.uploading : dict.uploadButton}
-        <input type="file" className="hidden" disabled={uploading} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
-      </label>
+      {atLimit ? (
+        <p className="text-center text-xs text-stone-400 py-2">{dict.limitReached}</p>
+      ) : (
+        <label className="flex items-center justify-center gap-2 border-2 border-dashed border-stone-200 rounded-xl py-3 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors text-sm font-semibold text-emerald-700">
+          <Upload size={16} />
+          {uploading ? dict.uploading : dict.uploadButton}
+          <input type="file" className="hidden" disabled={uploading} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        </label>
+      )}
     </div>
   )
 }

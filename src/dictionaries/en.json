@@ -77,10 +77,12 @@
     "documentsHint": "Please download, fill in, and bring these documents on the day of the event.",
     "documentUploads": {
       "title": "Your completed documents",
-      "hint": "Once you've filled in the documents above, upload them here — add as many as you need.",
+      "hint": "Once you've filled in the documents above, upload them here.",
       "uploadButton": "Upload a document",
       "uploading": "Uploading…",
-      "deleteConfirm": "Remove this document?"
+      "deleteConfirm": "Remove this document?",
+      "countLabel": "{count} of {max} uploaded",
+      "limitReached": "You've uploaded all the documents needed for this event."
     },
     "previewEnterLabel": "Preview as confirmed participant",
     "previewBannerText": "Preview mode — viewing this page as a confirmed participant would.",

@@ -24,9 +24,14 @@ function revalidateHikePaths(hikeId: string) {
   revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
 }
 
+async function getRequiredDocumentCount(hikeId: string) {
+  return prisma.hikeDocument.count({ where: { hikeId, requiresUpload: true } })
+}
+
 // A participant uploads one completed document for the event — not tied to a
 // specific template, so any number of files (covering any number of
-// templates, now or added later) all land in one list for that hike.
+// templates, now or added later) all land in one list for that hike, capped
+// at how many documents actually require a filled copy back.
 export async function submitDocument(hikeId: string, url: string, fileName: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
@@ -35,6 +40,12 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
   })
   if (!participant) throw new Error('Not registered for this event')
+
+  const [existingCount, requiredCount] = await Promise.all([
+    prisma.hikeDocumentSubmission.count({ where: { participantId: participant.id } }),
+    getRequiredDocumentCount(hikeId),
+  ])
+  if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
   await prisma.hikeDocumentSubmission.create({
     data: { hikeId, participantId: participant.id, url, fileName },
@@ -49,6 +60,12 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
 export async function submitPreviewDocument(hikeId: string, url: string, fileName: string) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const [existingCount, requiredCount] = await Promise.all([
+    prisma.hikeDocumentSubmission.count({ where: { hikeId, previewAdminId: session.user.id } }),
+    getRequiredDocumentCount(hikeId),
+  ])
+  if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
   await prisma.hikeDocumentSubmission.create({
     data: { hikeId, previewAdminId: session.user.id, url, fileName },

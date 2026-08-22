@@ -77,10 +77,12 @@
     "documentsHint": "Te rugăm să descarci, completezi și aduci aceste documente înainte de ziua evenimentului.",
     "documentUploads": {
       "title": "Documentele tale completate",
-      "hint": "După ce completezi documentele de mai sus, încarcă-le aici — adaugă câte ai nevoie.",
+      "hint": "După ce completezi documentele de mai sus, încarcă-le aici.",
       "uploadButton": "Încarcă un document",
       "uploading": "Se încarcă…",
-      "deleteConfirm": "Elimini acest document?"
+      "deleteConfirm": "Elimini acest document?",
+      "countLabel": "{count} din {max} încărcate",
+      "limitReached": "Ai încărcat toate documentele necesare pentru acest eveniment."
     },
     "previewEnterLabel": "Previzualizare ca participant confirmat",
     "previewBannerText": "Mod previzualizare — vezi pagina așa cum ar arăta pentru un participant confirmat.",
