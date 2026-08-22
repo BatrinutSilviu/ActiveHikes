@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { FileText, Download, ExternalLink, Upload, Check } from 'lucide-react'
-import { submitDocument } from '@/app/actions/documentSubmissions'
+import { submitDocument, submitPreviewDocument } from '@/app/actions/documentSubmissions'
 
 type ViaFerrataDoc = { id: string; url: string; name: string }
 type Submission = { id: string; url: string }
@@ -14,18 +14,19 @@ type UploadDict = {
   replace: string
 }
 
-export default function DocumentsSection({ documents, title, hint, hikeId, participantId, submissions, uploadDict }: {
+export default function DocumentsSection({ documents, title, hint, hikeId, canSubmit, previewMode, submissions, uploadDict }: {
   documents: ViaFerrataDoc[]
   title: string
   hint: string
   hikeId?: string
-  participantId?: string
+  canSubmit?: boolean
+  previewMode?: boolean
   submissions?: Record<string, Submission>
   uploadDict?: UploadDict
 }) {
   if (documents.length === 0) return null
 
-  const canSubmit = !!hikeId && !!participantId && !!uploadDict
+  const showUpload = !!hikeId && !!canSubmit && !!uploadDict
 
   return (
     <div className="space-y-3">
@@ -39,9 +40,10 @@ export default function DocumentsSection({ documents, title, hint, hikeId, parti
             key={document.id}
             document={document}
             hikeId={hikeId}
+            previewMode={!!previewMode}
             submission={submissions?.[document.id]}
             uploadDict={uploadDict}
-            canSubmit={canSubmit}
+            canSubmit={showUpload}
           />
         ))}
       </ul>
@@ -49,9 +51,10 @@ export default function DocumentsSection({ documents, title, hint, hikeId, parti
   )
 }
 
-function DocumentRow({ document, hikeId, submission, uploadDict, canSubmit }: {
+function DocumentRow({ document, hikeId, previewMode, submission, uploadDict, canSubmit }: {
   document: ViaFerrataDoc
   hikeId?: string
+  previewMode: boolean
   submission?: Submission
   uploadDict?: UploadDict
   canSubmit: boolean
@@ -68,7 +71,11 @@ function DocumentRow({ document, hikeId, submission, uploadDict, canSubmit }: {
     const res = await fetch('/api/upload', { method: 'POST', body: formData })
     const { url } = await res.json()
     startTransition(async () => {
-      await submitDocument(document.id, hikeId!, url)
+      if (previewMode) {
+        await submitPreviewDocument(document.id, hikeId!, url)
+      } else {
+        await submitDocument(document.id, hikeId!, url)
+      }
       setUploading(false)
     })
   }

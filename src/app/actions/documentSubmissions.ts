@@ -50,6 +50,30 @@ export async function submitDocument(documentId: string, hikeId: string, url: st
   revalidateHikePaths(hikeId)
 }
 
+// Lets an admin try out the upload flow on a hike's document as a dry run —
+// stored separately from real participant submissions (keyed by admin user,
+// not by a HikeParticipant row) so it never touches real participant data.
+export async function submitPreviewDocument(documentId: string, hikeId: string, url: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
+  if (!document || document.hikeId !== hikeId) throw new Error('Document not found')
+
+  const existing = await prisma.hikeDocumentSubmission.findUnique({
+    where: { documentId_previewAdminId: { documentId, previewAdminId: session.user.id } },
+  })
+  if (existing) await unlinkUpload(existing.url)
+
+  await prisma.hikeDocumentSubmission.upsert({
+    where: { documentId_previewAdminId: { documentId, previewAdminId: session.user.id } },
+    create: { documentId, previewAdminId: session.user.id, url },
+    update: { url, submittedAt: new Date() },
+  })
+
+  revalidateHikePaths(hikeId)
+}
+
 export async function deleteSubmission(submissionId: string, hikeId: string) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
@@ -60,7 +84,7 @@ export async function deleteSubmission(submissionId: string, hikeId: string) {
   })
   if (!submission) return
 
-  const isOwner = submission.participant.userId === session.user.id
+  const isOwner = submission.participant?.userId === session.user.id || submission.previewAdminId === session.user.id
   const isAdmin = session.user.role === 'admin'
   if (!isOwner && !isAdmin) throw new Error('Unauthorized')
 

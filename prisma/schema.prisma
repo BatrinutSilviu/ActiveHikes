@@ -110,6 +110,7 @@ model User {
   participations HikeParticipant[]
   uploadedPhotos HikePhoto[]
   createdHikes   Hike[]
+  previewDocumentSubmissions HikeDocumentSubmission[]
 }
 
 model Hike {
@@ -232,16 +233,19 @@ model HikeDocument {
 }
 
 model HikeDocumentSubmission {
-  id            String   @id @default(cuid())
-  documentId    String
-  participantId String
-  url           String
-  submittedAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  documentId     String
+  participantId  String?
+  previewAdminId String?
+  url            String
+  submittedAt    DateTime @default(now())
 
-  document    HikeDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  participant HikeParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  document     HikeDocument     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  participant  HikeParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  previewAdmin User?            @relation(fields: [previewAdminId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, participantId])
+  @@unique([documentId, previewAdminId])
 }
 
 model BankAccount {

@@ -81,6 +81,9 @@
       "submitted": "Încărcat",
       "replace": "Înlocuiește"
     },
+    "previewEnterLabel": "Previzualizare ca participant confirmat",
+    "previewBannerText": "Mod previzualizare — vezi pagina așa cum ar arăta pentru un participant confirmat.",
+    "previewExitLabel": "Ieși din previzualizare",
     "paymentTitle": "Informații Plată",
     "paymentDesc": "După înregistrare, transferă {fee} RON în unul din conturile de mai jos. Locul tău va fi confirmat după verificarea plății.",
     "friendDoublesFee": "Suma acoperă atât participarea ta, cât și a prietenului tău — dublul sumei obișnuite.",
@@ -561,7 +564,8 @@
         "adding": "Se adaugă…",
         "deleteConfirm": "Ștergi acest document?",
         "noDocuments": "Niciun document adăugat încă.",
-        "submissionsLabel": "Încărcat de"
+        "submissionsLabel": "Încărcat de",
+        "previewSubmissionLabel": "Încărcare test"
       }
     },
     "hike": {

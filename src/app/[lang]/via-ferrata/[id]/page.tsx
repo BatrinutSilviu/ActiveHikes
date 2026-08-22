@@ -13,8 +13,12 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
-export default async function ViaFerrataDetailPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
+export default async function ViaFerrataDetailPage({ params, searchParams }: {
+  params: Promise<{ lang: string; id: string }>
+  searchParams: Promise<{ preview?: string }>
+}) {
   const { lang, id } = await params
+  const { preview } = await searchParams
   if (!hasLocale(lang)) notFound()
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
@@ -36,6 +40,8 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
   const isAdmin = session?.user?.role === 'admin'
   if (viaFerrata.status === 'draft' && !isAdmin) notFound()
 
+  const isPreviewMode = isAdmin && preview === '1'
+
   const bankAccounts = await prisma.bankAccount.findMany({ where: { isActive: true } })
 
   let userParticipation = null
@@ -45,10 +51,16 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
       include: { friend: { select: { id: true, friendName: true } }, documentSubmissions: true },
     })
   }
-  const canSubmitDocuments = !!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired'
-  const documentSubmissionsByDocId = Object.fromEntries(
-    (userParticipation?.documentSubmissions ?? []).map(s => [s.documentId, { id: s.id, url: s.url }]),
-  )
+  const canSubmitDocuments = isPreviewMode
+    || (!!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired')
+  const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
+
+  const previewSubmissions = isPreviewMode
+    ? await prisma.hikeDocumentSubmission.findMany({ where: { document: { hikeId: id }, previewAdminId: session!.user.id } })
+    : []
+  const documentSubmissionsByDocId = isPreviewMode
+    ? Object.fromEntries(previewSubmissions.map(s => [s.documentId, { id: s.id, url: s.url }]))
+    : Object.fromEntries((userParticipation?.documentSubmissions ?? []).map(s => [s.documentId, { id: s.id, url: s.url }]))
   const hasFriend = !!userParticipation?.friend
   const priceMultiplier = hasFriend ? 2 : 1
 
@@ -73,6 +85,21 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
+      {isPreviewMode ? (
+        <div className="flex items-center justify-between gap-3 bg-amber-500 text-white text-sm font-semibold rounded-2xl px-4 py-3 mb-6">
+          <span>{dd.previewBannerText}</span>
+          <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`} className="underline underline-offset-2 shrink-0">
+            {dd.previewExitLabel}
+          </Link>
+        </div>
+      ) : isAdmin && (
+        <div className="flex justify-end mb-6">
+          <Link href={`/${lang}/via-ferrata/${viaFerrata.id}?preview=1`}
+            className="text-xs font-semibold text-stone-500 hover:text-emerald-600 underline underline-offset-2">
+            {dd.previewEnterLabel}
+          </Link>
+        </div>
+      )}
       <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
         {viaFerrata.coverImageUrl && viaFerrata.coverImageUrl2 ? (
           <div className="absolute inset-0 flex">
@@ -208,14 +235,15 @@ export default async function ViaFerrataDetailPage({ params }: { params: Promise
             title={dd.documentsTitle}
             hint={dd.documentsHint}
             hikeId={viaFerrata.id}
-            participantId={canSubmitDocuments ? userParticipation!.id : undefined}
+            canSubmit={canSubmitDocuments}
+            previewMode={isPreviewMode}
             submissions={documentSubmissionsByDocId}
             uploadDict={dd.documentsUpload}
           />
         </div>
 
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
-          {viaFerrata.whatsappGroupUrl && userParticipation?.status === 'confirmed' && (
+          {viaFerrata.whatsappGroupUrl && showsAsConfirmed && (
             <a href={viaFerrata.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
               <MessageCircle size={18} /> {dd.joinWhatsApp}

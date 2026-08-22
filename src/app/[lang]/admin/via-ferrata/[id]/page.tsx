@@ -37,7 +37,10 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           orderBy: { createdAt: 'asc' },
           include: {
             submissions: {
-              include: { participant: { select: { friendName: true, user: { select: { name: true } } } } },
+              include: {
+                participant: { select: { friendName: true, user: { select: { name: true } } } },
+                previewAdmin: { select: { name: true } },
+              },
               orderBy: { submittedAt: 'asc' },
             },
           },
@@ -114,7 +117,9 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     submissions: document.submissions.map(submission => ({
       id: submission.id,
       url: submission.url,
-      participantName: submission.participant.friendName ?? submission.participant.user?.name ?? '—',
+      participantName: submission.previewAdmin
+        ? `${da.documents.previewSubmissionLabel} (${submission.previewAdmin.name ?? '—'})`
+        : submission.participant?.friendName ?? submission.participant?.user?.name ?? '—',
     })),
   }))
 
