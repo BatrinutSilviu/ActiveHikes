@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addDocument, deleteDocument, renameDocument, setDocumentRequiresUpload } from '@/app/actions/documents'
+import { addDocument, deleteDocument, editDocumentUrl, renameDocument, setDocumentRequiresUpload } from '@/app/actions/documents'
 import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check } from 'lucide-react'
 
 type ViaFerrataDoc = { id: string; url: string; name: string; requiresUpload: boolean }
@@ -39,28 +39,37 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
   const [uploading, setUploading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingName, setEditingName] = useState('')
+  const [editingUrl, setEditingUrl] = useState('')
   const [, startTransition] = useTransition()
 
   const startEdit = (document: ViaFerrataDoc) => {
     setEditingId(document.id)
     setEditingName(document.name)
+    setEditingUrl(document.url)
   }
 
   const cancelEdit = () => {
     setEditingId(null)
     setEditingName('')
+    setEditingUrl('')
   }
 
   const saveEdit = () => {
     if (!editingId) return
     const trimmedName = editingName.trim()
-    if (!trimmedName) return
+    const trimmedUrl = editingUrl.trim()
+    if (!trimmedName || !trimmedUrl) return
     const id = editingId
+    const isLink = !editingUrl.startsWith('/uploads/')
     startTransition(async () => {
-      await renameDocument(id, viaFerrataId, trimmedName)
-      setDocuments(prev => prev.map(d => d.id === id ? { ...d, name: trimmedName } : d))
+      await Promise.all([
+        renameDocument(id, viaFerrataId, trimmedName),
+        isLink ? editDocumentUrl(id, viaFerrataId, trimmedUrl) : Promise.resolve(),
+      ])
+      setDocuments(prev => prev.map(d => d.id === id ? { ...d, name: trimmedName, url: isLink ? trimmedUrl : d.url } : d))
       setEditingId(null)
       setEditingName('')
+      setEditingUrl('')
     })
   }
 
@@ -139,15 +148,27 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
               )}
               {editingId === document.id ? (
                 <>
-                  <input
-                    type="text"
-                    value={editingName}
-                    onChange={e => setEditingName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
-                    autoFocus
-                    className="flex-1 border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  <button onClick={saveEdit} disabled={!editingName.trim()} className="text-emerald-600 hover:text-emerald-700 shrink-0 disabled:opacity-50">
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <input
+                      type="text"
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                      autoFocus
+                      className="border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    {!document.url.startsWith('/uploads/') && (
+                      <input
+                        type="url"
+                        value={editingUrl}
+                        onChange={e => setEditingUrl(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                        placeholder={dict.linkPlaceholder}
+                        className="border border-stone-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                    )}
+                  </div>
+                  <button onClick={saveEdit} disabled={!editingName.trim() || !editingUrl.trim()} className="text-emerald-600 hover:text-emerald-700 shrink-0 disabled:opacity-50">
                     <Check size={16} />
                   </button>
                   <button onClick={cancelEdit} className="text-stone-400 hover:text-red-500 shrink-0">

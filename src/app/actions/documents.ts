@@ -49,6 +49,27 @@ export async function renameDocument(documentId: string, hikeId: string, name: s
   revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
 }
 
+// Only allowed for link documents — an uploaded file's url points at a file on
+// disk, so changing it here would silently detach the record from the file.
+export async function editDocumentUrl(documentId: string, hikeId: string, url: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const trimmedUrl = url.trim()
+  if (!trimmedUrl) throw new Error('URL is required')
+
+  const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
+  if (!document) throw new Error('Document not found')
+  if (document.url.startsWith('/uploads/')) throw new Error('Cannot edit the link of an uploaded file')
+
+  await prisma.hikeDocument.update({ where: { id: documentId }, data: { url: trimmedUrl } })
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/admin/via-ferrata/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
+}
+
 export async function deleteDocument(documentId: string, hikeId: string) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
