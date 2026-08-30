@@ -21,7 +21,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
-  const [d, session, hike] = await Promise.all([
+  const [d, session, hike, bankAccounts] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
     prisma.hike.findFirst({
@@ -36,8 +36,10 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         orderBy: { joinedAt: 'asc' },
       },
         photos: { orderBy: { createdAt: 'asc' } },
+        bankAccounts: { where: { isActive: true }, select: { id: true } },
       },
     }),
+    prisma.bankAccount.findMany({ where: { isActive: true } }),
   ])
 
   if (!hike) notFound()
@@ -107,6 +109,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     campingPrice: hike.campingPrice ? Number(hike.campingPrice) : null,
     accommodationPrice: hike.accommodationPrice ? Number(hike.accommodationPrice) : null,
     accommodationDeposit: hike.accommodationDeposit ? Number(hike.accommodationDeposit) : null,
+    bankAccountIds: hike.bankAccounts.map(a => a.id),
     participants: undefined,
     photos: undefined,
   }
@@ -160,7 +163,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
-            <HikeEditForm hike={hikeData as any} dict={d.admin.hikeEdit} lang={lang} />
+            <HikeEditForm hike={hikeData as any} bankAccounts={bankAccounts} dict={d.admin.hikeEdit} lang={lang} />
           </div>
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">

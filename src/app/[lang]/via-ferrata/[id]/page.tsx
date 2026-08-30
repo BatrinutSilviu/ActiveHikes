@@ -34,6 +34,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
         orderBy: { joinedAt: 'asc' },
       },
       documents: { orderBy: { createdAt: 'asc' } },
+      bankAccounts: { where: { isActive: true } },
     },
   })
   if (!viaFerrata) notFound()
@@ -43,7 +44,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
 
   const isPreviewMode = isAdmin && preview === '1'
 
-  const bankAccounts = await prisma.bankAccount.findMany({ where: { isActive: true } })
+  const bankAccounts = viaFerrata.bankAccounts
 
   let userParticipation = null
   if (session?.user?.id) {

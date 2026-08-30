@@ -165,6 +165,7 @@ model Hike {
   rooms        HikeRoom[]
   documents    HikeDocument[]
   documentSubmissions HikeDocumentSubmission[]
+  bankAccounts BankAccount[]     @relation("HikeBankAccounts")
 }
 
 model HikeParticipant {
@@ -261,4 +262,6 @@ model BankAccount {
   notes         String?
   isActive      Boolean            @default(true)
   createdAt     DateTime           @default(now())
+
+  hikes Hike[] @relation("HikeBankAccounts")
 }

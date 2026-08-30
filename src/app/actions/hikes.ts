@@ -408,6 +408,9 @@ export async function createHike(data: {
       whatsappGroupUrl: data.whatsappGroupUrl || null,
       status: 'draft',
       createdById: session.user.id,
+      // New events show every currently active payment method by default;
+      // admin can narrow it down afterwards from the event's edit page.
+      bankAccounts: { connect: (await prisma.bankAccount.findMany({ where: { isActive: true }, select: { id: true } })) },
     },
   })
 
@@ -465,12 +468,13 @@ export async function updateHike(
     peoplePerCar?: number
     carsNeeded?: number | null
     essentials?: string[]
+    bankAccountIds?: string[]
   }
 ) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
-  const { date, endDate, difficulty, ...rest } = data
+  const { date, endDate, difficulty, bankAccountIds, ...rest } = data
   const updated = await prisma.hike.update({
     where: { id: hikeId },
     data: {
@@ -478,6 +482,7 @@ export async function updateHike(
       ...(date ? { date: new Date(date) } : {}),
       ...(endDate !== undefined ? { endDate: endDate ? new Date(endDate) : null } : {}),
       ...(difficulty !== undefined ? { difficulty: (difficulty as Difficulty | null) } : {}),
+      ...(bankAccountIds !== undefined ? { bankAccounts: { set: bankAccountIds.map(id => ({ id })) } } : {}),
     },
   })
 

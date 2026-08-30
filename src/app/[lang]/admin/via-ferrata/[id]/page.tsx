@@ -20,7 +20,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
 
   await Promise.all([expireOverduePending(), advanceEventStatuses()])
 
-  const [d, session, viaFerrata] = await Promise.all([
+  const [d, session, viaFerrata, bankAccounts] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
     prisma.hike.findFirst({
@@ -42,8 +42,10 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           },
           orderBy: { submittedAt: 'asc' },
         },
+        bankAccounts: { where: { isActive: true }, select: { id: true } },
       },
     }),
+    prisma.bankAccount.findMany({ where: { isActive: true } }),
   ])
 
   if (!viaFerrata) notFound()
@@ -105,6 +107,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     totalPrice: viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : null,
     advanceFee: viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : null,
     whatsappGroupUrl: viaFerrata.whatsappGroupUrl,
+    bankAccountIds: viaFerrata.bankAccounts.map(a => a.id),
   }
 
   const documents = viaFerrata.documents.map(document => ({
@@ -162,7 +165,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
-            <ViaFerrataEditForm viaFerrata={viaFerrataData} dict={d.admin.viaFerrataEdit} />
+            <ViaFerrataEditForm viaFerrata={viaFerrataData} bankAccounts={bankAccounts} dict={d.admin.viaFerrataEdit} />
           </div>
 
           <ViaFerrataDocumentUploader viaFerrataId={viaFerrata.id} existingDocuments={documents} dict={da.documents} />

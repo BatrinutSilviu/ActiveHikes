@@ -22,6 +22,14 @@ type ViaFerrataData = {
   totalPrice: number | null
   advanceFee: number | null
   whatsappGroupUrl: string | null
+  bankAccountIds: string[]
+}
+
+type BankAccountOption = {
+  id: string
+  type: string
+  bankName: string | null
+  accountHolder: string
 }
 
 type ViaFerrataEditDict = {
@@ -58,12 +66,15 @@ type ViaFerrataEditDict = {
   groupCountPlaceholder: string
   whatsappGroupUrl: string
   whatsappGroupUrlPlaceholder: string
+  bankAccountsSection: string
+  bankAccountsHint: string
+  noBankAccounts: string
   savedSuccessfully: string
   saveChanges: string
   saving: string
 }
 
-export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: ViaFerrataData; dict: ViaFerrataEditDict }) {
+export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: { viaFerrata: ViaFerrataData; bankAccounts: BankAccountOption[]; dict: ViaFerrataEditDict }) {
   const [form, setForm] = useState({
     title: viaFerrata.title,
     location: viaFerrata.destination,
@@ -80,6 +91,8 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
     groupCount: viaFerrata.groupCount != null ? String(viaFerrata.groupCount) : '',
     whatsappGroupUrl: viaFerrata.whatsappGroupUrl ?? '',
   })
+  const [bankAccountIds, setBankAccountIds] = useState<string[]>(viaFerrata.bankAccountIds)
+  const toggleBankAccount = (id: string) => setBankAccountIds(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id])
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
@@ -123,6 +136,7 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
         meetingTime: form.meetingTime || null,
         groupCount: form.groupCount ? parseInt(form.groupCount) : null,
         whatsappGroupUrl: form.whatsappGroupUrl || null,
+        bankAccountIds,
         coverImageUrl,
         coverImageUrl2,
       })
@@ -210,6 +224,26 @@ export default function ViaFerrataEditForm({ viaFerrata, dict }: { viaFerrata: V
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.whatsappGroupUrl}</label>
         <input type="url" value={form.whatsappGroupUrl} onChange={e => set('whatsappGroupUrl', e.target.value)} placeholder={dict.whatsappGroupUrlPlaceholder} className={cls} />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.bankAccountsSection}</label>
+        <p className="text-xs text-stone-400 mb-2">{dict.bankAccountsHint}</p>
+        {bankAccounts.length === 0 ? (
+          <p className="text-sm text-stone-400">{dict.noBankAccounts}</p>
+        ) : (
+          <div className="space-y-2">
+            {bankAccounts.map(account => {
+              const methodLabel = account.type === 'revolut' ? 'Revolut' : account.type === 'btpay' ? 'BT Pay' : account.bankName
+              return (
+                <label key={account.id} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={bankAccountIds.includes(account.id)} onChange={() => toggleBankAccount(account.id)} className="w-4 h-4 accent-emerald-600" />
+                  <span className="text-sm text-stone-700">{methodLabel} — {account.accountHolder}</span>
+                </label>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div>

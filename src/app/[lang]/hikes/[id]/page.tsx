@@ -39,6 +39,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
         orderBy: [{ type: 'asc' }, { createdAt: 'asc' }],
         include: { occupants: { select: { id: true } } },
       },
+      bankAccounts: { where: { isActive: true } },
     },
   })
   if (!hike) notFound()
@@ -56,7 +57,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
     occupied: r.occupants.length,
   }))
 
-  const bankAccounts = await prisma.bankAccount.findMany({ where: { isActive: true } })
+  const bankAccounts = hike.bankAccounts
 
   let userParticipation = null
   if (session?.user?.id) {
