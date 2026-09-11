@@ -55,6 +55,12 @@ enum HikeType {
   via_ferrata
 }
 
+enum BankConnectionStatus {
+  pending
+  linked
+  expired
+}
+
 // ─── NextAuth required models ─────────────────────────────────────────────────
 
 model Account {
@@ -194,6 +200,7 @@ model HikeParticipant {
   room         HikeRoom?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
   host         HikeParticipant? @relation("HostFriend", fields: [hostParticipantId], references: [id], onDelete: Cascade)
   friend       HikeParticipant? @relation("HostFriend")
+  matchedTransaction ProcessedBankTransaction?
   documentSubmissions HikeDocumentSubmission[]
 
   @@unique([hikeId, userId])
@@ -264,4 +271,31 @@ model BankAccount {
   createdAt     DateTime           @default(now())
 
   hikes Hike[] @relation("HikeBankAccounts")
+}
+
+model BankConnection {
+  id                String               @id @default(cuid())
+  provider          String               @default("enablebanking")
+  institutionId     String?
+  institutionName   String?
+  sessionId         String?
+  accountId         String?
+  reference         String               @unique
+  status            BankConnectionStatus @default(pending)
+  linkedAt          DateTime?
+  consentExpiresAt  DateTime?
+  lastSyncedAt      DateTime?
+  lastMatchedCount  Int?
+  lastUnmatchedCount Int?
+  createdAt         DateTime             @default(now())
+}
+
+model ProcessedBankTransaction {
+  id                String          @id @default(cuid())
+  transactionId     String          @unique
+  hikeParticipantId String          @unique
+  amount            Decimal         @db.Decimal(10, 2)
+  matchedAt         DateTime        @default(now())
+
+  hikeParticipant HikeParticipant @relation(fields: [hikeParticipantId], references: [id], onDelete: Cascade)
 }

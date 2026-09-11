@@ -7,6 +7,7 @@ import { ParticipantStatus } from '@prisma/client'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { resolvePair } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
+import { confirmParticipant } from '@/lib/participantConfirm'
 
 export async function updateParticipantStatus(
   participantId: string,
@@ -16,17 +17,21 @@ export async function updateParticipantStatus(
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
+  if (newStatus === 'confirmed') {
+    await confirmParticipant(participantId, hikeId)
+    return
+  }
+
   const { hostId, friendId } = await resolvePair(prisma, participantId)
 
   await prisma.hikeParticipant.updateMany({
     where: { id: { in: [hostId, friendId].filter((id): id is string => id !== null) } },
     data: {
       status: newStatus,
-      confirmedAt: newStatus === 'confirmed' ? new Date() : undefined,
       paymentDeadline: newStatus === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
       // No longer confirmed → free up the car seat they were occupying, so it
       // doesn't keep counting against the driver's capacity.
-      ...(newStatus !== 'confirmed' ? { carDriverParticipantId: null } : {}),
+      carDriverParticipantId: null,
     },
   })
 

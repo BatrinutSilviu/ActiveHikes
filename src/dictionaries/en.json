@@ -709,6 +709,27 @@
       "hidden": "Hidden",
       "noAccounts": "No payment methods added yet."
     },
+    "revolutConnection": {
+      "title": "Automatic payment confirmation (Revolut)",
+      "hint": "Connect your personal Revolut account so registrations get confirmed automatically when a payment arrives with the participant's name in the description. Checked periodically in the background — not instant.",
+      "connectButton": "Connect Revolut account",
+      "connecting": "Connecting…",
+      "noInstitutionFound": "Couldn't find Revolut for Romania. Please try again later.",
+      "chooseInstitution": "Select your Revolut account type…",
+      "continueButton": "Continue",
+      "linkedLabel": "Linked on",
+      "consentValidLabel": "Consent valid until",
+      "lastSyncedLabel": "Last synced",
+      "never": "never",
+      "confirmedCountLabel": "confirmed",
+      "unmatchedCountLabel": "unmatched",
+      "syncNowButton": "Sync now",
+      "syncing": "Syncing…",
+      "disconnectButton": "Disconnect",
+      "disconnectConfirm": "Disconnect your Revolut account? Auto-confirmation will stop until you reconnect.",
+      "expiredNotice": "Your Revolut connection has expired — reconnect to keep auto-confirming payments.",
+      "connectError": "Could not connect your Revolut account. Please try again."
+    },
     "hikeEdit": {
       "title": "Hike title",
       "titlePlaceholder": "e.g. Bucegi Traverse",

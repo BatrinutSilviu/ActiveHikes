@@ -14,6 +14,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
+import { getConfirmationPrice } from '@/lib/pricing'
 
 export default async function HikeDetailPage({ params, searchParams }: {
   params: Promise<{ lang: string; id: string }>
@@ -82,7 +83,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
   const entryFee = Number(hike.entryFee)
   const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? Number(hike.accommodationPrice) : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
-  const confirmationPrice = entryFee + accommodationDeposit
+  const confirmationPrice = getConfirmationPrice(hike)
   const totalPrice = entryFee + accommodationPrice
   const displayConfirmationPrice = confirmationPrice * priceMultiplier
   const displayTotalPrice = totalPrice * priceMultiplier

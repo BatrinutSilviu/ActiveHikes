@@ -709,6 +709,27 @@
       "hidden": "Ascuns",
       "noAccounts": "Nu există metode de plată adăugate."
     },
+    "revolutConnection": {
+      "title": "Confirmare automată a plăților (Revolut)",
+      "hint": "Conectează-ți contul personal Revolut pentru ca înregistrările să fie confirmate automat când apare o plată cu numele participantului în descriere. Verificat periodic în fundal — nu este instant.",
+      "connectButton": "Conectează contul Revolut",
+      "connecting": "Se conectează…",
+      "noInstitutionFound": "Nu am găsit Revolut pentru România. Încearcă din nou mai târziu.",
+      "chooseInstitution": "Selectează tipul contului Revolut…",
+      "continueButton": "Continuă",
+      "linkedLabel": "Conectat pe",
+      "consentValidLabel": "Acordul este valid până la",
+      "lastSyncedLabel": "Ultima sincronizare",
+      "never": "niciodată",
+      "confirmedCountLabel": "confirmate",
+      "unmatchedCountLabel": "nepotrivite",
+      "syncNowButton": "Sincronizează acum",
+      "syncing": "Se sincronizează…",
+      "disconnectButton": "Deconectează",
+      "disconnectConfirm": "Deconectezi contul Revolut? Confirmarea automată se va opri până te reconectezi.",
+      "expiredNotice": "Conexiunea cu Revolut a expirat — reconectează-te pentru a continua confirmarea automată a plăților.",
+      "connectError": "Nu s-a putut conecta contul Revolut. Încearcă din nou."
+    },
     "hikeEdit": {
       "title": "Titlul drumeției",
       "titlePlaceholder": "ex. Traversarea Bucegi",

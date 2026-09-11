@@ -13,6 +13,7 @@ import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { expireOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
+import { getConfirmationPrice } from '@/lib/pricing'
 
 export default async function ViaFerrataDetailPage({ params, searchParams }: {
   params: Promise<{ lang: string; id: string }>
@@ -74,8 +75,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
   const isFull = spotsLeft <= 0
   const isUpcoming = viaFerrata.status === 'upcoming' || (viaFerrata.status === 'draft' && isAdmin)
   const totalPrice = viaFerrata.accommodationPrice ? Number(viaFerrata.accommodationPrice) : 0
-  const advanceFee = viaFerrata.accommodationDeposit ? Number(viaFerrata.accommodationDeposit) : 0
-  const confirmationPrice = advanceFee
+  const confirmationPrice = getConfirmationPrice(viaFerrata)
   const displayConfirmationPrice = confirmationPrice * priceMultiplier
   const displayTotalPrice = totalPrice * priceMultiplier
 

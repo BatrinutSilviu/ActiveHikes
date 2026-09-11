@@ -101,6 +101,9 @@ GOOGLE_CLIENT_ID=          # optional
 GOOGLE_CLIENT_SECRET=      # optional
 RESEND_API_KEY=your-resend-api-key
 EMAIL_FROM=ActiveHikes <noreply@yourdomain.com>
+ENABLE_BANKING_APPLICATION_ID=   # optional — enables Revolut auto-confirmation
+ENABLE_BANKING_PRIVATE_KEY=      # optional — enables Revolut auto-confirmation
+REVOLUT_SYNC_INTERVAL_MS=        # optional, default 6h in ms — how often to poll for payments
 ```
 
 `DOMAIN` must be a hostname pointing at this VPS (a DNS A/AAAA record) — it's used in the
@@ -110,6 +113,18 @@ project already running behind the same Traefik.
 `RESEND_API_KEY` and `EMAIL_FROM` are used for password reset emails. Get an API key from
 [resend.com](https://resend.com), verify a sending domain there, and set `EMAIL_FROM` to an
 address on that domain.
+
+`ENABLE_BANKING_APPLICATION_ID` and `ENABLE_BANKING_PRIVATE_KEY` enable automatic payment
+confirmation from a personal Revolut account (via [Enable Banking](https://enablebanking.com),
+an Open Banking/PSD2 aggregator — Revolut has no self-service API for personal accounts). Sign
+up, register an application in their Control Panel, and use "Activate by linking accounts" to
+whitelist your own Revolut account in Restricted Production mode — free, as long as the app is
+only ever used against accounts you link yourself. Set `ENABLE_BANKING_APPLICATION_ID` to the
+app's id and `ENABLE_BANKING_PRIVATE_KEY` to the generated private key, with real newlines
+replaced by literal `\n` so it survives as a single-line env var. Without these two vars set,
+the feature is simply inactive — nothing else changes. After deploying, connect the account
+once from `/admin/bank-accounts`; the consent expires roughly every 90 days and needs
+reconnecting. Rate limits mean this checks for new payments every few hours, not instantly.
 
 ### 4. Build and start
 
