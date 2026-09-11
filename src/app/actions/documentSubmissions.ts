@@ -54,6 +54,29 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
   revalidateHikePaths(hikeId)
 }
 
+// Lets an admin upload a completed document on behalf of a participant who
+// handed it in some other way (in person, by email, etc.) instead of using
+// the self-serve upload.
+export async function submitDocumentForParticipant(hikeId: string, participantId: string, url: string, fileName: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+
+  const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId } })
+  if (!participant || participant.hikeId !== hikeId) throw new Error('Participant not found')
+
+  const [existingCount, requiredCount] = await Promise.all([
+    prisma.hikeDocumentSubmission.count({ where: { participantId } }),
+    getRequiredDocumentCount(hikeId),
+  ])
+  if (existingCount >= requiredCount) throw new Error('Upload limit reached')
+
+  await prisma.hikeDocumentSubmission.create({
+    data: { hikeId, participantId, url, fileName },
+  })
+
+  revalidateHikePaths(hikeId)
+}
+
 // Lets an admin try out the upload flow as a dry run — stored separately from
 // real participant submissions (keyed by admin user, not a HikeParticipant
 // row) so it never touches real participant data.

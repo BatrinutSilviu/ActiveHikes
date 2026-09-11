@@ -581,7 +581,12 @@
         "title": "Participant uploads",
         "hint": "Completed documents participants have uploaded for this event.",
         "empty": "No documents uploaded yet.",
-        "previewLabel": "Preview upload"
+        "previewLabel": "Preview upload",
+        "participantPlaceholder": "Select a participant…",
+        "noParticipants": "No participants to upload a document for yet.",
+        "uploadButton": "Upload for participant",
+        "uploading": "Uploading…",
+        "deleteConfirm": "Remove this document?"
       }
     },
     "hike": {

@@ -125,6 +125,10 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     isPreview: !!submission.previewAdmin,
   }))
 
+  const documentUploadParticipants = viaFerrata.participants
+    .filter(p => p.status !== 'rejected' && p.status !== 'expired')
+    .map(p => ({ id: p.id, name: p.friendName ?? p.user?.name ?? p.user?.email ?? '—' }))
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <Link href={`/${lang}/admin`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
@@ -170,7 +174,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
 
           <ViaFerrataDocumentUploader viaFerrataId={viaFerrata.id} existingDocuments={documents} dict={da.documents} />
 
-          <ParticipantDocumentUploads uploads={documentUploads} dict={da.documentUploads} />
+          <ParticipantDocumentUploads hikeId={viaFerrata.id} uploads={documentUploads} participants={documentUploadParticipants} dict={da.documentUploads} />
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>

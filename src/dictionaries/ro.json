@@ -581,7 +581,12 @@
         "title": "Documente încărcate de participanți",
         "hint": "Documentele completate pe care participanții le-au încărcat pentru acest eveniment.",
         "empty": "Niciun document încărcat încă.",
-        "previewLabel": "Încărcare test"
+        "previewLabel": "Încărcare test",
+        "participantPlaceholder": "Selectează un participant…",
+        "noParticipants": "Niciun participant pentru care să încarci un document încă.",
+        "uploadButton": "Încarcă pentru participant",
+        "uploading": "Se încarcă…",
+        "deleteConfirm": "Ștergi acest document?"
       }
     },
     "hike": {
