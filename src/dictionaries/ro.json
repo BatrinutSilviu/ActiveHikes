@@ -523,7 +523,10 @@
       "noBankAccounts": "Nu ai adăugat încă nicio metodă de plată — adaugă una la Metode de plată.",
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
-      "saving": "Se salvează…"
+      "saving": "Se salvează…",
+      "saveError": "Salvarea a eșuat — modificările tale sunt încă aici, încearcă din nou.",
+      "draftRestored": "Am recuperat modificări nesalvate de data trecută. Verifică-le și apasă Salvează.",
+      "discardDraft": "Renunță la ele"
     },
     "viaFerrata": {
       "backToDashboard": "Înapoi la panou",
@@ -797,6 +800,9 @@
       "savedSuccessfully": "Salvat cu succes!",
       "saveChanges": "Salvează modificările",
       "saving": "Se salvează…",
+      "saveError": "Salvarea a eșuat — modificările tale sunt încă aici, încearcă din nou.",
+      "draftRestored": "Am recuperat modificări nesalvate de data trecută. Verifică-le și apasă Salvează.",
+      "discardDraft": "Renunță la ele",
       "difficulties": { "easy": "Ușor", "easy_medium": "Ușor spre Mediu", "medium": "Mediu", "medium_hard": "Mediu spre Greu", "hard": "Greu" }
     },
     "hikeStatus": {

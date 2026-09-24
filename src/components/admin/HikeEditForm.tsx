@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
+import { useFormDraft, uploadFile } from '@/hooks/useFormDraft'
 import { Upload, X } from 'lucide-react'
 
 type HikeData = {
@@ -111,6 +112,9 @@ type HikeEditDict = {
   savedSuccessfully: string
   saveChanges: string
   saving: string
+  saveError: string
+  draftRestored: string
+  discardDraft: string
   difficulties: Record<string, string>
 }
 
@@ -156,89 +160,76 @@ export default function HikeEditForm({ hike, bankAccounts, dict, lang = 'ro' }: 
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
   const [gpxActualFile, setGpxActualFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
+  const draft = useFormDraft(`hike:${hike.id}`, { form, bankAccountIds }, saved => {
+    setForm(saved.form)
+    setBankAccountIds(saved.bankAccountIds)
+  })
 
   const set = (field: string, value: string | boolean) => setForm(f => ({ ...f, [field]: value }))
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    setSuccess(false)
     startTransition(async () => {
-      let gpxActualUrl = hike.gpxActualUrl
-      let gpxApproximateUrl = hike.gpxApproximateUrl
-      let coverImageUrl = hike.coverImageUrl
-      let coverImageUrl2 = hike.coverImageUrl2
+      try {
+        let gpxActualUrl = hike.gpxActualUrl
+        let gpxApproximateUrl = hike.gpxApproximateUrl
+        let coverImageUrl = hike.coverImageUrl
+        let coverImageUrl2 = hike.coverImageUrl2
 
-      if (coverFile) {
-        const fd = new FormData()
-        fd.append('file', coverFile)
-        fd.append('bucket', 'hike-covers')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        coverImageUrl = (await res.json()).url
+        if (coverFile) coverImageUrl = await uploadFile(coverFile, 'hike-covers')
+        if (coverFile2) coverImageUrl2 = await uploadFile(coverFile2, 'hike-covers')
+        if (gpxApproxFile) gpxApproximateUrl = await uploadFile(gpxApproxFile, 'hike-gpx')
+        if (gpxActualFile) gpxActualUrl = await uploadFile(gpxActualFile, 'hike-gpx')
+
+        await updateHike(hike.id, {
+          title: form.title,
+          destination: form.destination,
+          description: form.description || null,
+          date: form.date,
+          endDate: form.endDate || null,
+          meetingTime: form.meetingTime || null,
+          durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
+          difficulty: form.difficulty || null,
+          externalPhotosUrl: form.externalPhotosUrl || null,
+          whatsappGroupUrl: form.whatsappGroupUrl || null,
+          accommodationDetails: form.accommodationDetails || null,
+          accommodationUrl: form.accommodationUrl || null,
+          accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
+          accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
+          breakfastTime: form.breakfastTime || null,
+          dinnerTime: form.dinnerTime || null,
+          checkInTime: form.checkInTime || null,
+          checkOutTime: form.checkOutTime || null,
+          entryFee: parseFloat(form.entryFee),
+          maxParticipants: parseInt(form.maxParticipants),
+          mountainRange: form.mountainRange || null,
+          meetingPoint: form.meetingPoint || null,
+          startingPoint: form.startingPoint || null,
+          hasCamping: form.hasCamping,
+          campingDetails: form.campingDetails || null,
+          campingUrl: form.campingUrl || null,
+          campingPrice: form.campingPrice ? parseFloat(form.campingPrice) : null,
+          hasAccommodation: form.hasAccommodation,
+          essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
+          bankAccountIds,
+          gpxActualUrl,
+          gpxApproximateUrl,
+          coverImageUrl,
+          coverImageUrl2,
+        })
+
+        draft.clearDraft({ form, bankAccountIds })
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      } catch (err) {
+        // Keep everything the admin typed on screen (and in the local draft) so
+        // they can simply press Save again.
+        setError(`${dict.saveError}${err instanceof Error && err.message ? ` (${err.message})` : ''}`)
       }
-
-      if (coverFile2) {
-        const fd = new FormData()
-        fd.append('file', coverFile2)
-        fd.append('bucket', 'hike-covers')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        coverImageUrl2 = (await res.json()).url
-      }
-
-      if (gpxApproxFile) {
-        const fd = new FormData()
-        fd.append('file', gpxApproxFile)
-        fd.append('bucket', 'hike-gpx')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        gpxApproximateUrl = (await res.json()).url
-      }
-
-      if (gpxActualFile) {
-        const fd = new FormData()
-        fd.append('file', gpxActualFile)
-        fd.append('bucket', 'hike-gpx')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        gpxActualUrl = (await res.json()).url
-      }
-
-      await updateHike(hike.id, {
-        title: form.title,
-        destination: form.destination,
-        description: form.description || null,
-        date: form.date,
-        endDate: form.endDate || null,
-        meetingTime: form.meetingTime || null,
-        durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
-        difficulty: form.difficulty || null,
-        externalPhotosUrl: form.externalPhotosUrl || null,
-        whatsappGroupUrl: form.whatsappGroupUrl || null,
-        accommodationDetails: form.accommodationDetails || null,
-        accommodationUrl: form.accommodationUrl || null,
-        accommodationPrice: form.accommodationPrice ? parseFloat(form.accommodationPrice) : null,
-        accommodationDeposit: form.accommodationDeposit ? parseFloat(form.accommodationDeposit) : null,
-        breakfastTime: form.breakfastTime || null,
-        dinnerTime: form.dinnerTime || null,
-        checkInTime: form.checkInTime || null,
-        checkOutTime: form.checkOutTime || null,
-        entryFee: parseFloat(form.entryFee),
-        maxParticipants: parseInt(form.maxParticipants),
-        mountainRange: form.mountainRange || null,
-        meetingPoint: form.meetingPoint || null,
-        startingPoint: form.startingPoint || null,
-        hasCamping: form.hasCamping,
-        campingDetails: form.campingDetails || null,
-        campingUrl: form.campingUrl || null,
-        campingPrice: form.campingPrice ? parseFloat(form.campingPrice) : null,
-        hasAccommodation: form.hasAccommodation,
-        essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
-        bankAccountIds,
-        gpxActualUrl,
-        gpxApproximateUrl,
-        coverImageUrl,
-        coverImageUrl2,
-      })
-
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
     })
   }
 
@@ -246,6 +237,12 @@ export default function HikeEditForm({ hike, bankAccounts, dict, lang = 'ro' }: 
 
   return (
     <form onSubmit={handleSave} className="bg-white border border-stone-100 rounded-2xl p-5 space-y-4">
+      {draft.restored && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <span className="text-amber-800 text-sm flex-1">{dict.draftRestored}</span>
+          <button type="button" onClick={draft.discardDraft} className="text-sm font-medium text-amber-900 underline">{dict.discardDraft}</button>
+        </div>
+      )}
 
       {/* Basic info */}
       <div>
@@ -518,6 +515,7 @@ export default function HikeEditForm({ hike, bankAccounts, dict, lang = 'ro' }: 
       </div>
 
       {success && <p className="text-emerald-600 text-sm font-medium">{dict.savedSuccessfully}</p>}
+      {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
 
       <button type="submit" disabled={isPending}
         className="w-full bg-stone-800 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-stone-900 disabled:opacity-60">

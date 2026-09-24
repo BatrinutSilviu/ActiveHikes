@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
+import { useFormDraft, uploadFile } from '@/hooks/useFormDraft'
 import { Upload, X } from 'lucide-react'
 
 type ViaFerrataData = {
@@ -72,6 +73,9 @@ type ViaFerrataEditDict = {
   savedSuccessfully: string
   saveChanges: string
   saving: string
+  saveError: string
+  draftRestored: string
+  discardDraft: string
 }
 
 export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: { viaFerrata: ViaFerrataData; bankAccounts: BankAccountOption[]; dict: ViaFerrataEditDict }) {
@@ -96,55 +100,55 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
+  const draft = useFormDraft(`hike:${viaFerrata.id}`, { form, bankAccountIds }, saved => {
+    setForm(saved.form)
+    setBankAccountIds(saved.bankAccountIds)
+  })
 
   const set = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }))
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    setSuccess(false)
     startTransition(async () => {
-      let coverImageUrl = viaFerrata.coverImageUrl
-      let coverImageUrl2 = viaFerrata.coverImageUrl2
-      if (coverFile) {
-        const fd = new FormData()
-        fd.append('file', coverFile)
-        fd.append('bucket', 'hike-covers')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        coverImageUrl = (await res.json()).url
+      try {
+        let coverImageUrl = viaFerrata.coverImageUrl
+        let coverImageUrl2 = viaFerrata.coverImageUrl2
+        if (coverFile) coverImageUrl = await uploadFile(coverFile, 'hike-covers')
+        if (coverFile2) coverImageUrl2 = await uploadFile(coverFile2, 'hike-covers')
+        await updateHike(viaFerrata.id, {
+          title: form.title,
+          destination: form.location,
+          description: form.description || null,
+          date: form.date,
+          durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
+          maxParticipants: parseInt(form.maxParticipants),
+          accommodationPrice: form.totalPrice ? parseFloat(form.totalPrice) : null,
+          accommodationDeposit: form.advanceFee ? parseFloat(form.advanceFee) : null,
+          essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
+          startingPoint: form.startingPoint || null,
+          meetingPoint: form.meetingPoint || null,
+          meetingTime: form.meetingTime || null,
+          groupCount: form.groupCount ? parseInt(form.groupCount) : null,
+          whatsappGroupUrl: form.whatsappGroupUrl || null,
+          bankAccountIds,
+          coverImageUrl,
+          coverImageUrl2,
+        })
+
+        draft.clearDraft({ form, bankAccountIds })
+        setCoverFile(null)
+        setCoverFile2(null)
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      } catch (err) {
+        // Keep everything the admin typed on screen (and in the local draft) so
+        // they can simply press Save again.
+        setError(`${dict.saveError}${err instanceof Error && err.message ? ` (${err.message})` : ''}`)
       }
-
-      if (coverFile2) {
-        const fd = new FormData()
-        fd.append('file', coverFile2)
-        fd.append('bucket', 'hike-covers')
-        const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        coverImageUrl2 = (await res.json()).url
-      }
-
-      await updateHike(viaFerrata.id, {
-        title: form.title,
-        destination: form.location,
-        description: form.description || null,
-        date: form.date,
-        durationHours: form.durationHours ? parseFloat(form.durationHours) : null,
-        maxParticipants: parseInt(form.maxParticipants),
-        accommodationPrice: form.totalPrice ? parseFloat(form.totalPrice) : null,
-        accommodationDeposit: form.advanceFee ? parseFloat(form.advanceFee) : null,
-        essentials: form.routes.split('\n').map(s => s.trim()).filter(Boolean),
-        startingPoint: form.startingPoint || null,
-        meetingPoint: form.meetingPoint || null,
-        meetingTime: form.meetingTime || null,
-        groupCount: form.groupCount ? parseInt(form.groupCount) : null,
-        whatsappGroupUrl: form.whatsappGroupUrl || null,
-        bankAccountIds,
-        coverImageUrl,
-        coverImageUrl2,
-      })
-
-      setCoverFile(null)
-      setCoverFile2(null)
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
     })
   }
 
@@ -152,6 +156,12 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
 
   return (
     <form onSubmit={handleSave} className="bg-white border border-stone-100 rounded-2xl p-5 space-y-4">
+      {draft.restored && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+          <span className="text-amber-800 text-sm flex-1">{dict.draftRestored}</span>
+          <button type="button" onClick={draft.discardDraft} className="text-sm font-medium text-amber-900 underline">{dict.discardDraft}</button>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.title}</label>
@@ -291,6 +301,7 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
       </div>
 
       {success && <p className="text-emerald-600 text-sm font-medium">{dict.savedSuccessfully}</p>}
+      {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
 
       <button type="submit" disabled={isPending}
         className="w-full bg-stone-800 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-stone-900 disabled:opacity-60">

@@ -523,7 +523,10 @@
       "noBankAccounts": "No payment methods added yet — add one under Payment Methods.",
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "saveError": "Save failed — your changes are still here, please try again.",
+      "draftRestored": "Restored unsaved changes from last time. Review them and press Save.",
+      "discardDraft": "Discard them"
     },
     "viaFerrata": {
       "backToDashboard": "Back to dashboard",
@@ -797,6 +800,9 @@
       "savedSuccessfully": "Saved successfully!",
       "saveChanges": "Save changes",
       "saving": "Saving…",
+      "saveError": "Save failed — your changes are still here, please try again.",
+      "draftRestored": "Restored unsaved changes from last time. Review them and press Save.",
+      "discardDraft": "Discard them",
       "difficulties": { "easy": "Easy", "easy_medium": "Easy to Medium", "medium": "Medium", "medium_hard": "Medium to Hard", "hard": "Hard" }
     },
     "hikeStatus": {
