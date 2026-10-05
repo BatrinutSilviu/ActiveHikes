@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import PhoneContact from './PhoneContact'
 import { updateParticipantStatus, confirmAllPending, adminAddParticipant, adminImportParticipant, removeFriend } from '@/app/actions/participants'
 import { Check, X, List, CheckCheck, Timer, UserPlus, UserMinus } from 'lucide-react'
 
@@ -31,6 +32,9 @@ type ParticipantManagerDict = {
   friendOf: string
   removeFriend: string
   removeFriendConfirm: string
+  copyPhone: string
+  phoneCopied: string
+  openWhatsApp: string
   status: Record<string, string>
   actions: { confirm: string; waitlist: string; reject: string }
   addParticipant: string
@@ -248,10 +252,7 @@ export default function ViaFerrataParticipantManager({
                 ) : p.user ? (
                   <>
                     <div className="text-stone-400 text-sm truncate">{p.user?.email}</div>
-                    {p.user?.phone && (
-                      <a href={`https://wa.me/${p.user.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                        className="text-emerald-600 text-xs hover:underline">{p.user.phone}</a>
-                    )}
+                    {p.user?.phone && <PhoneContact phone={p.user.phone} dict={dict} />}
                   </>
                 ) : (
                   <div className="text-stone-400 text-sm truncate italic">{dict.importedLabel}</div>

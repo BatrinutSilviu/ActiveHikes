@@ -553,6 +553,9 @@
       "friendOf": "Prieten cu",
       "removeFriend": "Elimină prietenul",
       "removeFriendConfirm": "Elimini acest prieten din înregistrare? Înregistrarea persoanei gazdă nu va fi afectată.",
+      "copyPhone": "Copiază numărul de telefon",
+      "phoneCopied": "Copiat!",
+      "openWhatsApp": "Deschide chat pe WhatsApp",
       "status": {
         "confirmed": "Confirmat",
         "pending": "În așteptare",
@@ -629,6 +632,9 @@
       "friendOf": "Prieten cu",
       "removeFriend": "Elimină prietenul",
       "removeFriendConfirm": "Elimini acest prieten din înregistrare? Înregistrarea persoanei gazdă nu va fi afectată.",
+      "copyPhone": "Copiază numărul de telefon",
+      "phoneCopied": "Copiat!",
+      "openWhatsApp": "Deschide chat pe WhatsApp",
       "status": {
         "confirmed": "Confirmat",
         "pending": "În așteptare",
