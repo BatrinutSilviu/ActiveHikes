@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ParticipantManager from '@/components/admin/ParticipantManager'
+import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import PickupLocationsMap from '@/components/admin/PickupLocationsMapWrapper'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
@@ -149,6 +150,16 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <div>
           <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
           <ParticipantManager participants={participants} hikeId={hike.id} maxParticipants={hike.maxParticipants} dict={da} />
+
+          <div className="mt-6">
+            <WhatsAppGroupCompare
+              eventId={hike.id}
+              participants={participants}
+              adminUserId={session?.user?.id ?? null}
+              statusLabels={da.status as Record<string, string>}
+              dict={{ ...d.admin.whatsappCompare, copyPhone: da.copyPhone, phoneCopied: da.phoneCopied, openWhatsApp: da.openWhatsApp }}
+            />
+          </div>
 
           <div className="mt-8">
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.pickupLocationsTitle}</h2>

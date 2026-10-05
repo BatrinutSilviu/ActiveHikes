@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
+import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
@@ -164,6 +165,16 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
         <div>
           <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
           <ViaFerrataParticipantManager participants={participants} viaFerrataId={viaFerrata.id} maxParticipants={viaFerrata.maxParticipants} dict={da} />
+
+          <div className="mt-6">
+            <WhatsAppGroupCompare
+              eventId={viaFerrata.id}
+              participants={participants}
+              adminUserId={session?.user?.id ?? null}
+              statusLabels={da.status as Record<string, string>}
+              dict={{ ...d.admin.whatsappCompare, copyPhone: da.copyPhone, phoneCopied: da.phoneCopied, openWhatsApp: da.openWhatsApp }}
+            />
+          </div>
         </div>
 
         <div className="space-y-6">

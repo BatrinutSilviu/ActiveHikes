@@ -811,6 +811,22 @@
       "discardDraft": "Renunță la ele",
       "difficulties": { "easy": "Ușor", "easy_medium": "Ușor spre Mediu", "medium": "Mediu", "medium_hard": "Mediu spre Greu", "hard": "Greu" }
     },
+    "whatsappCompare": {
+      "title": "Compară cu grupul de WhatsApp",
+      "hint": "Lipește aici lista de membri ai grupului. Pe telefon: info grup → Participanți, sau pe WhatsApp Web: info grup → selectează lista de participanți și copiaz-o. Merg nume, numere de telefon, câte unul pe linie sau separate prin virgulă.\nPersoanele sunt potrivite întâi după numărul de telefon, apoi după nume (cum sunt salvate în contactele tale).",
+      "placeholder": "Ana Popescu\n+40 722 123 456\nMihai, Ioana Ionescu, …",
+      "clear": "Șterge lista",
+      "missingTitle": "Confirmați pe site, dar nu sunt în grup",
+      "missingEmpty": "Toți cei confirmați sunt în grup.",
+      "extraTitle": "În grup, dar neconfirmați pe site",
+      "extraEmpty": "Toți cei din grup sunt confirmați.",
+      "notRegistered": "neînscris",
+      "onSiteAs": "{name} · {status}",
+      "matchedTitle": "Potriviți",
+      "firstNameOnly": "doar prenumele — verifică",
+      "ignore": "Ignoră această linie",
+      "showIgnored": "{count} ignorate — arată din nou"
+    },
     "hikeStatus": {
       "draft": "Ciornă",
       "published": "Publicată",

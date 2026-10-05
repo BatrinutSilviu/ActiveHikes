@@ -811,6 +811,22 @@
       "discardDraft": "Discard them",
       "difficulties": { "easy": "Easy", "easy_medium": "Easy to Medium", "medium": "Medium", "medium_hard": "Medium to Hard", "hard": "Hard" }
     },
+    "whatsappCompare": {
+      "title": "Compare with WhatsApp group",
+      "hint": "Paste the group's member list here. On your phone: group info → Participants, or on WhatsApp Web: group info → select the participants list and copy it. Names, phone numbers, one per line or comma-separated all work.\nPeople are matched by phone number first, then by name (as saved in your contacts).",
+      "placeholder": "Ana Popescu\n+40 722 123 456\nMihai, Ioana Ionescu, …",
+      "clear": "Clear list",
+      "missingTitle": "Confirmed on the site, not in the group",
+      "missingEmpty": "Everyone confirmed is in the group.",
+      "extraTitle": "In the group, not confirmed on the site",
+      "extraEmpty": "Everyone in the group is confirmed.",
+      "notRegistered": "not registered",
+      "onSiteAs": "{name} · {status}",
+      "matchedTitle": "Matched",
+      "firstNameOnly": "first name only — double-check",
+      "ignore": "Ignore this line",
+      "showIgnored": "{count} ignored — show again"
+    },
     "hikeStatus": {
       "draft": "Draft",
       "published": "Published",
