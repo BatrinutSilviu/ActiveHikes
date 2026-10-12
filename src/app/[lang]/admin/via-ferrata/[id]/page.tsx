@@ -12,14 +12,14 @@ import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { expireOverduePending } from '@/lib/expireParticipants'
+import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 export default async function AdminViaFerrataPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
   const [d, session, viaFerrata, bankAccounts] = await Promise.all([
     getDictionary(lang),
@@ -67,7 +67,6 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     pending: viaFerrata.participants.filter(p => p.status === 'pending').length,
     waitlist: waitlistParticipants.length,
     rejected: viaFerrata.participants.filter(p => p.status === 'rejected').length,
-    expired: viaFerrata.participants.filter(p => p.status === 'expired').length,
   }
 
   const participants = viaFerrata.participants.map(p => ({
@@ -127,7 +126,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
   }))
 
   const documentUploadParticipants = viaFerrata.participants
-    .filter(p => p.status !== 'rejected' && p.status !== 'expired')
+    .filter(p => p.status !== 'rejected')
     .map(p => ({ id: p.id, name: p.friendName ?? p.user?.name ?? p.user?.email ?? '—' }))
 
   return (

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
-import { expireOverduePending } from '@/lib/expireParticipants'
+import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
@@ -11,7 +11,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
   const [d, hikeCount, viaFerrataCount, pendingCount, userCount, draftHikes, allHikes, draftViaFerrata, allViaFerrata] = await Promise.all([
     getDictionary(lang),

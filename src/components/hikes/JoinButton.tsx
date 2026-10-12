@@ -14,7 +14,6 @@ type JoinButtonDict = {
   joinWaitlist: string
   registering: string
   cancelRegistration: string
-  registerAgain: string
   cancelling: string
   cancelConfirm: string
   cancelError: string
@@ -47,7 +46,6 @@ type JoinButtonDict = {
     confirmed: StatusEntry
     rejected: StatusEntry
     waitlist: StatusEntry
-    expired: StatusEntry
   }
 }
 
@@ -56,7 +54,6 @@ const STATUS_COLORS = {
   confirmed: 'bg-emerald-50 border-emerald-200 text-emerald-800',
   rejected: 'bg-red-50 border-red-200 text-red-800',
   waitlist: 'bg-blue-50 border-blue-200 text-blue-800',
-  expired: 'bg-stone-100 border-stone-300 text-stone-600',
 }
 
 function PaymentCountdown({ deadline, dict }: { deadline: string; dict: JoinButtonDict }) {
@@ -186,7 +183,7 @@ export default function JoinButton({
   hikeId: string
   userId: string | null
   isFull: boolean
-  participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired' | null
+  participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | null
   currentBringsCar?: boolean
   currentCarSeats?: number | null
   currentPickupLat?: number | null
@@ -283,7 +280,7 @@ export default function JoinButton({
   }
 
   const handleCancel = () => {
-    if (participationStatus !== 'expired' && !confirm(dict.cancelConfirm)) return
+    if (!confirm(dict.cancelConfirm)) return
     setCancelling(true)
     setCancelError('')
     startTransition(async () => {
@@ -389,11 +386,11 @@ export default function JoinButton({
             {carSaveError && <p className="text-red-600 text-xs text-center">{carSaveError}</p>}
           </div>
 
-          {(participationStatus === 'pending' || participationStatus === 'waitlist' || participationStatus === 'expired') && (
+          {(participationStatus === 'pending' || participationStatus === 'waitlist') && (
             <button onClick={handleCancel} disabled={cancelling}
               className="w-full flex items-center justify-center gap-2 border-2 border-red-200 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-400 active:bg-red-100 transition-colors disabled:opacity-50">
               <X size={15} strokeWidth={2.5} />
-              {cancelling ? dict.cancelling : (participationStatus === 'expired' ? dict.registerAgain : dict.cancelRegistration)}
+              {cancelling ? dict.cancelling : dict.cancelRegistration}
             </button>
           )}
           {cancelError && <p className="text-red-600 text-xs text-center mt-1">{cancelError}</p>}

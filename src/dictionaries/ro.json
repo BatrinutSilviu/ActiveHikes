@@ -247,12 +247,11 @@
     "joinWaitlist": "Listă de așteptare",
     "registering": "Se înregistrează…",
     "cancelRegistration": "Anulează înregistrarea",
-    "registerAgain": "Înscrie-te din nou",
     "cancelling": "Se anulează…",
     "cancelConfirm": "Ești sigur că vrei să anulezi înregistrarea?",
     "cancelError": "Nu s-a putut anula. Încearcă din nou.",
     "payWithin": "Plătește în",
-    "paymentWindowExpired": "Timpul de plată a expirat.",
+    "paymentWindowExpired": "Timpul de plată a expirat — ai fost mutat pe lista de așteptare.",
     "waitlistPosition": "Ești #{position} din {count} pe lista de așteptare",
     "joinError": "A apărut o eroare. Încearcă din nou.",
     "saveCarPreference": "Salvează preferința auto",
@@ -271,8 +270,7 @@
       "pending": { "label": "Înregistrare în așteptare", "desc": "Transferă taxa de participare pentru a-ți confirma locul." },
       "confirmed": { "label": "Ești confirmat!", "desc": "Locul tău este rezervat. Ne vedem pe traseu!" },
       "rejected": { "label": "Înregistrare respinsă", "desc": "Înregistrarea ta nu a fost acceptată." },
-      "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." },
-      "expired": { "label": "Înregistrare expirată", "desc": "Nu ai plătit la timp. Te rugăm să te înscrii din nou." }
+      "waitlist": { "label": "Ești pe lista de așteptare", "desc": "Dacă se eliberează un loc, vei fi promovat." }
     }
   },
   "roomPicker": {
@@ -294,8 +292,7 @@
       "confirmed": "Confirmat",
       "pending": "În așteptare",
       "waitlist": "Listă de așteptare",
-      "rejected": "Neacceptat",
-      "expired": "Expirat"
+      "rejected": "Neacceptat"
     },
     "nameEditor": {
       "firstName": "Prenume",
@@ -560,8 +557,7 @@
         "confirmed": "Confirmat",
         "pending": "În așteptare",
         "waitlist": "Listă de așteptare",
-        "rejected": "Respins",
-        "expired": "Expirat"
+        "rejected": "Respins"
       },
       "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
       "manageCars": "Gestionează mașinile",
@@ -639,8 +635,7 @@
         "confirmed": "Confirmat",
         "pending": "În așteptare",
         "waitlist": "Listă de așteptare",
-        "rejected": "Respins",
-        "expired": "Expirat"
+        "rejected": "Respins"
       },
       "actions": { "confirm": "Confirmă", "waitlist": "Așteptare", "reject": "Respinge" },
       "carAllocator": {

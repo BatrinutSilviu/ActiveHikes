@@ -11,7 +11,7 @@ import EssentialsSection from '@/components/hikes/EssentialsSection'
 import Link from 'next/link'
 import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
-import { expireOverduePending } from '@/lib/expireParticipants'
+import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 import { getConfirmationPrice } from '@/lib/pricing'
@@ -24,7 +24,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
   const { preview } = await searchParams
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 

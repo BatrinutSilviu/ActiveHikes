@@ -11,7 +11,7 @@ import DocumentsSection from '@/components/viaFerrata/DocumentsSection'
 import DocumentUploadsSection from '@/components/viaFerrata/DocumentUploadsSection'
 import { Calendar, MapPin, Users, Clock, DollarSign, Mountain, ExternalLink, Car, Navigation, Layers, MessageCircle } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
-import { expireOverduePending } from '@/lib/expireParticipants'
+import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { getConfirmationPrice } from '@/lib/pricing'
 
@@ -23,7 +23,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
   const { preview } = await searchParams
   if (!hasLocale(lang)) notFound()
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
@@ -55,7 +55,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
     })
   }
   const canSubmitDocuments = isPreviewMode
-    || (!!userParticipation && userParticipation.status !== 'rejected' && userParticipation.status !== 'expired')
+    || (!!userParticipation && userParticipation.status !== 'rejected')
   const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
   const requiredDocumentCount = viaFerrata.documents.filter(document => document.requiresUpload).length
 

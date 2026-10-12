@@ -7,7 +7,7 @@ import { Mountain, Calendar, CheckCircle, Clock, List, ShieldCheck, Phone, Mail,
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
-import { expireOverduePending } from '@/lib/expireParticipants'
+import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
 
@@ -18,7 +18,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
   const [session, d] = await Promise.all([getServerSession(authOptions), getDictionary(lang)])
   if (!session) redirect(`/${lang}/auth/login`)
 
-  await Promise.all([expireOverduePending(), advanceEventStatuses()])
+  await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
   const [user, participations] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
@@ -40,7 +40,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
     pending: { label: statusLabels.pending, icon: <Clock size={13} />, color: 'text-amber-700', bg: 'bg-amber-50' },
     waitlist: { label: statusLabels.waitlist, icon: <List size={13} />, color: 'text-blue-700', bg: 'bg-blue-50' },
     rejected: { label: statusLabels.rejected, icon: null, color: 'text-red-600', bg: 'bg-red-50' },
-    expired: { label: statusLabels.expired, icon: <XCircle size={13} />, color: 'text-stone-500', bg: 'bg-stone-100' },
   }
 
   const initials = user?.name?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() ?? '?'

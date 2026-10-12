@@ -6,7 +6,7 @@ import PhoneContact from './PhoneContact'
 import { updateParticipantStatus, confirmAllPending, adminAddParticipant, adminImportParticipant, removeFriend } from '@/app/actions/participants'
 import { Check, X, List, CheckCheck, Car, Timer, UserPlus, UserMinus } from 'lucide-react'
 
-type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist' | 'expired'
+type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist'
 
 type Participant = {
   id: string
@@ -57,7 +57,6 @@ const STATUS_BADGE_CLASSES: Record<ParticipantStatus, string> = {
   pending: 'bg-yellow-100 text-yellow-700',
   waitlist: 'bg-blue-100 text-blue-700',
   rejected: 'bg-red-100 text-red-600',
-  expired: 'bg-stone-200 text-stone-500',
 }
 
 export default function ParticipantManager({
@@ -165,7 +164,7 @@ export default function ParticipantManager({
     })
   }
 
-  const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected', 'expired']
+  const filters: Array<'all' | ParticipantStatus> = ['all', 'pending', 'confirmed', 'waitlist', 'rejected']
   const filtered = filter === 'all' ? items : items.filter(p => p.status === filter)
 
   const addForm = (

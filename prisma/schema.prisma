@@ -35,7 +35,6 @@ enum ParticipantStatus {
   confirmed
   rejected
   waitlist
-  expired
 }
 
 enum PaymentMethodType {

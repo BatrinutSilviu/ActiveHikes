@@ -247,12 +247,11 @@
     "joinWaitlist": "Join waitlist",
     "registering": "Registering…",
     "cancelRegistration": "Cancel registration",
-    "registerAgain": "Register again",
     "cancelling": "Cancelling…",
     "cancelConfirm": "Are you sure you want to cancel your registration?",
     "cancelError": "Could not cancel. Please try again.",
     "payWithin": "Pay within",
-    "paymentWindowExpired": "Payment window elapsed.",
+    "paymentWindowExpired": "Payment window elapsed — you've been moved to the waitlist.",
     "waitlistPosition": "You're #{position} of {count} on the waitlist",
     "joinError": "Something went wrong. Please try again.",
     "saveCarPreference": "Save car preference",
@@ -271,8 +270,7 @@
       "pending": { "label": "Registration pending", "desc": "Transfer the entry fee to confirm your spot." },
       "confirmed": { "label": "You're in!", "desc": "Your spot is confirmed. See you on the trail!" },
       "rejected": { "label": "Registration rejected", "desc": "Your registration was not accepted." },
-      "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." },
-      "expired": { "label": "Registration expired", "desc": "You didn't pay in time. Please register again." }
+      "waitlist": { "label": "You're on the waitlist", "desc": "If a spot opens, you will be moved up." }
     }
   },
   "roomPicker": {
@@ -294,8 +292,7 @@
       "confirmed": "Confirmed",
       "pending": "Pending",
       "waitlist": "Waitlist",
-      "rejected": "Not accepted",
-      "expired": "Expired"
+      "rejected": "Not accepted"
     },
     "nameEditor": {
       "firstName": "First name",
@@ -560,8 +557,7 @@
         "confirmed": "Confirmed",
         "pending": "Pending",
         "waitlist": "Waitlist",
-        "rejected": "Rejected",
-        "expired": "Expired"
+        "rejected": "Rejected"
       },
       "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
       "manageCars": "Manage cars",
@@ -639,8 +635,7 @@
         "confirmed": "Confirmed",
         "pending": "Pending",
         "waitlist": "Waitlist",
-        "rejected": "Rejected",
-        "expired": "Expired"
+        "rejected": "Rejected"
       },
       "actions": { "confirm": "Confirm", "waitlist": "Waitlist", "reject": "Reject" },
       "carAllocator": {
