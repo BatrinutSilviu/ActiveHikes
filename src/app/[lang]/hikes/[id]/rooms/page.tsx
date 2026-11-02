@@ -6,11 +6,13 @@ import Link from 'next/link'
 import RoomJoinButton from '@/components/hikes/RoomJoinButton'
 import { ArrowLeft, UserCheck } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 export default async function HikeRoomsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
+  await advanceEventStatuses()
   const [d, session, hike] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),

@@ -20,10 +20,13 @@ type Dict = {
 export default function HikeStatusControl({
   hikeId,
   status,
+  isPast,
   dict,
 }: {
   hikeId: string
   status: HikeStatus
+  // Past events are auto-completed, so "Normal" would just flip back on the next load
+  isPast: boolean
   dict: Dict
 }) {
   const router = useRouter()
@@ -73,7 +76,7 @@ export default function HikeStatusControl({
           onChange={e => setStatus((e.target.value || 'upcoming') as HikeStatus)}
           className="border border-stone-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
         >
-          <option value="">{dict.normal}</option>
+          {!isPast && <option value="">{dict.normal}</option>}
           <option value="completed">{dict.completed}</option>
           <option value="cancelled">{dict.cancelled}</option>
         </select>

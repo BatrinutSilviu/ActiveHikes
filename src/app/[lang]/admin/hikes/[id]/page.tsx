@@ -14,7 +14,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate } from '@/lib/dates'
+import { formatHikeDate, isEventPast } from '@/lib/dates'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -133,7 +133,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       </div>
 
       <div className="mb-8">
-        <HikeStatusControl hikeId={hike.id} status={hike.status} dict={d.admin.hikeStatus} />
+        <HikeStatusControl hikeId={hike.id} status={hike.status} isPast={isEventPast(hike.date, hike.endDate, hike)} dict={d.admin.hikeStatus} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

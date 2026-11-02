@@ -7,6 +7,7 @@ import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
+import { isEventPast } from '@/lib/dates'
 import JoinButton from '@/components/hikes/JoinButton'
 import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
@@ -148,7 +149,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
       </div>
 
       <div className="mb-8">
-        <HikeStatusControl hikeId={viaFerrata.id} status={viaFerrata.status} dict={d.admin.hikeStatus} />
+        <HikeStatusControl hikeId={viaFerrata.id} status={viaFerrata.status} isPast={isEventPast(viaFerrata.date, viaFerrata.endDate, viaFerrata)} dict={d.admin.hikeStatus} />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">

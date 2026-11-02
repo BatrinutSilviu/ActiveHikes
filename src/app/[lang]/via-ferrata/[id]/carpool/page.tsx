@@ -6,11 +6,13 @@ import Link from 'next/link'
 import AttendeeSection from '@/components/hikes/AttendeeSection'
 import { ArrowLeft } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
+import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
 export default async function ViaFerrataCarpoolPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
   if (!hasLocale(lang)) notFound()
 
+  await advanceEventStatuses()
   const [d, session, viaFerrata] = await Promise.all([
     getDictionary(lang),
     getServerSession(authOptions),
