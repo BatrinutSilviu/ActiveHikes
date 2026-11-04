@@ -1,5 +1,6 @@
 import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { notifyManagement } from '@/lib/managementSync'
 
 // Every page that shows a participant/spot count for this event needs to be
 // revalidated whenever a registration is added, imported, or changes status.
@@ -16,4 +17,6 @@ export function revalidateParticipantCountPaths(hikeId: string) {
   revalidateLocalePaths('/admin', revalidatePath)
   revalidateLocalePaths('/admin/participants', revalidatePath)
   revalidateLocalePaths('', revalidatePath)
+  // Called after every change to a hike or its participants: keep the management app's event in step.
+  notifyManagement(hikeId)
 }

@@ -28,6 +28,9 @@ services:
       ENABLE_BANKING_APPLICATION_ID: ${ENABLE_BANKING_APPLICATION_ID:-}
       ENABLE_BANKING_PRIVATE_KEY: ${ENABLE_BANKING_PRIVATE_KEY:-}
       REVOLUT_SYNC_INTERVAL_MS: ${REVOLUT_SYNC_INTERVAL_MS:-}
+      # Push hikes to the management app (empty = off); the token is its INTEGRATION_TOKEN.
+      MANAGEMENT_SYNC_URL: ${MANAGEMENT_SYNC_URL:-}
+      MANAGEMENT_SYNC_TOKEN: ${MANAGEMENT_SYNC_TOKEN:-}
     volumes:
       - uploads_data:/app/public/uploads
     depends_on:
