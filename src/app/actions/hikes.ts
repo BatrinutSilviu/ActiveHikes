@@ -9,6 +9,7 @@ import { revalidateLocalePaths } from '@/lib/i18n'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
+import { notifyManagement } from '@/lib/managementSync'
 
 export async function joinHike(
   hikeId: string,
@@ -422,6 +423,7 @@ export async function createHike(data: {
     })
   }
 
+  notifyManagement(hike.id) // drafts are synced too
   return hike.id
 }
 

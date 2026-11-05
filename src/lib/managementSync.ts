@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 // which keeps a matching event with its date, price, place and confirmed participants.
 // Configured with MANAGEMENT_SYNC_URL (e.g. https://management.activetimisoara.ro/api/integrations/events)
 // and MANAGEMENT_SYNC_TOKEN (the same secret as the management app's INTEGRATION_TOKEN); does nothing
-// without them. The management app decides what to do with each push (it ignores drafts, for example),
+// without them. The management app decides what to do with each push (drafts are synced too),
 // so this just sends the hike as it is now, whenever it or its participants change.
 //
 // Pushes are fire-and-forget and never fail the action that triggered them. Several changes to the same

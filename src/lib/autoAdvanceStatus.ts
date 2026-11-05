@@ -1,5 +1,6 @@
 import { prisma } from './db'
 import { eventEndsAt, eventStartsAt } from './dates'
+import { notifyManagement } from './managementSync'
 
 // Moves events through 'upcoming' → 'ongoing' → 'completed' based on the current time
 // vs their start/end (see eventStartsAt/eventEndsAt) — admins no longer pick this
@@ -41,4 +42,5 @@ export async function advanceEventStatuses() {
       data: { status: 'upcoming' },
     }),
   ])
+  for (const id of [...toCompleted, ...toOngoing, ...toUpcoming]) notifyManagement(id)
 }
