@@ -12,6 +12,9 @@ type GpxDict = {
   download: string
   distance: string
   elevationGain: string
+  start: string
+  finish: string
+  startFinish: string
 }
 
 export default function GpxSection({
@@ -38,7 +41,7 @@ export default function GpxSection({
       <GpxMapWrapper
         approximateUrl={approximateUrl}
         actualUrl={actualUrl}
-        dict={{ distance: dict.distance, elevationGain: dict.elevationGain }}
+        dict={{ distance: dict.distance, elevationGain: dict.elevationGain, start: dict.start, finish: dict.finish, startFinish: dict.startFinish }}
       />
 
       {/* Legend — only shown when there's something to distinguish */}
@@ -46,13 +49,13 @@ export default function GpxSection({
         <div className="flex flex-wrap gap-4 text-sm text-stone-600 px-1">
           <div className="flex items-center gap-2">
             <svg width="28" height="10" className="shrink-0">
-              <line x1="0" y1="5" x2="28" y2="5" stroke="#d97706" strokeWidth="2.5" strokeDasharray="6 4" />
+              <line x1="0" y1="5" x2="28" y2="5" stroke="#e6007e" strokeWidth="3" strokeDasharray="7 4" />
             </svg>
             <span>{dict.legendPlanned}</span>
           </div>
           <div className="flex items-center gap-2">
             <svg width="28" height="10" className="shrink-0">
-              <line x1="0" y1="5" x2="28" y2="5" stroke="#059669" strokeWidth="2.5" />
+              <line x1="0" y1="5" x2="28" y2="5" stroke="#6d28d9" strokeWidth="3" />
             </svg>
             <span>{dict.legendRecorded}</span>
           </div>
@@ -67,7 +70,7 @@ export default function GpxSection({
             download
             className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 hover:bg-stone-100 transition-colors text-sm"
           >
-            <Download size={15} className="text-amber-600 shrink-0" />
+            <Download size={15} className="text-pink-600 shrink-0" />
             <span className="font-medium text-stone-800">
               {dict.download} · {dict.approximateRoute}
             </span>
@@ -79,7 +82,7 @@ export default function GpxSection({
             download
             className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-lg px-4 py-2.5 hover:bg-stone-100 transition-colors text-sm"
           >
-            <Download size={15} className="text-emerald-600 shrink-0" />
+            <Download size={15} className="text-violet-700 shrink-0" />
             <span className="font-medium text-stone-800">
               {dict.download} · {dict.actualRoute}
             </span>

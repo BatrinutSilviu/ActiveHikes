@@ -844,7 +844,10 @@
     "legendRecorded": "Traseu înregistrat",
     "download": "Descarcă",
     "distance": "distanță",
-    "elevationGain": "diferență de nivel"
+    "elevationGain": "diferență de nivel",
+    "start": "Start",
+    "finish": "Sosire",
+    "startFinish": "Start și sosire"
   },
   "terms": {
     "title": "Termeni și condiții",

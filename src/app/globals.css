@@ -45,3 +45,14 @@ body {
     overflow: hidden;
   }
 }
+
+/* Hike map: "Start" / "Finish" labels over the route's end pins */
+.leaflet-tooltip.route-end-label {
+  font-weight: 700;
+  font-size: 12px;
+  color: #111827;
+  padding: 2px 7px;
+  border-radius: 6px;
+  border: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}

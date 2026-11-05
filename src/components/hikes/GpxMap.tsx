@@ -31,7 +31,17 @@ function computeStats(points: GpxPoint[]): TrackStats {
 type GpxMapDict = {
   distance: string
   elevationGain: string
+  start: string
+  finish: string
+  startFinish: string
 }
+
+// Start / finish markers: big round pins with a white ring and a label, so the ends of the route are
+// easy to spot. A loop (ends within 150 m of each other) gets one "start & finish" pin.
+const FLAG = '<path d="M5 21V4m0 0h11l-2 4 2 4H5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+const PLAY = '<path d="M9 6.5v11l9-5.5z" fill="#fff"/>'
+const pinHtml = (background: string, icon: string) =>
+  `<div style="width:30px;height:30px;border-radius:50%;background:${background};border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="16" height="16">${icon}</svg></div>`
 
 export default function GpxMap({
   approximateUrl,
@@ -106,6 +116,23 @@ export default function GpxMap({
         }
       }
 
+      // Ends of the main track: the recorded one when there is one, otherwise the planned route.
+      const track = bounds[bounds.length - 1]
+      if (track && track.length > 1) {
+        const first = track[0], last = track[track.length - 1]
+        const loop = haversineKm({ lat: first[0], lon: first[1], ele: 0 }, { lat: last[0], lon: last[1], ele: 0 }) < 0.15
+        const pin = (at: [number, number], background: string, icon: string, label: string) =>
+          L.marker(at, {
+            icon: L.divIcon({ html: pinHtml(background, icon), className: '', iconSize: [30, 30], iconAnchor: [15, 15] }),
+            title: label, keyboard: false, zIndexOffset: 1000,
+          }).bindTooltip(label, { permanent: true, direction: 'top', offset: [0, -16], className: 'route-end-label' }).addTo(map!)
+        if (loop) pin(first, 'linear-gradient(90deg,#16a34a 50%,#111827 50%)', FLAG, dict.startFinish)
+        else {
+          pin(last, '#111827', FLAG, dict.finish)
+          pin(first, '#16a34a', PLAY, dict.start)
+        }
+      }
+
       if (bounds.length > 0) {
         const allPts = bounds.flat()
         map.fitBounds(L.latLngBounds(allPts), { padding: [24, 24] })
@@ -117,7 +144,7 @@ export default function GpxMap({
     return () => {
       map?.remove()
     }
-  }, [approximateUrl, actualUrl])
+  }, [approximateUrl, actualUrl]) // eslint-disable-line react-hooks/exhaustive-deps -- dict labels don't change
 
   const primaryStats = actualStats ?? approximateStats
 

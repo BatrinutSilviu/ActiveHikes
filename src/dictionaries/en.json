@@ -844,7 +844,10 @@
     "legendRecorded": "Recorded route",
     "download": "Download",
     "distance": "distance",
-    "elevationGain": "elevation gain"
+    "elevationGain": "elevation gain",
+    "start": "Start",
+    "finish": "Finish",
+    "startFinish": "Start & finish"
   },
   "terms": {
     "title": "Terms & Conditions",
