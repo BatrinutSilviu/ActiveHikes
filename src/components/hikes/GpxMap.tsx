@@ -79,11 +79,18 @@ export default function GpxMap({
 
       const bounds: [number, number][][] = []
 
+      // Routes in colours OpenTopoMap doesn't use (its roads and contours are orange/brown, forests green),
+      // over a white outline, so they stand out on any terrain.
+      const drawRoute = (latLngs: [number, number][], color: string, dashArray?: string) => {
+        L.polyline(latLngs, { color: '#ffffff', weight: 8, opacity: 0.85, lineCap: 'round', lineJoin: 'round', interactive: false }).addTo(map!)
+        L.polyline(latLngs, { color, weight: 4.5, opacity: 1, dashArray, lineCap: 'round', lineJoin: 'round' }).addTo(map!)
+      }
+
       if (approximateUrl) {
         const pts = await parseGpx(approximateUrl)
         if (pts.length > 1) {
           const latLngs: [number, number][] = pts.map(p => [p.lat, p.lon])
-          L.polyline(latLngs, { color: '#d97706', weight: 3, dashArray: '8 6', opacity: 0.8 }).addTo(map)
+          drawRoute(latLngs, '#e6007e', '10 7') // planned route: magenta, dashed
           bounds.push(latLngs)
           setApproximateStats(computeStats(pts))
         }
@@ -93,7 +100,7 @@ export default function GpxMap({
         const pts = await parseGpx(actualUrl)
         if (pts.length > 1) {
           const latLngs: [number, number][] = pts.map(p => [p.lat, p.lon])
-          L.polyline(latLngs, { color: '#059669', weight: 3, opacity: 0.9 }).addTo(map)
+          drawRoute(latLngs, '#6d28d9') // recorded track: violet
           bounds.push(latLngs)
           setActualStats(computeStats(pts))
         }
