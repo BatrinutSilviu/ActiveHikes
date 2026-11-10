@@ -30,6 +30,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
             hostParticipantId: true,
             bringsCar: true,
             carSeats: true,
+            carTrip: true,
             carDriverParticipantId: true,
             user: { select: { name: true } },
             friend: { select: { id: true, friendName: true } },
@@ -47,7 +48,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
   const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
   const drivers = hike.participants
     .filter(p => p.bringsCar && p.carSeats != null)
-    .map(p => ({ id: p.id, name: pName(p), seats: p.carSeats! }))
+    .map(p => ({ id: p.id, name: pName(p), seats: p.carSeats!, carTrip: p.carTrip }))
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -74,7 +75,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
           dict={dc}
         />
 
-        <CarAllocatorPanel hikeId={hike.id} dict={d.admin.hike.carAllocator} />
+        <CarAllocatorPanel hikeId={hike.id} dict={d.admin.hike.carAllocator} tripDict={d.carTrip} />
 
         {drivers.length > 0 && (
           <div>
@@ -98,11 +99,13 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
                 hostName: p.host?.user?.name ?? null,
                 linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
                 bringsCar: p.bringsCar,
+                carTrip: p.carTrip,
                 carDriverParticipantId: p.carDriverParticipantId,
                 user: p.user,
               }))}
               drivers={drivers}
               dict={dc}
+              tripDict={d.carTrip}
             />
           </div>
         )}

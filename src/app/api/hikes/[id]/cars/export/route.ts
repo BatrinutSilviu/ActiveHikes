@@ -3,7 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
-type Row = { driver: string; seats: string; passenger: string }
+type Row = { driver: string; seats: string; passenger: string; trip: string }
+
+const TRIP_LABEL = { both: 'Both ways', there: 'Only there', back: 'Only back' } as const
 
 function csvEscape(value: string) {
   if (/[",\n]/.test(value)) return `"${value.replace(/"/g, '""')}"`
@@ -11,8 +13,8 @@ function csvEscape(value: string) {
 }
 
 function toCsv(rows: Row[]) {
-  const header = ['Driver', 'Seats', 'Passenger']
-  const lines = [header, ...rows.map(r => [r.driver, r.seats, r.passenger])]
+  const header = ['Driver', 'Seats', 'Passenger', 'Direction']
+  const lines = [header, ...rows.map(r => [r.driver, r.seats, r.passenger, r.trip])]
   return lines.map(line => line.map(csvEscape).join(',')).join('\n')
 }
 
@@ -34,6 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         hostParticipantId: true,
         bringsCar: true,
         carSeats: true,
+        carTrip: true,
         carDriverParticipantId: true,
         user: { select: { name: true } },
       },
@@ -55,15 +58,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const rows: Row[] = []
   const placed = new Set<string>()
 
+  const driverLabel = (d: (typeof participants)[number]) =>
+    d.carTrip === 'both' ? pName(d) : `${pName(d)} (${TRIP_LABEL[d.carTrip]})`
+
   for (const driver of drivers) {
     const carPassengers = participants.filter(p => p.carDriverParticipantId === driver.id)
 
     if (carPassengers.length === 0) {
-      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: '' })
+      rows.push({ driver: driverLabel(driver), seats: String(driver.carSeats), passenger: '', trip: '' })
     }
 
     for (const p of carPassengers) {
-      rows.push({ driver: pName(driver), seats: String(driver.carSeats), passenger: passengerLabel(p) })
+      rows.push({ driver: driverLabel(driver), seats: String(driver.carSeats), passenger: passengerLabel(p), trip: TRIP_LABEL[p.carTrip] })
       placed.add(p.id)
     }
     placed.add(driver.id)
@@ -72,7 +78,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   // Everyone not driving or riding in a car — one row per person
   for (const p of participants) {
     if (placed.has(p.id)) continue
-    rows.push({ driver: '', seats: '', passenger: passengerLabel(p) })
+    rows.push({ driver: '', seats: '', passenger: passengerLabel(p), trip: TRIP_LABEL[p.carTrip] })
   }
 
   const csv = toCsv(rows)

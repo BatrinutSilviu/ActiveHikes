@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import { assignCarDriver, assignFriendCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
+import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg, goesThere, goesBack } from '@/lib/carTrip'
 
 type Participant = {
   id: string
@@ -11,6 +12,7 @@ type Participant = {
   hostParticipantId: string | null
   bringsCar: boolean
   carSeats: number | null
+  carTrip: CarTrip
   carDriverParticipantId: string | null
   user: { name: string | null } | null
 }
@@ -28,6 +30,14 @@ type AttendeeSectionDict = {
   yourCar: string
   friendOf: string
   you: string
+  trip: { both: string; there: string; back: string; seatsThere: string; seatsBack: string }
+}
+
+function TripBadge({ trip, dict }: { trip: CarTrip; dict: AttendeeSectionDict['trip'] }) {
+  if (trip === 'both') return null
+  return (
+    <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">{dict[trip]}</span>
+  )
 }
 
 function pName(p: Participant) {
@@ -105,11 +115,32 @@ export default function AttendeeSection({
         <div className="space-y-2">
           {drivers.map(driver => {
             const passengers = confirmed.filter(p => p.carDriverParticipantId === driver.id)
-            const left = Number(driver.carSeats) - passengers.length
-            const isFull = left <= 0
+            const seats = Number(driver.carSeats)
+            const legs = seatsLeftByLeg(seats, passengers.map(p => p.carTrip))
+            const thereLeft = goesThere(driver.carTrip) ? Math.max(0, legs.there) : 0
+            const backLeft = goesBack(driver.carTrip) ? Math.max(0, legs.back) : 0
+            const isFull = thereLeft <= 0 && backLeft <= 0
+            const seatsLabel = driver.carTrip === 'both' && thereLeft !== backLeft
+              ? `${thereLeft} ${dict.trip.seatsThere} · ${backLeft} ${dict.trip.seatsBack} ${dict.seatsLeft}`
+              : `${Math.max(thereLeft, backLeft)} ${dict.seatsLeft}`
             const isMyDriver = userParticipant?.carDriverParticipantId === driver.id
             const isMyOwnCar = userParticipantId === driver.id
             const isFriendsDriver = friendParticipant?.carDriverParticipantId === driver.id
+            // Whether a group of riders could join this car (direction covered + a seat on each leg they need)
+            const canTake = (group: Participant[]) => {
+              if (group.some(g => !tripCompatible(driver.carTrip, g.carTrip))) return false
+              const ids = group.map(g => g.id)
+              const existing = passengers.filter(p => !ids.includes(p.id)).map(p => p.carTrip)
+              return fitsInCar(seats, existing, group.map(g => g.carTrip))
+            }
+            // The user's friend moves along while they share the same car (or both have none)
+            const userGroup = userParticipant
+              ? (friendParticipant && friendParticipant.carDriverParticipantId === userParticipant.carDriverParticipantId
+                ? [userParticipant, friendParticipant]
+                : [userParticipant])
+              : []
+            const userCanJoin = userGroup.length > 0 && canTake(userGroup)
+            const friendCanJoin = !!friendParticipant && canTake([friendParticipant])
 
             return (
               <div key={driver.id}
@@ -120,6 +151,7 @@ export default function AttendeeSection({
                     <div className="flex items-center gap-2 font-semibold text-stone-800 flex-wrap">
                       <Car size={15} className="text-emerald-600 shrink-0" />
                       <span>{pName(driver)}</span>
+                      <TripBadge trip={driver.carTrip} dict={dict.trip} />
                       {isMyOwnCar && (
                         <span className="text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">{dict.yourCar}</span>
                       )}
@@ -131,6 +163,7 @@ export default function AttendeeSection({
                             <UserCheck size={10} />
                             {pName(p)}
                             {p.hostParticipantId && <span className="text-stone-400"> ({dict.friendOf} {hostNameOf(p)})</span>}
+                            <TripBadge trip={p.carTrip} dict={dict.trip} />
                           </span>
                         ))}
                       </div>
@@ -140,7 +173,7 @@ export default function AttendeeSection({
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     {isUpcoming && (
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isFull ? 'bg-stone-100 text-stone-400' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {isFull ? dict.full : `${left} ${dict.seatsLeft}`}
+                        {isFull ? dict.full : seatsLabel}
                       </span>
                     )}
 
@@ -152,7 +185,7 @@ export default function AttendeeSection({
                             className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">
                             <X size={12} /> {dict.leave}
                           </button>
-                        ) : !isFull && (
+                        ) : userCanJoin && (
                           <button onClick={() => assign(driver.id)} disabled={isPending}
                             className="flex items-center gap-1 text-xs text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors">
                             <Car size={12} /> {dict.hopIn}
@@ -169,7 +202,7 @@ export default function AttendeeSection({
                             className="flex items-center gap-1 text-xs text-red-600 border border-red-200 px-2.5 py-1 rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors">
                             <X size={12} /> {dict.leave}
                           </button>
-                        ) : !isFull && (
+                        ) : friendCanJoin && (
                           <button onClick={() => assignFriend(driver.id)} disabled={isPending}
                             className="flex items-center gap-1 text-xs text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg hover:bg-emerald-50 disabled:opacity-50 transition-colors">
                             <Car size={12} /> {dict.hopIn}
@@ -194,6 +227,7 @@ export default function AttendeeSection({
                     <span key={p.id} className="bg-stone-50 border border-stone-200 text-stone-700 text-sm px-3 py-1 rounded-full">
                       {pName(p)}
                       {p.hostParticipantId && <span className="text-stone-400"> ({dict.friendOf} {hostNameOf(p)})</span>}
+                      {p.carTrip !== 'both' && <span className="text-amber-600 text-xs"> · {dict.trip[p.carTrip]}</span>}
                     </span>
                   ))}
                 </div>

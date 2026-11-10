@@ -77,6 +77,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
     bringsCar: p.bringsCar,
     carSeats: p.carSeats,
+    carTrip: p.carTrip,
     carDriverParticipantId: p.carDriverParticipantId,
     pickupLat: p.pickupLat,
     pickupLng: p.pickupLng,
@@ -148,7 +149,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
-          <ParticipantManager participants={participants} hikeId={hike.id} maxParticipants={hike.maxParticipants} dict={da} />
+          <ParticipantManager participants={participants} hikeId={hike.id} maxParticipants={hike.maxParticipants} dict={da} tripDict={d.carTrip} />
 
           <div className="mt-6">
             <WhatsAppGroupCompare
@@ -185,12 +186,14 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               participationStatus={adminParticipation?.status ?? null}
               currentBringsCar={adminParticipation?.bringsCar ?? false}
               currentCarSeats={adminParticipation?.carSeats ?? null}
+              currentCarTrip={adminParticipation?.carTrip ?? 'both'}
               currentPickupLat={adminParticipation?.pickupLat ?? null}
               currentPickupLng={adminParticipation?.pickupLng ?? null}
               paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
               waitlistPosition={adminWaitlistPosition}
               waitlistCount={waitlistParticipants.length}
               dict={d.joinButton}
+              tripDict={d.carTrip}
               lang={lang}
             />
           </div>

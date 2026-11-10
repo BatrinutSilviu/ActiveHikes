@@ -10,6 +10,34 @@ import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { notifyManagement } from '@/lib/managementSync'
+import { type CarTrip, isCarTrip, tripCompatible, fitsInCar, goesThere, goesBack } from '@/lib/carTrip'
+
+const DRIVER_SELECT = {
+  hikeId: true,
+  bringsCar: true,
+  carSeats: true,
+  carTrip: true,
+  hostParticipantId: true,
+  carPassengers: { where: { status: 'confirmed' }, select: { id: true, carTrip: true } },
+} as const
+
+/**
+ * Validates that the given riders (id + trip) can sit in the driver's car.
+ * Returns an error message, or null when the move is allowed.
+ */
+async function checkDriverCanTake(
+  hikeId: string,
+  driverParticipantId: string,
+  riders: { id: string; carTrip: CarTrip }[],
+): Promise<string | null> {
+  const driver = await prisma.hikeParticipant.findUnique({ where: { id: driverParticipantId }, select: DRIVER_SELECT })
+  if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) return 'Invalid driver'
+  if (riders.some(r => !tripCompatible(driver.carTrip, r.carTrip))) return 'This car does not cover that direction'
+  const riderIds = riders.map(r => r.id)
+  const existing = driver.carPassengers.filter(p => !riderIds.includes(p.id)).map(p => p.carTrip)
+  if (driver.carSeats !== null && !fitsInCar(driver.carSeats, existing, riders.map(r => r.carTrip))) return 'Car is full'
+  return null
+}
 
 export async function joinHike(
   hikeId: string,
@@ -19,10 +47,12 @@ export async function joinHike(
   pickupLat?: number,
   pickupLng?: number,
   agreedToTerms?: boolean,
+  carTrip?: CarTrip,
 ) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
 
+  const trip: CarTrip = isCarTrip(carTrip) ? carTrip : 'both'
   const trimmedFriendName = friendName?.trim() || null
 
   const isAdmin = session.user.role === 'admin'
@@ -55,6 +85,7 @@ export async function joinHike(
         agreedToTermsAt: agreedToTerms ? new Date() : null,
         bringsCar: bringsCar ?? false,
         carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+        carTrip: trip,
         pickupLat: pickupLat ?? null,
         pickupLng: pickupLng ?? null,
       },
@@ -71,6 +102,7 @@ export async function joinHike(
           friendName: trimmedFriendName,
           hostParticipantId: host.id,
           bringsCar: false,
+          carTrip: trip,
           carDriverParticipantId: bringsCar ? host.id : null,
         },
       })
@@ -97,9 +129,11 @@ export async function cancelRegistration(hikeId: string) {
   revalidateParticipantCountPaths(hikeId)
 }
 
-export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number, pickupLat?: number | null, pickupLng?: number | null) {
+export async function updateCarPreference(hikeId: string, bringsCar: boolean, carSeats?: number, pickupLat?: number | null, pickupLng?: number | null, carTrip?: CarTrip) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')
+
+  const trip: CarTrip | undefined = isCarTrip(carTrip) ? carTrip : undefined
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
@@ -119,10 +153,16 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
       data: {
         bringsCar,
         carSeats: bringsCar && carSeats && carSeats > 0 ? carSeats : null,
+        ...(trip ? { carTrip: trip } : {}),
         ...(pickupLat !== undefined ? { pickupLat } : {}),
         ...(pickupLng !== undefined ? { pickupLng } : {}),
       },
     })
+
+    // The friend travels the same way as their host.
+    if (participation.friend && trip) {
+      await tx.hikeParticipant.update({ where: { id: participation.friend.id }, data: { carTrip: trip } })
+    }
 
     if (participation.friend) {
       if (bringsCar && wasLinked) {
@@ -137,6 +177,41 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
         })
       }
     }
+
+    if (!trip) return
+
+    // A changed direction may no longer match the car people are in:
+    if (bringsCar) {
+      // Drop passengers this driver no longer covers (e.g. driver now only goes there).
+      const passengers = await tx.hikeParticipant.findMany({
+        where: { carDriverParticipantId: participation.id },
+        select: { id: true, carTrip: true },
+      })
+      const dropIds = passengers.filter(p => !tripCompatible(trip, p.carTrip)).map(p => p.id)
+      if (dropIds.length) {
+        await tx.hikeParticipant.updateMany({ where: { id: { in: dropIds } }, data: { carDriverParticipantId: null } })
+      }
+    }
+
+    // Leave any car (own or friend's) that doesn't cover the new direction or is now over capacity.
+    const riderIds = [participation.id, ...(participation.friend ? [participation.friend.id] : [])]
+    const riders = await tx.hikeParticipant.findMany({
+      where: { id: { in: riderIds }, carDriverParticipantId: { not: null } },
+      select: {
+        id: true,
+        carTrip: true,
+        carDriver: { select: { carTrip: true, carSeats: true, carPassengers: { where: { status: 'confirmed' }, select: { carTrip: true } } } },
+      },
+    })
+    for (const r of riders) {
+      const d = r.carDriver
+      if (!d) continue
+      const ok = tripCompatible(d.carTrip, r.carTrip) &&
+        (d.carSeats === null || fitsInCar(d.carSeats, d.carPassengers.map(p => p.carTrip), []))
+      if (!ok) {
+        await tx.hikeParticipant.update({ where: { id: r.id }, data: { carDriverParticipantId: null } })
+      }
+    }
   })
 
   revalidateParticipantCountPaths(hikeId)
@@ -148,7 +223,7 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, bringsCar: true, carDriverParticipantId: true, friend: { select: { id: true, carDriverParticipantId: true } } },
+    select: { id: true, bringsCar: true, carTrip: true, carDriverParticipantId: true, friend: { select: { id: true, carTrip: true, carDriverParticipantId: true } } },
   })
   if (!participation) throw new Error('Not registered for this hike')
   if (participation.bringsCar) throw new Error('Drivers cannot join another car')
@@ -158,17 +233,12 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
   const linked = participation.friend
     ? participation.friend.carDriverParticipantId === participation.carDriverParticipantId
     : false
-  const movingIds = linked && participation.friend ? [participation.id, participation.friend.id] : [participation.id]
-  const neededSeats = movingIds.length
+  const moving = linked && participation.friend ? [participation, participation.friend] : [participation]
+  const movingIds = moving.map(m => m.id)
 
   if (driverParticipantId !== null) {
-    const driver = await prisma.hikeParticipant.findUnique({
-      where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
-    })
-    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
-    const takenSeats = driver.carPassengers.filter(p => !movingIds.includes(p.id)).length
-    if (driver.carSeats !== null && takenSeats + neededSeats > driver.carSeats) throw new Error('Car is full')
+    const error = await checkDriverCanTake(hikeId, driverParticipantId, moving)
+    if (error) throw new Error(error)
   }
 
   await prisma.$transaction(
@@ -184,19 +254,14 @@ export async function assignFriendCarDriver(hikeId: string, driverParticipantId:
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { friend: { select: { id: true } } },
+    select: { friend: { select: { id: true, carTrip: true } } },
   })
   if (!participation?.friend) throw new Error('No friend registered')
   const friendId = participation.friend.id
 
   if (driverParticipantId !== null) {
-    const driver = await prisma.hikeParticipant.findUnique({
-      where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
-    })
-    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) throw new Error('Invalid driver')
-    const takenSeats = driver.carPassengers.filter(p => p.id !== friendId).length
-    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) throw new Error('Car is full')
+    const error = await checkDriverCanTake(hikeId, driverParticipantId, [participation.friend])
+    if (error) throw new Error(error)
   }
 
   await prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverParticipantId } })
@@ -210,19 +275,14 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
 
   const participant = await prisma.hikeParticipant.findUnique({
     where: { id: participantId },
-    select: { hikeId: true, bringsCar: true },
+    select: { hikeId: true, bringsCar: true, carTrip: true },
   })
   if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
   if (participant.bringsCar) return { error: 'Drivers cannot be assigned as a passenger' }
 
   if (driverParticipantId !== null) {
-    const driver = await prisma.hikeParticipant.findUnique({
-      where: { id: driverParticipantId },
-      select: { hikeId: true, bringsCar: true, carSeats: true, hostParticipantId: true, carPassengers: { where: { status: 'confirmed' }, select: { id: true } } },
-    })
-    if (!driver || driver.hikeId !== hikeId || !driver.bringsCar || driver.hostParticipantId !== null) return { error: 'Invalid driver' }
-    const takenSeats = driver.carPassengers.filter(p => p.id !== participantId).length
-    if (driver.carSeats !== null && takenSeats + 1 > driver.carSeats) return { error: 'Car is full' }
+    const error = await checkDriverCanTake(hikeId, driverParticipantId, [{ id: participantId, carTrip: participant.carTrip }])
+    if (error) return { error }
   }
 
   await prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } })
@@ -513,6 +573,7 @@ export type AllocationPassenger = {
   passengerId: string
   passengerName: string
   friendName: string | null
+  carTrip: CarTrip
   distanceKm: number | null
 }
 
@@ -520,13 +581,14 @@ export type AllocationDriver = {
   driverId: string
   driverName: string
   friendName: string | null
+  carTrip: CarTrip
   passengers: AllocationPassenger[]
   remainingSeats: number
 }
 
 export type AllocationPreview = {
   drivers: AllocationDriver[]
-  unassigned: { id: string; name: string; friendName: string | null }[]
+  unassigned: { id: string; name: string; friendName: string | null; carTrip: CarTrip }[]
   noLocationCount: number
 }
 
@@ -540,6 +602,7 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
       id: true,
       bringsCar: true,
       carSeats: true,
+      carTrip: true,
       carDriverParticipantId: true,
       pickupLat: true,
       pickupLng: true,
@@ -562,21 +625,35 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
   // Track seats already used per driver — this naturally includes a driver's own
   // friend and any already-assigned passenger's friend, since every physical row
   // (host or friend) that points at a driver counts as one occupied seat.
-  const seatsUsed = new Map<string, number>()
+  // Seats are tracked per leg: someone riding only there frees the seat for the way back.
+  type Legs = { there: number; back: number }
+  const seatsUsed = new Map<string, Legs>()
   for (const p of participants) {
     if (p.carDriverParticipantId) {
-      seatsUsed.set(p.carDriverParticipantId, (seatsUsed.get(p.carDriverParticipantId) ?? 0) + 1)
+      const used = seatsUsed.get(p.carDriverParticipantId) ?? { there: 0, back: 0 }
+      if (goesThere(p.carTrip)) used.there++
+      if (goesBack(p.carTrip)) used.back++
+      seatsUsed.set(p.carDriverParticipantId, used)
     }
   }
+  const initialRemaining = (d: (typeof rawDrivers)[number]): Legs => {
+    const used = seatsUsed.get(d.id) ?? { there: 0, back: 0 }
+    return {
+      there: goesThere(d.carTrip) ? (d.carSeats ?? 0) - used.there : 0,
+      back: goesBack(d.carTrip) ? (d.carSeats ?? 0) - used.back : 0,
+    }
+  }
+  const hasRoom = (r: Legs) => r.there > 0 || r.back > 0
 
   const drivers = rawDrivers.map(d => ({
     id: d.id,
     name: pName(d),
     friendName: d.friend?.friendName ?? null,
+    carTrip: d.carTrip,
     lat: d.pickupLat,
     lng: d.pickupLng,
-    remaining: (d.carSeats ?? 0) - (seatsUsed.get(d.id) ?? 0),
-  })).filter(d => d.remaining > 0)
+    remaining: initialRemaining(d),
+  })).filter(d => hasRoom(d.remaining))
 
   // Separate passengers into those with and without coordinates
   const withCoords = unassignedPassengers.filter(p => p.pickupLat != null && p.pickupLng != null)
@@ -598,13 +675,24 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
     return { p, dists, groupSize }
   }).sort((a, b) => (a.dists[0]?.dist ?? Infinity) - (b.dists[0]?.dist ?? Infinity))
 
-  const remaining = new Map(drivers.map(d => [d.id, d.remaining]))
+  const remaining = new Map(drivers.map(d => [d.id, { ...d.remaining }]))
+  const driverTrip = new Map(drivers.map(d => [d.id, d.carTrip]))
+
+  const tryTake = (driverId: string, trip: CarTrip, groupSize: number) => {
+    const r = remaining.get(driverId)
+    const dt = driverTrip.get(driverId)
+    if (!r || !dt || !tripCompatible(dt, trip)) return false
+    if (goesThere(trip) && r.there < groupSize) return false
+    if (goesBack(trip) && r.back < groupSize) return false
+    if (goesThere(trip)) r.there -= groupSize
+    if (goesBack(trip)) r.back -= groupSize
+    return true
+  }
 
   for (const { p, dists, groupSize } of scored) {
     for (const { driverId, dist } of dists) {
-      if ((remaining.get(driverId) ?? 0) >= groupSize) {
+      if (tryTake(driverId, p.carTrip, groupSize)) {
         assignments.set(p.id, { driverId, distanceKm: dist })
-        remaining.set(driverId, (remaining.get(driverId) ?? groupSize) - groupSize)
         break
       }
     }
@@ -621,9 +709,8 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
   for (const p of needsRoundRobin) {
     const groupSize = p.friend ? 2 : 1
     for (const d of allDriversOrdered) {
-      if ((remaining.get(d.id) ?? 0) >= groupSize) {
+      if (tryTake(d.id, p.carTrip, groupSize)) {
         assignments.set(p.id, { driverId: d.id, distanceKm: null })
-        remaining.set(d.id, (remaining.get(d.id) ?? groupSize) - groupSize)
         break
       }
     }
@@ -631,7 +718,7 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
 
   // Build result grouped by driver
   const resultDrivers: AllocationDriver[] = rawDrivers
-    .filter(d => (d.carSeats ?? 0) - (seatsUsed.get(d.id) ?? 0) > 0 || [...assignments.values()].some(a => a.driverId === d.id))
+    .filter(d => hasRoom(initialRemaining(d)) || [...assignments.values()].some(a => a.driverId === d.id))
     .map(d => {
       const passengers = unassignedPassengers
         .filter(p => assignments.get(p.id)?.driverId === d.id)
@@ -639,20 +726,23 @@ export async function previewCarAllocation(hikeId: string): Promise<AllocationPr
           passengerId: p.id,
           passengerName: pName(p),
           friendName: p.friend?.friendName ?? null,
+          carTrip: p.carTrip,
           distanceKm: assignments.get(p.id)?.distanceKm ?? null,
         }))
+      const r = remaining.get(d.id)
       return {
         driverId: d.id,
         driverName: pName(d),
         friendName: d.friend?.friendName ?? null,
+        carTrip: d.carTrip,
         passengers,
-        remainingSeats: remaining.get(d.id) ?? 0,
+        remainingSeats: r ? Math.max(r.there, r.back) : 0,
       }
     })
 
   const unassigned = unassignedPassengers
     .filter(p => !assignments.has(p.id))
-    .map(p => ({ id: p.id, name: pName(p), friendName: p.friend?.friendName ?? null }))
+    .map(p => ({ id: p.id, name: pName(p), friendName: p.friend?.friendName ?? null, carTrip: p.carTrip }))
 
   return {
     drivers: resultDrivers,

@@ -173,6 +173,12 @@ model Hike {
   bankAccounts BankAccount[]     @relation("HikeBankAccounts")
 }
 
+enum CarTrip {
+  both
+  there
+  back
+}
+
 model HikeParticipant {
   id          String            @id @default(cuid())
   hikeId      String
@@ -187,6 +193,7 @@ model HikeParticipant {
   hostParticipantId      String? @unique
   bringsCar              Boolean @default(false)
   carSeats               Int?
+  carTrip                CarTrip @default(both)
   carDriverParticipantId String?
   pickupLat              Float?
   pickupLng              Float?

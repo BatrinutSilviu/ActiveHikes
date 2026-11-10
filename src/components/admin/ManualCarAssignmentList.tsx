@@ -2,11 +2,20 @@
 
 import { useState, useTransition } from 'react'
 import { adminAssignCarDriver } from '@/app/actions/hikes'
+import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg } from '@/lib/carTrip'
+
+type TripDict = { both: string; there: string; back: string; seatsThere: string; seatsBack: string }
+
+function TripTag({ trip, dict }: { trip: CarTrip; dict: TripDict }) {
+  if (trip === 'both') return null
+  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">{dict[trip]}</span>
+}
 
 type Driver = {
   id: string
   name: string
   seats: number
+  carTrip: CarTrip
 }
 
 type Participant = {
@@ -16,6 +25,7 @@ type Participant = {
   hostName: string | null
   linkedFriend: { id: string; name: string | null } | null
   bringsCar: boolean
+  carTrip: CarTrip
   carDriverParticipantId: string | null
   user: { name: string | null } | null
 }
@@ -33,19 +43,21 @@ export default function ManualCarAssignmentList({
   participants: initialParticipants,
   drivers,
   dict,
+  tripDict,
 }: {
   hikeId: string
   participants: Participant[]
   drivers: Driver[]
   dict: Dict
+  tripDict: TripDict
 }) {
   const [participants, setParticipants] = useState(initialParticipants)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [, startTransition] = useTransition()
 
-  const occupancy = (driverId: string) =>
-    participants.filter(p => p.carDriverParticipantId === driverId).length
+  const ridersOf = (driverId: string) =>
+    participants.filter(p => p.carDriverParticipantId === driverId)
 
   const handleChange = (p: Participant, driverId: string | null) => {
     setError('')
@@ -70,6 +82,7 @@ export default function ManualCarAssignmentList({
             {p.user?.name ?? p.friendName ?? '?'}
             {p.linkedFriend && <span className="text-stone-400 font-normal"> +{p.linkedFriend.name}</span>}
             {p.hostParticipantId && <span className="text-stone-400 font-normal text-xs"> ({dict.friendOf} {p.hostName ?? '?'})</span>}
+            <TripTag trip={p.carTrip} dict={tripDict} />
           </span>
           <select
             value={p.carDriverParticipantId ?? ''}
@@ -79,12 +92,18 @@ export default function ManualCarAssignmentList({
           >
             <option value="">{dict.noCar}</option>
             {drivers.map(driver => {
-              const occExcludingSelf = participants.filter(x => x.carDriverParticipantId === driver.id && x.id !== p.id).length
-              const occ = occupancy(driver.id)
-              const isFull = occExcludingSelf + 1 > driver.seats
+              const riders = ridersOf(driver.id)
+              const others = riders.filter(x => x.id !== p.id).map(x => x.carTrip)
+              const compatible = tripCompatible(driver.carTrip, p.carTrip)
+              const isFull = !fitsInCar(driver.seats, others, [p.carTrip])
+              const left = seatsLeftByLeg(driver.seats, riders.map(x => x.carTrip))
+              const used = driver.carTrip === 'both' && left.there !== left.back
+                ? `${driver.seats - left.there}/${driver.seats} ${tripDict.seatsThere} · ${driver.seats - left.back}/${driver.seats} ${tripDict.seatsBack}`
+                : `${driver.carTrip === 'back' ? driver.seats - left.back : driver.seats - left.there}/${driver.seats}`
+              const tripNote = driver.carTrip !== 'both' ? ` · ${tripDict[driver.carTrip]}` : ''
               return (
-                <option key={driver.id} value={driver.id} disabled={isFull}>
-                  {driver.name} — {occ}/{driver.seats}{isFull ? ` (${dict.full})` : ''}
+                <option key={driver.id} value={driver.id} disabled={!compatible || isFull}>
+                  {driver.name}{tripNote} — {used}{compatible && isFull ? ` (${dict.full})` : ''}
                 </option>
               )
             })}
@@ -95,6 +114,7 @@ export default function ManualCarAssignmentList({
         <div key={p.id} className="bg-stone-50 border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
           <span className="text-sm font-medium text-stone-500 truncate">
             {p.user?.name ?? p.friendName ?? '?'}
+            <TripTag trip={p.carTrip} dict={tripDict} />
           </span>
           <span className="text-xs text-stone-400 shrink-0">{dict.drivingOwnCar}</span>
         </div>

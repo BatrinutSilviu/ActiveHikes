@@ -233,6 +233,14 @@
     "confirmed": "confirmați",
     "onWaitlist": "pe lista de așteptare"
   },
+  "carTrip": {
+    "label": "Pe ce drum?",
+    "both": "Dus-întors",
+    "there": "Doar dus",
+    "back": "Doar întors",
+    "seatsThere": "dus",
+    "seatsBack": "întors"
+  },
   "joinButton": {
     "bringFriend": "Aduc un prieten",
     "friendNamePlaceholder": "Numele complet al prietenului",

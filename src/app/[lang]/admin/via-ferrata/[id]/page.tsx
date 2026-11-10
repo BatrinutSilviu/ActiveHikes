@@ -196,12 +196,14 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
               participationStatus={adminParticipation?.status ?? null}
               currentBringsCar={adminParticipation?.bringsCar ?? false}
               currentCarSeats={adminParticipation?.carSeats ?? null}
+              currentCarTrip={adminParticipation?.carTrip ?? 'both'}
               currentPickupLat={adminParticipation?.pickupLat ?? null}
               currentPickupLng={adminParticipation?.pickupLng ?? null}
               paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
               waitlistPosition={adminWaitlistPosition}
               waitlistCount={waitlistParticipants.length}
               dict={d.joinButton}
+              tripDict={d.carTrip}
               lang={lang}
             />
           </div>

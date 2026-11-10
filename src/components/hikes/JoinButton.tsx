@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { joinHike, cancelRegistration, updateCarPreference } from '@/app/actions/hikes'
 import { X, UserPlus, User, Car, MapPin, Pencil, Timer } from 'lucide-react'
 import LocationPickerModal from './LocationPickerModalWrapper'
+import { type CarTrip, CAR_TRIPS } from '@/lib/carTrip'
+
+type CarTripDict = { label: string; both: string; there: string; back: string }
 
 type StatusEntry = { label: string; desc: string }
 type JoinButtonDict = {
@@ -125,6 +128,37 @@ function CarToggle({
   )
 }
 
+function TripToggle({
+  value,
+  onChange,
+  dict,
+}: {
+  value: CarTrip
+  onChange: (value: CarTrip) => void
+  dict: CarTripDict
+}) {
+  return (
+    <div>
+      <span className="block text-sm text-stone-500 mb-1.5">{dict.label}</span>
+      <div className="grid grid-cols-3 gap-1 p-1 bg-stone-100 rounded-xl" role="group">
+        {CAR_TRIPS.map(trip => (
+          <button
+            key={trip}
+            type="button"
+            onClick={() => onChange(trip)}
+            aria-pressed={value === trip}
+            className={`py-2 px-1 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+              value === trip ? 'bg-white text-emerald-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+            }`}
+          >
+            {dict[trip]}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function LocationButton({
   lat,
   lng,
@@ -172,12 +206,14 @@ export default function JoinButton({
   participationStatus,
   currentBringsCar = false,
   currentCarSeats = null,
+  currentCarTrip = 'both',
   currentPickupLat = null,
   currentPickupLng = null,
   paymentDeadline = null,
   waitlistPosition = null,
   waitlistCount = 0,
   dict,
+  tripDict,
   lang,
 }: {
   hikeId: string
@@ -186,12 +222,14 @@ export default function JoinButton({
   participationStatus: 'pending' | 'confirmed' | 'rejected' | 'waitlist' | null
   currentBringsCar?: boolean
   currentCarSeats?: number | null
+  currentCarTrip?: CarTrip
   currentPickupLat?: number | null
   currentPickupLng?: number | null
   paymentDeadline?: string | null
   waitlistPosition?: number | null
   waitlistCount?: number
   dict: JoinButtonDict
+  tripDict: CarTripDict
   lang: string
 }) {
   const [error, setError] = useState('')
@@ -204,6 +242,7 @@ export default function JoinButton({
   const [friendName, setFriendName] = useState('')
   const [bringingCar, setBringingCar] = useState(false)
   const [carSeats, setCarSeats] = useState('4')
+  const [carTrip, setCarTrip] = useState<CarTrip>('both')
   const [pickupLat, setPickupLat] = useState<number | null>(null)
   const [pickupLng, setPickupLng] = useState<number | null>(null)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
@@ -211,6 +250,7 @@ export default function JoinButton({
   // Edit form state (already registered)
   const [editBringsCar, setEditBringsCar] = useState(currentBringsCar)
   const [editCarSeats, setEditCarSeats] = useState(String(currentCarSeats ?? 4))
+  const [editCarTrip, setEditCarTrip] = useState<CarTrip>(currentCarTrip)
   const [editPickupLat, setEditPickupLat] = useState<number | null>(currentPickupLat ?? null)
   const [editPickupLng, setEditPickupLng] = useState<number | null>(currentPickupLng ?? null)
   const [carSaveError, setCarSaveError] = useState('')
@@ -230,6 +270,7 @@ export default function JoinButton({
   const carChanged =
     editBringsCar !== currentBringsCar ||
     (editBringsCar && clampSeats(editCarSeats) !== (currentCarSeats ?? 4)) ||
+    editCarTrip !== currentCarTrip ||
     editPickupLat !== (currentPickupLat ?? null) ||
     editPickupLng !== (currentPickupLng ?? null)
 
@@ -263,6 +304,7 @@ export default function JoinButton({
           editBringsCar ? clampSeats(editCarSeats) : undefined,
           editPickupLat,
           editPickupLng,
+          editCarTrip,
         )
         router.refresh()
       } catch {
@@ -306,6 +348,7 @@ export default function JoinButton({
           pickupLat ?? undefined,
           pickupLng ?? undefined,
           agreedToTerms,
+          carTrip,
         )
         router.refresh()
       } catch {
@@ -349,6 +392,8 @@ export default function JoinButton({
 
           <div className="border border-stone-200 rounded-xl p-3 space-y-3">
             <CarToggle value={editBringsCar} onChange={setEditBringsCar} dict={dict} />
+
+            <TripToggle value={editCarTrip} onChange={setEditCarTrip} dict={tripDict} />
 
             {editBringsCar && (
               <div className="pl-6 space-y-1">
@@ -423,6 +468,8 @@ export default function JoinButton({
           )}
 
           <CarToggle value={bringingCar} onChange={setBringingCar} dict={dict} />
+
+          <TripToggle value={carTrip} onChange={setCarTrip} dict={tripDict} />
 
           {bringingCar && (
             <div className="pl-6 space-y-1">

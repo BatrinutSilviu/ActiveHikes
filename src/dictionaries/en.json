@@ -233,6 +233,14 @@
     "confirmed": "confirmed",
     "onWaitlist": "on the waitlist"
   },
+  "carTrip": {
+    "label": "Which way?",
+    "both": "Both ways",
+    "there": "Only there",
+    "back": "Only back",
+    "seatsThere": "there",
+    "seatsBack": "back"
+  },
   "joinButton": {
     "bringFriend": "Bring a friend",
     "friendNamePlaceholder": "Friend's full name",

@@ -4,6 +4,14 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { previewCarAllocation, applyCarAllocation, type AllocationPreview } from '@/app/actions/hikes'
 import { Car, MapPin, AlertTriangle, CheckCircle, Shuffle } from 'lucide-react'
+import type { CarTrip } from '@/lib/carTrip'
+
+type TripDict = { both: string; there: string; back: string }
+
+function TripTag({ trip, dict }: { trip: CarTrip; dict: TripDict }) {
+  if (trip === 'both') return null
+  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">{dict[trip]}</span>
+}
 
 type Dict = {
   title: string
@@ -26,9 +34,11 @@ type Dict = {
 export default function CarAllocatorPanel({
   hikeId,
   dict,
+  tripDict,
 }: {
   hikeId: string
   dict: Dict
+  tripDict: TripDict
 }) {
   const [preview, setPreview] = useState<AllocationPreview | null>(null)
   const [done, setDone] = useState(false)
@@ -122,6 +132,7 @@ export default function CarAllocatorPanel({
                   <span className="truncate">
                     {driver.driverName}
                     {driver.friendName && <span className="font-normal text-stone-500"> + {driver.friendName} ({dict.friendLabel})</span>}
+                    <TripTag trip={driver.carTrip} dict={tripDict} />
                   </span>
                 </div>
                 <div className="space-y-1.5 pl-5">
@@ -131,6 +142,7 @@ export default function CarAllocatorPanel({
                       <span className="flex-1 min-w-0 break-words">
                         {p.passengerName}
                         {p.friendName && <span className="text-stone-400"> + {p.friendName} ({dict.friendLabel})</span>}
+                        <TripTag trip={p.carTrip} dict={tripDict} />
                       </span>
                       <span className="text-stone-400 text-xs shrink-0 mt-0.5">
                         {p.distanceKm != null
@@ -151,6 +163,7 @@ export default function CarAllocatorPanel({
                 {preview.unassigned.map(p => (
                   <span key={p.id} className="text-xs bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full">
                     {p.name}{p.friendName && ` + ${p.friendName} (${dict.friendLabel})`}
+                    {p.carTrip !== 'both' && ` · ${tripDict[p.carTrip]}`}
                   </span>
                 ))}
               </div>

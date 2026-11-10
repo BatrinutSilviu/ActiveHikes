@@ -13,6 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       hostParticipantId: true,
       bringsCar: true,
       carSeats: true,
+      carTrip: true,
       carDriverParticipantId: true,
       user: { select: { name: true } },
     },

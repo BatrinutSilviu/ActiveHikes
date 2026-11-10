@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import PhoneContact from './PhoneContact'
+import type { CarTrip } from '@/lib/carTrip'
 import { updateParticipantStatus, confirmAllPending, adminAddParticipant, adminImportParticipant, removeFriend } from '@/app/actions/participants'
 import { Check, X, List, CheckCheck, Car, Timer, UserPlus, UserMinus } from 'lucide-react'
 
@@ -20,6 +21,7 @@ type Participant = {
   linkedFriend?: { id: string; name: string | null } | null
   bringsCar?: boolean
   carSeats?: number | null
+  carTrip?: CarTrip
   carDriverParticipantId?: string | null
   user: { id: string; name: string | null; email: string | null; phone?: string | null } | null
 }
@@ -64,11 +66,13 @@ export default function ParticipantManager({
   hikeId,
   maxParticipants,
   dict,
+  tripDict,
 }: {
   participants: Participant[]
   hikeId: string
   maxParticipants: number
   dict: ParticipantManagerDict
+  tripDict?: { both: string; there: string; back: string }
 }) {
   const router = useRouter()
   const [items, setItems] = useState(participants)
@@ -274,6 +278,7 @@ export default function ParticipantManager({
                   {p.bringsCar && (
                     <span className="inline-flex items-center gap-1 text-xs bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded-full">
                       <Car size={11} /> {dict.bringsCar}{p.carSeats != null ? ` (${p.carSeats})` : ''}
+                      {tripDict && p.carTrip && p.carTrip !== 'both' && ` · ${tripDict[p.carTrip]}`}
                     </span>
                   )}
                   {!p.bringsCar && p.carDriverParticipantId && (() => {
@@ -281,6 +286,7 @@ export default function ParticipantManager({
                     return driver ? (
                       <span className="inline-flex items-center gap-1 text-xs bg-stone-100 text-stone-500 px-1.5 py-0.5 rounded-full">
                         <Car size={11} /> {driver.user?.name ?? driver.friendName}
+                        {tripDict && p.carTrip && p.carTrip !== 'both' && ` · ${tripDict[p.carTrip]}`}
                       </span>
                     ) : null
                   })()}

@@ -265,12 +265,14 @@ export default async function HikeDetailPage({ params, searchParams }: {
               participationStatus={userParticipation?.status ?? null}
               currentBringsCar={userParticipation?.bringsCar ?? false}
               currentCarSeats={userParticipation?.carSeats ?? null}
+              currentCarTrip={userParticipation?.carTrip ?? 'both'}
               currentPickupLat={userParticipation?.pickupLat ?? null}
               currentPickupLng={userParticipation?.pickupLng ?? null}
               paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
               waitlistPosition={userWaitlistPosition}
               waitlistCount={waitlistCount}
               dict={d.joinButton}
+              tripDict={d.carTrip}
               lang={lang}
             />
 
