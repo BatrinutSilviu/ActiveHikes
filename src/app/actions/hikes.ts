@@ -378,6 +378,8 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
 
 export async function createHike(data: {
   type?: HikeType
+  // Payment methods to show; left out = every active one.
+  bankAccountIds?: string[]
   title: string
   destination: string
   description?: string
@@ -469,9 +471,13 @@ export async function createHike(data: {
       whatsappGroupUrl: data.whatsappGroupUrl || null,
       status: 'draft',
       createdById: session.user.id,
-      // New events show every currently active payment method by default;
-      // admin can narrow it down afterwards from the event's edit page.
-      bankAccounts: { connect: (await prisma.bankAccount.findMany({ where: { isActive: true }, select: { id: true } })) },
+      // The payment methods picked in the form; by default every currently active one.
+      // The event's edit page changes them afterwards.
+      bankAccounts: {
+        connect: data.bankAccountIds
+          ? data.bankAccountIds.map(id => ({ id }))
+          : await prisma.bankAccount.findMany({ where: { isActive: true }, select: { id: true } }),
+      },
     },
   })
 

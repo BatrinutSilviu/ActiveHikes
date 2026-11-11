@@ -48,3 +48,14 @@ export async function deleteBankAccount(id: string) {
   await prisma.bankAccount.delete({ where: { id } })
   revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
 }
+
+// The active payment methods, for picking which ones a new event shows.
+export async function listActivePaymentMethods() {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  return prisma.bankAccount.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, type: true, bankName: true, accountHolder: true, iban: true, paymentHandle: true },
+  })
+}

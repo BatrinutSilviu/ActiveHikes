@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useTransition, Suspense } from 'react'
+import { useEffect, useState, useTransition, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createHike } from '@/app/actions/hikes'
 import { HikeType } from '@prisma/client'
 import { Upload, X } from 'lucide-react'
 import { useDict, useLocale } from '@/hooks/useDict'
+import { listActivePaymentMethods } from '@/app/actions/bank-accounts'
+import PaymentMethodsDropdown, { type PaymentMethodOption } from '@/components/admin/PaymentMethodsDropdown'
 
 export default function NewHikePage() {
   return <Suspense fallback={null}><NewHikeForm /></Suspense>
@@ -20,6 +22,15 @@ function NewHikeForm() {
   const dict = useDict()
   const d = dict.admin.newHike
   const dv = dict.admin.viaFerrataEdit
+  // Payment methods the new event shows: every active one, unless narrowed down here.
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodOption[]>([])
+  const [bankAccountIds, setBankAccountIds] = useState<string[]>([])
+  useEffect(() => {
+    listActivePaymentMethods().then(list => {
+      setPaymentMethods(list)
+      setBankAccountIds(list.map(a => a.id))
+    }).catch(() => {})
+  }, [])
   const timeLocale = lang === 'en' ? 'en-GB' : 'ro-RO'
 
   const [eventType, setEventType] = useState<HikeType>(
@@ -81,6 +92,7 @@ function NewHikeForm() {
         if (gpxApproxFile) gpxApproximateUrl = await uploadFile(gpxApproxFile, 'hike-gpx')
         const hikeId = await createHike({
           type: eventType,
+          bankAccountIds,
           title: form.title, destination: form.destination,
           description: form.description || undefined, date: form.date,
           endDate: form.end_date || undefined,
@@ -196,6 +208,14 @@ function NewHikeForm() {
               </Field>
             </div>
           )}
+          <PaymentMethodsDropdown
+            accounts={paymentMethods}
+            selected={bankAccountIds}
+            onChange={setBankAccountIds}
+            label={dict.admin.hikeEdit.bankAccountsSection}
+            hint={dict.admin.hikeEdit.bankAccountsHint}
+            empty={dict.admin.hikeEdit.noBankAccounts}
+          />
         </Section>
 
         <Section title={d.logistics}>

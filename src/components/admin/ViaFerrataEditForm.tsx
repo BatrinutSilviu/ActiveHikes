@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { updateHike } from '@/app/actions/hikes'
 import { useFormDraft, uploadFile } from '@/hooks/useFormDraft'
 import { Upload, X } from 'lucide-react'
+import PaymentMethodsDropdown from '@/components/admin/PaymentMethodsDropdown'
 
 type ViaFerrataData = {
   id: string
@@ -96,7 +97,6 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
     whatsappGroupUrl: viaFerrata.whatsappGroupUrl ?? '',
   })
   const [bankAccountIds, setBankAccountIds] = useState<string[]>(viaFerrata.bankAccountIds)
-  const toggleBankAccount = (id: string) => setBankAccountIds(ids => ids.includes(id) ? ids.filter(i => i !== id) : [...ids, id])
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
@@ -236,25 +236,14 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
         <input type="url" value={form.whatsappGroupUrl} onChange={e => set('whatsappGroupUrl', e.target.value)} placeholder={dict.whatsappGroupUrlPlaceholder} className={cls} />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-stone-700 mb-1">{dict.bankAccountsSection}</label>
-        <p className="text-xs text-stone-400 mb-2">{dict.bankAccountsHint}</p>
-        {bankAccounts.length === 0 ? (
-          <p className="text-sm text-stone-400">{dict.noBankAccounts}</p>
-        ) : (
-          <div className="space-y-2">
-            {bankAccounts.map(account => {
-              const methodLabel = account.type === 'revolut' ? 'Revolut' : account.type === 'btpay' ? 'BT Pay' : account.bankName
-              return (
-                <label key={account.id} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={bankAccountIds.includes(account.id)} onChange={() => toggleBankAccount(account.id)} className="w-4 h-4 accent-emerald-600" />
-                  <span className="text-sm text-stone-700">{methodLabel} — {account.accountHolder}</span>
-                </label>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      <PaymentMethodsDropdown
+        accounts={bankAccounts}
+        selected={bankAccountIds}
+        onChange={setBankAccountIds}
+        label={dict.bankAccountsSection}
+        hint={dict.bankAccountsHint}
+        empty={dict.noBankAccounts}
+      />
 
       <div>
         <label className="block text-sm font-medium text-stone-700 mb-1">{dict.coverPhoto}</label>
