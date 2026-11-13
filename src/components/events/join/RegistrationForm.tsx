@@ -17,12 +17,14 @@ export default function RegistrationForm({
   dict,
   tripDict,
   lang,
+  withCar = true,
 }: {
   hikeId: string
   isFull: boolean
   dict: JoinButtonDict
   tripDict: CarTripDict
   lang: string
+  withCar?: boolean
 }) {
   const [bringingFriend, setBringingFriend] = useState(false)
   const [friendName, setFriendName] = useState('')
@@ -100,13 +102,15 @@ export default function RegistrationForm({
           />
         )}
 
-        <CarPreferenceFields
-          value={car}
-          onChange={updateCar}
-          onPickLocation={() => setShowLocationModal(true)}
-          dict={dict}
-          tripDict={tripDict}
-        />
+        {withCar && (
+          <CarPreferenceFields
+            value={car}
+            onChange={updateCar}
+            onPickLocation={() => setShowLocationModal(true)}
+            dict={dict}
+            tripDict={tripDict}
+          />
+        )}
 
         <label className="flex items-start gap-2.5 cursor-pointer select-none">
           <input

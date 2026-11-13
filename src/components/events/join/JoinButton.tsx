@@ -8,7 +8,8 @@ import type { CarTripDict, JoinButtonDict, Registration } from './types'
 /**
  * The registration panel of an event: a login link for guests, the sign-up form,
  * or — once registered — the registration's status and car preferences.
- * Used for hikes and Via Ferrata events alike (both are rows of the same table).
+ * Used for hikes, Via Ferrata and general events alike (all rows of the same table);
+ * `withCar` = false leaves out the carpool questions (general events).
  */
 export default function JoinButton({
   hikeId,
@@ -20,6 +21,7 @@ export default function JoinButton({
   dict,
   tripDict,
   lang,
+  withCar = true,
 }: {
   hikeId: string
   userId: string | null
@@ -30,6 +32,7 @@ export default function JoinButton({
   dict: JoinButtonDict
   tripDict: CarTripDict
   lang: string
+  withCar?: boolean
 }) {
   if (!userId) {
     return (
@@ -48,9 +51,10 @@ export default function JoinButton({
         waitlistCount={waitlistCount}
         dict={dict}
         tripDict={tripDict}
+        withCar={withCar}
       />
     )
   }
 
-  return <RegistrationForm hikeId={hikeId} isFull={isFull} dict={dict} tripDict={tripDict} lang={lang} />
+  return <RegistrationForm hikeId={hikeId} isFull={isFull} dict={dict} tripDict={tripDict} lang={lang} withCar={withCar} />
 }

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
+import AdminEventsSection from '@/components/generalEvents/AdminEventsSection'
 import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
@@ -123,6 +124,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
         <QuickLink href={`/${lang}/admin/hikes/new`} icon={<Plus size={17} />} label={da.createHike} />
         <QuickLink href={`/${lang}/admin/via-ferrata/new`} icon={<Plus size={17} />} label={da.newViaFerrata} />
+        <QuickLink href={`/${lang}/admin/events/new`} icon={<Plus size={17} />} label={d.events.admin.newEvent} />
         <QuickLink href={`/${lang}/admin/bank-accounts`} icon={<CreditCard size={17} />} label={da.bankAccounts} />
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
       </div>
@@ -234,6 +236,8 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
           </div>
         )}
       </div>
+
+      <AdminEventsSection lang={lang} locale={d.locale} dict={d.events.admin} spotsLabel={da.spots} />
 
       {/* Past hikes list */}
       <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mt-6">

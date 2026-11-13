@@ -25,6 +25,7 @@ export default function MyRegistration({
   waitlistCount,
   dict,
   tripDict,
+  withCar = true,
 }: {
   hikeId: string
   registration: Registration
@@ -32,6 +33,7 @@ export default function MyRegistration({
   waitlistCount: number
   dict: JoinButtonDict
   tripDict: CarTripDict
+  withCar?: boolean
 }) {
   const { status, paymentDeadline } = registration
   const saved = initialCarPreference(registration)
@@ -121,7 +123,7 @@ export default function MyRegistration({
           )}
         </div>
 
-        <div className="border border-stone-200 rounded-xl p-3 space-y-3">
+        {withCar && <div className="border border-stone-200 rounded-xl p-3 space-y-3">
           <CarPreferenceFields
             value={car}
             onChange={updateCar}
@@ -140,7 +142,7 @@ export default function MyRegistration({
             </button>
           )}
           {carSaveError && <p className="text-red-600 text-xs text-center">{carSaveError}</p>}
-        </div>
+        </div>}
 
         {(status === 'pending' || status === 'waitlist') && (
           <button onClick={handleCancel} disabled={cancelling}

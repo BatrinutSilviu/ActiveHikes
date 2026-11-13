@@ -64,6 +64,8 @@ export default function WhatsAppGroupCompare({
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved) as Stored
+        // localStorage only exists in the browser, so it can only be read after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setText(parsed.text ?? '')
         setIgnored(parsed.ignored ?? [])
       }

@@ -45,6 +45,10 @@ export default function Navbar() {
               className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
               {d.nav.viaFerrata}
             </Link>
+            <Link href={`${pfx}/events`}
+              className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
+              {d.nav.events}
+            </Link>
             {session ? (
               <>
                 <Link href={`${pfx}/profile`}
@@ -83,6 +87,11 @@ export default function Navbar() {
               className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
               onClick={() => setMenuOpen(false)}>
               {d.nav.viaFerrata}
+            </Link>
+            <Link href={`${pfx}/events`}
+              className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+              onClick={() => setMenuOpen(false)}>
+              {d.nav.events}
             </Link>
             {session ? (
               <>

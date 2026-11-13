@@ -81,6 +81,7 @@ export function AdminRegistrationCard({
   dict: JoinButtonDict
   tripDict: CarTripDict
   lang: string
+  withCar?: boolean
 }) {
   return (
     <div className="bg-white border border-stone-100 rounded-2xl p-5">

@@ -52,6 +52,8 @@ enum RoomType {
 enum HikeType {
   hike
   via_ferrata
+  // Any other community event (running, yoga, a party…): its kind is in Hike.category.
+  event
 }
 
 enum BankConnectionStatus {
@@ -114,6 +116,7 @@ model User {
   sessions       Session[]
   participations HikeParticipant[]
   uploadedPhotos HikePhoto[]
+  chatMessages   EventChatMessage[]
   createdHikes   Hike[]
   previewDocumentSubmissions HikeDocumentSubmission[]
 }
@@ -161,6 +164,11 @@ model Hike {
   whatsappGroupUrl     String?
   coverImageUrl        String?
   coverImageUrl2       String?
+  // General events only: what kind of event it is (e.g. Running, Yoga), when it ends,
+  // and the advance that confirms a spot (the rest of entryFee is paid on the day).
+  category             String?
+  endTime              String?
+  advanceFee           Decimal?    @db.Decimal(10, 2)
   createdById          String?
   createdAt            DateTime    @default(now())
 
@@ -171,6 +179,7 @@ model Hike {
   documents    HikeDocument[]
   documentSubmissions HikeDocumentSubmission[]
   bankAccounts BankAccount[]     @relation("HikeBankAccounts")
+  chatMessages EventChatMessage[]
 }
 
 enum CarTrip {
@@ -262,6 +271,22 @@ model HikeDocumentSubmission {
   hike         Hike             @relation(fields: [hikeId], references: [id], onDelete: Cascade)
   participant  HikeParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
   previewAdmin User?            @relation(fields: [previewAdminId], references: [id], onDelete: Cascade)
+}
+
+// The chat of a general event: its participants and the organisers write here while it's open
+// (from when the event is published until a day after it ends). fromAdmin = written as the organisers.
+model EventChatMessage {
+  id        String   @id @default(cuid())
+  hikeId    String
+  userId    String?
+  fromAdmin Boolean  @default(false)
+  body      String
+  createdAt DateTime @default(now())
+
+  hike Hike  @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([hikeId, createdAt])
 }
 
 model BankAccount {

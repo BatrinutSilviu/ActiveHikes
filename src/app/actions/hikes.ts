@@ -384,6 +384,18 @@ function assertSaneDate(value: string | null | undefined) {
   if (!(year >= 2020 && year <= 2099)) throw new Error(`Invalid date: ${value}`)
 }
 
+// A clock time as the forms send it ("18:30"); empty means not set.
+function assertTime(value: string | null | undefined) {
+  if (value && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) throw new Error(`Invalid time: ${value}`)
+}
+
+// A general event's advance can't be more than its price.
+function assertAdvance(advanceFee: number | null | undefined, entryFee: number | null | undefined) {
+  if (advanceFee == null) return
+  if (advanceFee < 0) throw new Error('The advance cannot be negative')
+  if (entryFee != null && advanceFee > entryFee) throw new Error('The advance cannot be more than the price')
+}
+
 export async function createHike(data: {
   type?: HikeType
   // Payment methods to show; left out = every active one.
@@ -426,6 +438,10 @@ export async function createHike(data: {
   essentials?: string[]
   externalPhotosUrl?: string
   whatsappGroupUrl?: string
+  // General events only.
+  category?: string
+  endTime?: string
+  advanceFee?: number
 }) {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
@@ -437,6 +453,12 @@ export async function createHike(data: {
   assertSaneDate(data.date)
   assertSaneDate(data.endDate)
   if (isHike && data.endDate && data.endDate < data.date) throw new Error('End date cannot be before the start date')
+  const isEvent = type === 'event'
+  if (isEvent) {
+    assertTime(data.meetingTime)
+    assertTime(data.endTime)
+    assertAdvance(data.advanceFee, data.entryFee)
+  }
 
   const hike = await prisma.hike.create({
     data: {
@@ -445,7 +467,7 @@ export async function createHike(data: {
       destination: data.destination,
       description: data.description || null,
       date: new Date(data.date),
-      endDate: isHike && data.endDate ? new Date(data.endDate) : null,
+      endDate: (isHike || isEvent) && data.endDate ? new Date(data.endDate) : null,
       meetingTime: data.meetingTime || null,
       groupCount: data.groupCount ?? null,
       entryFee: data.entryFee,
@@ -480,6 +502,9 @@ export async function createHike(data: {
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
+      category: isEvent ? (data.category?.trim() || null) : null,
+      endTime: isEvent ? (data.endTime || null) : null,
+      advanceFee: isEvent ? (data.advanceFee ?? null) : null,
       status: 'draft',
       createdById: session.user.id,
       // The payment methods picked in the form; by default every currently active one.
@@ -548,6 +573,9 @@ export async function updateHike(
     carsNeeded?: number | null
     essentials?: string[]
     bankAccountIds?: string[]
+    category?: string | null
+    endTime?: string | null
+    advanceFee?: number | null
   }
 ) {
   const session = await getServerSession(authOptions)
@@ -557,6 +585,9 @@ export async function updateHike(
   assertSaneDate(date)
   assertSaneDate(endDate)
   if (date && endDate && endDate < date) throw new Error('End date cannot be before the start date')
+  // Only general events send these (hikes keep their meeting time as free text).
+  assertTime(data.endTime)
+  if (data.advanceFee !== undefined) assertAdvance(data.advanceFee, data.entryFee)
   const updated = await prisma.hike.update({
     where: { id: hikeId },
     data: {
