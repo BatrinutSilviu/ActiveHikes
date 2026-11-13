@@ -5,6 +5,7 @@ import { addPhoto, deletePhoto } from '@/app/actions/photos'
 import { Upload, Trash2, X } from 'lucide-react'
 import { apiFetch, isNetworkError } from '@/lib/net'
 import { useDict } from '@/hooks/useDict'
+import UploadedImage from '@/components/UploadedImage'
 
 const MAX_PHOTOS = 2
 
@@ -65,7 +66,7 @@ export default function PhotoUploader({ hikeId, existingPhotos }: {
         <div className="grid grid-cols-2 gap-2">
           {photos.map(photo => (
             <div key={photo.id} className="relative group aspect-video rounded-lg overflow-hidden">
-              <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+              <UploadedImage src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button onClick={() => handleDelete(photo)} className="text-white hover:text-red-400">
                   <Trash2 size={18} />

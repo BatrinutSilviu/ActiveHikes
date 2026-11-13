@@ -11,6 +11,7 @@ import NameEditor from '@/components/profile/NameEditor'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
+import UploadedImage from '@/components/UploadedImage'
 
 const participationInclude = {
   hike: { select: { id: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } },
@@ -131,7 +132,7 @@ function ParticipationCard({ participation, lang, statusUI, dateLocale }: {
       className="flex items-center gap-4 bg-white border border-stone-100 rounded-2xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all group">
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-800 to-stone-700 shrink-0">
         {hike.coverImageUrl ? (
-          <img src={hike.coverImageUrl} alt={hike.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <UploadedImage src={hike.coverImageUrl} alt={hike.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Mountain size={20} className="text-white/30" />

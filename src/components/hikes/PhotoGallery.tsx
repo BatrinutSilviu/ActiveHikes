@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import UploadedImage from '@/components/UploadedImage'
 
 type Photo = { id: string; url: string; caption: string | null }
 
@@ -17,7 +18,7 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
         {photos.map((photo, i) => (
           <button key={photo.id} onClick={() => setLightbox(i)}
             className="aspect-square overflow-hidden rounded-lg hover:opacity-90 transition-opacity">
-            <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+            <UploadedImage src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
           </button>
         ))}
       </div>
@@ -32,7 +33,7 @@ export default function PhotoGallery({ photos }: { photos: Photo[] }) {
             <ChevronLeft size={36} />
           </button>
           <div onClick={e => e.stopPropagation()} className="max-w-4xl max-h-[85vh] flex flex-col items-center">
-            <img src={photos[lightbox].url} alt={photos[lightbox].caption ?? ''}
+            <UploadedImage src={photos[lightbox].url} alt={photos[lightbox].caption ?? ''}
               className="max-w-full max-h-[75vh] object-contain rounded-lg" />
             {photos[lightbox].caption && <p className="text-white/70 text-sm mt-3">{photos[lightbox].caption}</p>}
             <p className="text-white/40 text-xs mt-1">{lightbox + 1} / {photos.length}</p>
