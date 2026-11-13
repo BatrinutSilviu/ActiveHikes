@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
-import HikeCard from '@/components/HikeCard'
+import HikeCard, { toHikeCardData } from '@/components/HikeCard'
 import { Mountain, ArrowRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
@@ -16,18 +16,7 @@ async function getUpcomingHikes() {
   return hikes
     .filter(h => !isPastEvent(h.status, h.date, h.endDate))
     .slice(0, 6)
-    .map(h => ({
-    ...h,
-    date: h.date.toISOString(),
-    endDate: h.endDate ? h.endDate.toISOString() : null,
-    entryFee: Number(h.entryFee),
-    durationHours: h.durationHours ? Number(h.durationHours) : null,
-    accommodationPrice: h.accommodationPrice ? Number(h.accommodationPrice) : null,
-    accommodationDeposit: h.accommodationDeposit ? Number(h.accommodationDeposit) : null,
-    confirmedCount: h.participants.filter(p => p.status === 'confirmed').length,
-    waitlistCount: h.participants.filter(p => p.status === 'waitlist').length,
-    participants: undefined,
-  }))
+    .map(toHikeCardData)
 }
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {

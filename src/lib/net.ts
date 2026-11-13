@@ -44,6 +44,9 @@ export async function apiFetch(
   }
 }
 
+/** Options for requests polled every few seconds: a failed poll isn't retried — the next poll is the retry. */
+export const POLL_REQUEST = { cache: 'no-store', timeoutMs: 4000, retries: 0 } as const
+
 /**
  * Rejects with a NetworkError if `promise` (e.g. a server action call) hasn't settled in time,
  * so a stalled connection shows an error instead of a button stuck on "Saving…".

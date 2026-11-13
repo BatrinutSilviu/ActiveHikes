@@ -11,7 +11,6 @@ type ParticipantStatus = 'pending' | 'confirmed' | 'rejected' | 'waitlist'
 
 type Participant = {
   id: string
-  hikeId: string
   status: ParticipantStatus
   joinedAt: string
   paymentDeadline?: string | null
@@ -33,7 +32,7 @@ type ParticipantManagerDict = {
   noRegistrations: string
   overLimitConfirm: string
   joined: string
-  bringsCar: string
+  bringsCar?: string // only hikes show car badges
   payBy: string
   friendOf: string
   removeFriend: string

@@ -1,20 +1,22 @@
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import ViaFerrataParticipantManager from '@/components/admin/ViaFerrataParticipantManager'
+import ParticipantManager from '@/components/admin/ParticipantManager'
 import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import { isEventPast } from '@/lib/dates'
-import JoinButton from '@/components/hikes/JoinButton'
+import JoinButton from '@/components/events/join/JoinButton'
+import { toRegistration } from '@/components/events/join/registration'
 import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
+import { waitlistPosition } from '@/lib/participantStats'
 
 export default async function AdminViaFerrataPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -59,9 +61,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     : null
 
   const waitlistParticipants = viaFerrata.participants.filter(p => p.status === 'waitlist')
-  const adminWaitlistPosition = adminParticipation?.status === 'waitlist'
-    ? waitlistParticipants.findIndex(p => p.userId === session?.user?.id) + 1
-    : null
+  const adminWaitlistPosition = waitlistPosition(viaFerrata.participants, session?.user?.id, adminParticipation?.status)
 
   const counts = {
     confirmed: viaFerrata.participants.filter(p => p.status === 'confirmed').length,
@@ -73,7 +73,6 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
   const participants = viaFerrata.participants.map(p => ({
     id: p.id,
     userId: p.userId,
-    viaFerrataId: p.hikeId,
     status: p.status,
     joinedAt: p.joinedAt.toISOString(),
     paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
@@ -164,7 +163,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
-          <ViaFerrataParticipantManager participants={participants} viaFerrataId={viaFerrata.id} maxParticipants={viaFerrata.maxParticipants} dict={da} />
+          <ParticipantManager participants={participants} hikeId={viaFerrata.id} maxParticipants={viaFerrata.maxParticipants} dict={da} />
 
           <div className="mt-6">
             <WhatsAppGroupCompare
@@ -193,13 +192,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
               hikeId={viaFerrata.id}
               userId={session?.user?.id ?? null}
               isFull={isFull}
-              participationStatus={adminParticipation?.status ?? null}
-              currentBringsCar={adminParticipation?.bringsCar ?? false}
-              currentCarSeats={adminParticipation?.carSeats ?? null}
-              currentCarTrip={adminParticipation?.carTrip ?? 'both'}
-              currentPickupLat={adminParticipation?.pickupLat ?? null}
-              currentPickupLng={adminParticipation?.pickupLng ?? null}
-              paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
+              registration={toRegistration(adminParticipation)}
               waitlistPosition={adminWaitlistPosition}
               waitlistCount={waitlistParticipants.length}
               dict={d.joinButton}

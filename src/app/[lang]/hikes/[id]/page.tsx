@@ -2,19 +2,34 @@ import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
-import JoinButton from '@/components/hikes/JoinButton'
-import SpotsCounter from '@/components/hikes/SpotsCounter'
-import ParticipantsCount from '@/components/hikes/ParticipantsCount'
+import JoinButton from '@/components/events/join/JoinButton'
+import { toRegistration } from '@/components/events/join/registration'
+import SpotsCounter from '@/components/events/SpotsCounter'
+import ParticipantsCount from '@/components/events/ParticipantsCount'
+import ParticipantsLine from '@/components/events/ParticipantsLine'
+import { AdminPreviewBar, CarpoolLink, EventHero, InfoCard, WhatsAppGroupLink } from '@/components/events/EventDetail'
+import { PaymentInstructions, PriceSummary } from '@/components/events/EventPayment'
 import PhotoGallery from '@/components/hikes/PhotoGallery'
 import GpxSection from '@/components/hikes/GpxSection'
 import EssentialsSection from '@/components/hikes/EssentialsSection'
-import Link from 'next/link'
-import { Calendar, MapPin, Users, Clock, Tent, Hotel, DollarSign, Mountain, MountainSnow, ExternalLink, Navigation, Car, MessageCircle } from 'lucide-react'
+import { HikeCampingBox, HikeAccommodationBox } from '@/components/hikes/HikeStayDetails'
+import { Calendar, Users, Clock, Tent, Hotel, DollarSign, Mountain, ExternalLink, Navigation, Car } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
 import { getConfirmationPrice } from '@/lib/pricing'
+import { priceOrFree } from '@/lib/money'
+import { participantStats, waitlistPosition } from '@/lib/participantStats'
+import { spotsApiUrl } from '@/lib/eventPaths'
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  easy: 'text-green-700 bg-green-100',
+  easy_medium: 'text-lime-700 bg-lime-100',
+  medium: 'text-yellow-700 bg-yellow-100',
+  medium_hard: 'text-orange-700 bg-orange-100',
+  hard: 'text-red-700 bg-red-100',
+}
 
 export default async function HikeDetailPage({ params, searchParams }: {
   params: Promise<{ lang: string; id: string }>
@@ -48,103 +63,64 @@ export default async function HikeDetailPage({ params, searchParams }: {
   const isAdmin = session?.user?.role === 'admin'
   if (hike.status === 'draft' && !isAdmin) notFound()
 
+  // Admins can look at the page as a confirmed participant would see it.
   const isPreviewMode = isAdmin && preview === '1'
 
-  const rooms = hike.rooms.map(r => ({
-    id: r.id,
-    type: r.type,
-    label: r.label,
-    capacity: r.capacity,
-    occupied: r.occupants.length,
-  }))
-
-  const bankAccounts = hike.bankAccounts
-
-  let userParticipation = null
-  if (session?.user?.id) {
-    userParticipation = await prisma.hikeParticipant.findUnique({
-      where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
-      include: { friend: { select: { id: true, friendName: true } } },
-    })
-  }
+  const userParticipation = session?.user?.id
+    ? await prisma.hikeParticipant.findUnique({
+        where: { hikeId_userId: { hikeId: id, userId: session.user.id } },
+        include: { friend: { select: { id: true, friendName: true } } },
+      })
+    : null
+  // A friend registered alongside the user pays the same price again.
   const hasFriend = !!userParticipation?.friend
   const priceMultiplier = hasFriend ? 2 : 1
   const showsAsConfirmed = isPreviewMode || userParticipation?.status === 'confirmed'
 
-  const confirmedCount = hike.participants.filter(p => p.status === 'confirmed').length
-  const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
-  const waitlistCount = waitlistParticipants.length
-  const userWaitlistPosition = userParticipation?.status === 'waitlist'
-    ? waitlistParticipants.findIndex(p => p.userId === session?.user?.id) + 1
-    : null
-  const spotsLeft = hike.maxParticipants - confirmedCount
-  const isFull = spotsLeft <= 0
+  const { confirmedCount, waitlistCount, spotsLeft, isFull } = participantStats(hike.participants, hike.maxParticipants)
+  const userWaitlistPosition = waitlistPosition(hike.participants, session?.user?.id, userParticipation?.status)
   const isUpcoming = hike.status === 'upcoming' || (hike.status === 'draft' && isAdmin)
+
   const entryFee = Number(hike.entryFee)
   const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? Number(hike.accommodationPrice) : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? Number(hike.accommodationDeposit) : 0
   const confirmationPrice = getConfirmationPrice(hike)
   const totalPrice = entryFee + accommodationPrice
-  const displayConfirmationPrice = confirmationPrice * priceMultiplier
-  const displayTotalPrice = totalPrice * priceMultiplier
   const carsCount = hike.carsNeeded ?? Math.ceil(hike.maxParticipants / hike.peoplePerCar)
   const carsCountIsAuto = !hike.carsNeeded
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
+  const hasRooms = hike.rooms.length > 0
 
   const dd = d.hikeDetail
   const difficultyLabels = dd.difficulty as Record<string, string>
   const difficultyDescs = dd.difficultyDesc as Record<string, string>
-  const statusLabels = dd.status as Record<string, string>
   const dateLocale = d.locale
+  const counts = { confirmedCount, maxParticipants: hike.maxParticipants, waitlistCount }
+  const countsDict = { confirmed: dd.confirmed, onWaitlist: dd.onWaitlist }
+  // Shown when part of the confirmation price is an accommodation deposit.
+  const feeBreakdown = accommodationDeposit > 0
+    ? dd.feeBreakdown
+        .replace('{entryFee}', String(entryFee * priceMultiplier))
+        .replace('{deposit}', String(accommodationDeposit * priceMultiplier))
+    : null
 
+  // The grid places blocks in two columns on desktop; `order-*` sets the stacking on mobile
+  // (details, registration, sidebar links, more details, photos, route).
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      {isPreviewMode ? (
-        <div className="flex items-center justify-between gap-3 bg-amber-500 text-white text-sm font-semibold rounded-2xl px-4 py-3 mb-6">
-          <span>{dd.previewBannerText}</span>
-          <Link href={`/${lang}/hikes/${hike.id}`} className="underline underline-offset-2 shrink-0">
-            {dd.previewExitLabel}
-          </Link>
-        </div>
-      ) : isAdmin && (
-        <div className="flex justify-end mb-6">
-          <Link href={`/${lang}/hikes/${hike.id}?preview=1`}
-            className="text-xs font-semibold text-stone-500 hover:text-emerald-600 underline underline-offset-2">
-            {dd.previewEnterLabel}
-          </Link>
-        </div>
-      )}
+      <AdminPreviewBar isAdmin={isAdmin} isPreviewMode={isPreviewMode} eventUrl={`/${lang}/hikes/${hike.id}`} dict={dd} />
       {hike.status === 'draft' && (
         <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm font-medium">
           {dd.draftNotice}
         </div>
       )}
-      <div className="w-full h-72 sm:h-[28rem] rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-emerald-900 to-stone-800 relative shadow-xl">
-        {hike.coverImageUrl && hike.coverImageUrl2 ? (
-          <div className="absolute inset-0 flex">
-            <img src={hike.coverImageUrl} alt={hike.title} className="w-1/2 h-full object-cover" />
-            <img src={hike.coverImageUrl2} alt={hike.title} className="w-1/2 h-full object-cover" />
-          </div>
-        ) : hike.coverImageUrl || hike.coverImageUrl2 ? (
-          <img src={hike.coverImageUrl ?? hike.coverImageUrl2 ?? undefined} alt={hike.title} className="w-full h-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Mountain size={72} className="text-white/10" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 px-6 sm:px-8 pb-6 sm:pb-8">
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-1 leading-tight drop-shadow">{hike.title}</h1>
-          <p className="text-stone-300 flex items-center gap-1.5 text-base">
-            <MapPin size={15} /> {hike.destination}
-          </p>
-          {hike.mountainRange && (
-            <p className="text-stone-400 flex items-center gap-1 mt-0.5 text-sm">
-              <MountainSnow size={13} /> {hike.mountainRange}
-            </p>
-          )}
-        </div>
-      </div>
+      <EventHero
+        title={hike.title}
+        destination={hike.destination}
+        mountainRange={hike.mountainRange}
+        coverImageUrl={hike.coverImageUrl}
+        coverImageUrl2={hike.coverImageUrl2}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* General details — mobile order 1, desktop left column top */}
@@ -155,7 +131,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
             <InfoCard icon={<Mountain size={18} />} label={dd.difficultyLabel}>
               {hike.difficulty
                 ? <>
-                    <span className={difficultyColor(hike.difficulty) + ' px-2 py-0.5 rounded-full text-xs font-semibold'}>{difficultyLabels[hike.difficulty] ?? hike.difficulty}</span>
+                    <span className={(DIFFICULTY_COLORS[hike.difficulty] ?? '') + ' px-2 py-0.5 rounded-full text-xs font-semibold'}>{difficultyLabels[hike.difficulty] ?? hike.difficulty}</span>
                     {difficultyDescs[hike.difficulty] && (
                       <p className="text-stone-400 text-xs font-normal mt-2 leading-relaxed">{difficultyDescs[hike.difficulty]}</p>
                     )}
@@ -180,21 +156,12 @@ export default async function HikeDetailPage({ params, searchParams }: {
               {hike.durationHours ? `${Number(hike.durationHours)} ${dd.durationUnit}` : dd.notSet}
             </InfoCard>
             <InfoCard icon={<Users size={18} />} label={dd.participantsLabel}>
-              {isUpcoming ? (
-                <ParticipantsCount
-                  hikeId={hike.id}
-                  initial={{ confirmedCount, maxParticipants: hike.maxParticipants, waitlistCount }}
-                  dict={{ confirmed: dd.confirmed, onWaitlist: dd.onWaitlist }}
-                />
-              ) : (
-                <>
-                  {confirmedCount}/{hike.maxParticipants} {dd.confirmed}
-                  {waitlistCount > 0 && <span className="text-stone-400 text-sm ml-1">· {waitlistCount} {dd.onWaitlist}</span>}
-                </>
-              )}
+              {isUpcoming
+                ? <ParticipantsCount spotsUrl={spotsApiUrl('hike', hike.id)} initial={counts} dict={countsDict} />
+                : <ParticipantsLine counts={counts} dict={countsDict} />}
             </InfoCard>
             <InfoCard icon={<DollarSign size={18} />} label={dd.entryFeeLabel}>
-              {entryFee > 0 ? `${entryFee} RON` : dd.free}
+              {priceOrFree(entryFee, dd.free)}
             </InfoCard>
             <InfoCard icon={<Car size={18} />} label={dd.carsLabel}>
               {carsCount} {carsCountIsAuto && <span className="text-stone-400 text-xs">({dd.carsAuto})</span>}
@@ -212,49 +179,25 @@ export default async function HikeDetailPage({ params, searchParams }: {
           </div>
         </div>
 
-        {/* Confirmation panel — mobile order 2 (right after general details), desktop right column top */}
+        {/* Registration panel — mobile order 2 (right after general details), desktop right column top */}
         {isUpcoming && (
           <div className="order-2 lg:col-start-3 lg:row-start-1 self-start bg-white border border-stone-100 rounded-3xl p-6 shadow-md">
-            <div className="text-center mb-5">
-              {totalPrice > confirmationPrice ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">{displayTotalPrice} RON</div>
-                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.totalPriceLabel}</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-700">{displayConfirmationPrice} RON</div>
-                    <div className="text-stone-400 text-[11px] uppercase tracking-wide mt-1">{dd.confirmationPriceLabel}</div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-4xl font-black tracking-tight text-stone-900">
-                    {displayConfirmationPrice > 0 ? `${displayConfirmationPrice} RON` : dd.free}
-                  </div>
-                  {displayConfirmationPrice > 0 && (
-                    <p className="text-stone-400 text-sm mt-1">{hasFriend ? dd.forYouAndFriend : dd.perPerson}</p>
-                  )}
-                </>
-              )}
-              {accommodationDeposit > 0 && (
-                <p className="text-stone-400 text-xs mt-2 leading-relaxed">
-                  {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee * priceMultiplier))
-                    .replace('{deposit}', String(accommodationDeposit * priceMultiplier))}
-                </p>
-              )}
-              {hasFriend && (
-                <p className="text-emerald-600 text-xs font-medium mt-2 leading-relaxed">{dd.friendDoublesFee}</p>
-              )}
+            <PriceSummary
+              totalPrice={totalPrice}
+              confirmationPrice={confirmationPrice}
+              priceMultiplier={priceMultiplier}
+              hasFriend={hasFriend}
+              breakdown={feeBreakdown}
+              dict={dd}
+            >
               <p className="flex items-start justify-center gap-1.5 text-stone-400 text-xs mt-3 leading-relaxed text-left">
                 <Car size={13} className="shrink-0 mt-0.5" /> {dd.gasNotIncluded.replace('{count}', String(carsCount))}
               </p>
-            </div>
+            </PriceSummary>
 
             <SpotsCounter
-              hikeId={hike.id}
-              initial={{ confirmedCount, maxParticipants: hike.maxParticipants, spotsLeft, isFull, waitlistCount }}
+              spotsUrl={spotsApiUrl('hike', hike.id)}
+              initial={{ ...counts, spotsLeft, isFull }}
               dict={d.spots}
             />
 
@@ -262,13 +205,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
               hikeId={hike.id}
               userId={session?.user?.id ?? null}
               isFull={isFull}
-              participationStatus={userParticipation?.status ?? null}
-              currentBringsCar={userParticipation?.bringsCar ?? false}
-              currentCarSeats={userParticipation?.carSeats ?? null}
-              currentCarTrip={userParticipation?.carTrip ?? 'both'}
-              currentPickupLat={userParticipation?.pickupLat ?? null}
-              currentPickupLng={userParticipation?.pickupLng ?? null}
-              paymentDeadline={userParticipation?.paymentDeadline ? userParticipation.paymentDeadline.toISOString() : null}
+              registration={toRegistration(userParticipation)}
               waitlistPosition={userWaitlistPosition}
               waitlistCount={waitlistCount}
               dict={d.joinButton}
@@ -281,121 +218,14 @@ export default async function HikeDetailPage({ params, searchParams }: {
 
         {/* Rest of left column content — mobile order 4, desktop left column (after general details) */}
         <div className="order-4 lg:col-start-1 lg:col-span-2 lg:row-start-2 space-y-8">
-          <Link
-            href={`/${lang}/hikes/${hike.id}/carpool`}
-            className="flex items-center justify-between gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl p-4 font-semibold shadow-sm transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <Car size={18} /> {dd.participantsSectionTitle}
-            </span>
-            <ExternalLink size={15} className="text-white/70" />
-          </Link>
+          <CarpoolLink href={`/${lang}/hikes/${hike.id}/carpool`} label={dd.participantsSectionTitle} />
 
           {hike.hasCamping && (hike.campingDetails || hike.campingUrl || hike.campingPrice) && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 space-y-2">
-              <h3 className="font-semibold text-amber-800 flex items-center gap-2">
-                <Tent size={16} /> {dd.campingTitle}
-              </h3>
-              {hike.campingDetails && (
-                <p className="text-amber-700 text-sm break-words">{hike.campingDetails}</p>
-              )}
-              {hike.campingUrl && (
-                <a
-                  href={hike.campingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
-                >
-                  <ExternalLink size={15} /> {dd.campingBookingLink}
-                </a>
-              )}
-              {hike.campingPrice && (
-                <div className="bg-white rounded-lg p-3 inline-block text-center">
-                  <div className="text-lg font-bold text-amber-800">{Number(hike.campingPrice)} RON</div>
-                  <div className="text-xs text-amber-500 mt-0.5">{dd.campingCost}</div>
-                </div>
-              )}
-            </div>
+            <HikeCampingBox hike={hike} dict={dd} />
           )}
 
-          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime || hike.checkInTime || hike.checkOutTime || rooms.length > 0) && (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3">
-              <h3 className="font-semibold text-blue-800 flex items-center gap-2">
-                <Hotel size={16} /> {dd.accommodationTitle}
-              </h3>
-              {hike.accommodationDetails && (
-                <p className="text-blue-700 text-sm break-words">{hike.accommodationDetails}</p>
-              )}
-              {hike.accommodationUrl && (
-                <a
-                  href={hike.accommodationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
-                >
-                  <ExternalLink size={15} /> {dd.accommodationBookingLink}
-                </a>
-              )}
-              {hike.accommodationPrice && (() => {
-                const price = Number(hike.accommodationPrice)
-                const deposit = hike.accommodationDeposit ? Number(hike.accommodationDeposit) : null
-                return (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <div className="bg-white rounded-lg p-3 text-center">
-                      <div className="text-lg font-bold text-blue-800">{price} RON</div>
-                      <div className="text-xs text-blue-500 mt-0.5">{dd.accommodationCost}</div>
-                    </div>
-                    {deposit && (
-                      <>
-                        <div className="bg-white rounded-lg p-3 text-center">
-                          <div className="text-lg font-bold text-amber-700">{deposit} RON</div>
-                          <div className="text-xs text-amber-500 mt-0.5">{dd.accommodationDeposit}</div>
-                        </div>
-                        <div className="bg-white rounded-lg p-3 text-center">
-                          <div className="text-lg font-bold text-stone-700">{price - deposit} RON</div>
-                          <div className="text-xs text-stone-400 mt-0.5">{dd.accommodationRemaining}</div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )
-              })()}
-              {hike.accommodationPrice && hike.accommodationDeposit && (
-                <p className="text-blue-600 text-xs leading-relaxed">{dd.accommodationRemainingNote}</p>
-              )}
-              {(hike.checkInTime || hike.checkOutTime || hike.breakfastTime || hike.dinnerTime) && (
-                <div className="flex flex-wrap gap-4">
-                  {hike.checkInTime && (
-                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
-                      <Clock size={14} /> {dd.checkInTime}: {hike.checkInTime}
-                    </span>
-                  )}
-                  {hike.checkOutTime && (
-                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
-                      <Clock size={14} /> {dd.checkOutTime}: {hike.checkOutTime}
-                    </span>
-                  )}
-                  {hike.breakfastTime && (
-                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
-                      <Clock size={14} /> {dd.breakfastTime}: {hike.breakfastTime}
-                    </span>
-                  )}
-                  {hike.dinnerTime && (
-                    <span className="flex items-center gap-1.5 text-sm text-blue-700">
-                      <Clock size={14} /> {dd.dinnerTime}: {hike.dinnerTime}
-                    </span>
-                  )}
-                </div>
-              )}
-              {rooms.length > 0 && (
-                <Link
-                  href={`/${lang}/hikes/${hike.id}/rooms`}
-                  className="flex w-full items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shadow-sm"
-                >
-                  <ExternalLink size={15} /> {dd.roomsTitle}
-                </Link>
-              )}
-            </div>
+          {hike.hasAccommodation && (hike.accommodationDetails || hike.accommodationUrl || hike.accommodationPrice || hike.breakfastTime || hike.dinnerTime || hike.checkInTime || hike.checkOutTime || hasRooms) && (
+            <HikeAccommodationBox hike={hike} roomsUrl={hasRooms ? `/${lang}/hikes/${hike.id}/rooms` : null} dict={dd} />
           )}
 
           <EssentialsSection items={hike.essentials} title={dd.essentialsTitle} />
@@ -420,62 +250,20 @@ export default async function HikeDetailPage({ params, searchParams }: {
           </div>
         )}
 
-        {/* Rest of sidebar content — mobile order 3, desktop right column (after confirmation panel) */}
+        {/* Rest of sidebar content — mobile order 3, desktop right column (after registration panel) */}
         <div className="order-3 lg:col-start-3 lg:row-start-2 self-start space-y-4">
           {hike.whatsappGroupUrl && showsAsConfirmed && (
-            <a href={hike.whatsappGroupUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-2xl transition-colors">
-              <MessageCircle size={18} /> {dd.joinWhatsApp}
-            </a>
+            <WhatsAppGroupLink url={hike.whatsappGroupUrl} label={dd.joinWhatsApp} />
           )}
 
-          {confirmationPrice > 0 && bankAccounts.length > 0 && (
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6">
-              <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
-                <DollarSign size={16} /> {dd.paymentTitle}
-              </h3>
-              <p className="text-amber-700 text-sm mb-4">
-                {dd.paymentDesc.replace('{fee}', String(displayConfirmationPrice))}
-              </p>
-              {hasFriend && (
-                <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
-                  {dd.friendDoublesFee}
-                </p>
-              )}
-              {accommodationDeposit > 0 && (
-                <p className="text-amber-600 text-xs font-medium bg-amber-100/70 rounded-lg px-3 py-2 mb-4">
-                  {dd.feeBreakdown
-                    .replace('{entryFee}', String(entryFee * priceMultiplier))
-                    .replace('{deposit}', String(accommodationDeposit * priceMultiplier))}
-                </p>
-              )}
-              {bankAccounts.map(account => {
-                const methodLabel = account.type === 'revolut' ? 'Revolut' : account.type === 'btpay' ? 'BT Pay' : account.bankName
-                const revolutTag = account.type === 'revolut' && account.paymentHandle?.startsWith('@')
-                  ? account.paymentHandle.slice(1)
-                  : null
-                return (
-                  <div key={account.id} className="bg-white rounded-xl p-4 mb-3 last:mb-0 border border-amber-100">
-                    <div className="font-semibold text-stone-800">{methodLabel}</div>
-                    <div className="text-stone-600 text-sm">{account.accountHolder}</div>
-                    <div className="font-mono text-sm mt-1 text-stone-700 break-all">
-                      {account.type === 'bank' ? account.iban : account.paymentHandle}
-                    </div>
-                    {revolutTag && (
-                      <a
-                        href={`https://revolut.me/${revolutTag}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-2.5 bg-stone-900 hover:bg-stone-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
-                      >
-                        <ExternalLink size={12} /> {dd.payWithRevolut}
-                      </a>
-                    )}
-                    {account.notes && <p className="text-stone-400 text-xs mt-1">{account.notes}</p>}
-                  </div>
-                )
-              })}
-            </div>
+          {confirmationPrice > 0 && hike.bankAccounts.length > 0 && (
+            <PaymentInstructions
+              accounts={hike.bankAccounts}
+              amount={confirmationPrice * priceMultiplier}
+              hasFriend={hasFriend}
+              note={feeBreakdown}
+              dict={dd}
+            />
           )}
 
           {hike.status === 'completed' && hike.externalPhotosUrl && photos.length === 0 && (
@@ -486,26 +274,6 @@ export default async function HikeDetailPage({ params, searchParams }: {
           )}
         </div>
       </div>
-    </div>
-  )
-}
-
-function difficultyColor(d: string) {
-  const m: Record<string, string> = {
-    easy: 'text-green-700 bg-green-100',
-    easy_medium: 'text-lime-700 bg-lime-100',
-    medium: 'text-yellow-700 bg-yellow-100',
-    medium_hard: 'text-orange-700 bg-orange-100',
-    hard: 'text-red-700 bg-red-100',
-  }
-  return m[d] ?? ''
-}
-
-function InfoCard({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm ring-1 ring-stone-950/[0.04]">
-      <div className="flex items-center gap-1.5 text-stone-400 text-[10px] font-semibold uppercase tracking-widest mb-2">{icon} {label}</div>
-      <div className="text-stone-900 font-semibold text-sm leading-snug">{children}</div>
     </div>
   )
 }

@@ -1,8 +1,8 @@
-import Link from 'next/link'
-import { Calendar, Users, Clock, ChevronRight, Mountain, MapPin, DollarSign } from 'lucide-react'
+import { DollarSign } from 'lucide-react'
+import type { Hike } from '@prisma/client'
+import EventCard, { CARD_DATE_FORMAT, CARD_DATE_LOCALE } from '@/components/events/EventCard'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
-
-const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
+import { formatRon, priceOrFree } from '@/lib/money'
 
 type ViaFerrataCardData = {
   id: string
@@ -21,100 +21,59 @@ type ViaFerrataCardData = {
 
 type ViaFerrataCardDict = {
   full: string
-  joined: string
   went: string
-  viewDetails: string
   free: string
   onWaitlist: string
   totalPriceShort: string
   status: Record<string, string>
 }
 
-const STATUS_TEXT: Record<string, string> = {
-  upcoming: 'text-emerald-600',
-  ongoing: 'text-blue-600',
-  completed: 'text-stone-500',
-  cancelled: 'text-red-500',
+/**
+ * Serializable card data from a Via Ferrata row. These events reuse the accommodation
+ * price/deposit columns for their total price and the advance that confirms a spot.
+ */
+export function toViaFerrataCardData(event: Hike & { participants: { status: string }[] }): ViaFerrataCardData {
+  return {
+    id: event.id,
+    title: event.title,
+    location: event.destination,
+    date: event.date.toISOString(),
+    totalPrice: event.accommodationPrice ? Number(event.accommodationPrice) : null,
+    advanceFee: event.accommodationDeposit ? Number(event.accommodationDeposit) : null,
+    maxParticipants: event.maxParticipants,
+    durationHours: event.durationHours ? Number(event.durationHours) : null,
+    status: event.status,
+    confirmedCount: event.participants.filter(p => p.status === 'confirmed').length,
+    waitlistCount: event.participants.filter(p => p.status === 'waitlist').length,
+    coverImageUrl: event.coverImageUrl,
+  }
 }
 
 export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata: ViaFerrataCardData; lang: string; dict: ViaFerrataCardDict }) {
-  const spotsLeft = viaFerrata.maxParticipants - viaFerrata.confirmedCount
-  const isFull = spotsLeft <= 0
-  const isUpcoming = !isPastEvent(viaFerrata.status, viaFerrata.date)
   const confirmationPrice = viaFerrata.advanceFee ?? 0
   const totalPrice = viaFerrata.totalPrice ?? 0
-  const priceLabel = confirmationPrice > 0 ? `${confirmationPrice} RON` : dict.free
 
   return (
-    <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`}
-      className="group block bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
-
-      <div className="relative h-60 overflow-hidden">
-        {viaFerrata.coverImageUrl ? (
-          <img src={viaFerrata.coverImageUrl} alt={viaFerrata.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-800 flex items-center justify-center">
-            <Mountain size={56} className="text-white/10" />
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
-
-        <div className="absolute top-3.5 right-3.5">
-          <span className="bg-white text-stone-900 font-bold text-sm px-3 py-1.5 rounded-full shadow-md">
-            {priceLabel}
-          </span>
+    <EventCard
+      href={`/${lang}/via-ferrata/${viaFerrata.id}`}
+      title={viaFerrata.title}
+      location={viaFerrata.location}
+      coverImageUrl={viaFerrata.coverImageUrl}
+      priceLabel={priceOrFree(confirmationPrice, dict.free)}
+      status={viaFerrata.status}
+      statusLabel={dict.status[viaFerrata.status] ?? viaFerrata.status}
+      priceNote={totalPrice > confirmationPrice && (
+        <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
+          <DollarSign size={12} /> {dict.totalPriceShort}: {formatRon(totalPrice)}
         </div>
-
-        <div className="absolute top-3.5 left-3.5 flex gap-1.5">
-          <span className={`bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1.5 rounded-full ${STATUS_TEXT[viaFerrata.status]}`}>
-            {dict.status[viaFerrata.status] ?? viaFerrata.status}
-          </span>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 p-5">
-          <h3 className="font-bold text-white text-lg leading-snug group-hover:text-emerald-300 transition-colors">
-            {viaFerrata.title}
-          </h3>
-          <p className="text-white/60 text-sm flex items-center gap-1 mt-1">
-            <MapPin size={13} className="shrink-0" /> {viaFerrata.location}
-          </p>
-        </div>
-      </div>
-
-      <div className="px-5 py-3.5">
-        {totalPrice > confirmationPrice && (
-          <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
-            <DollarSign size={12} /> {dict.totalPriceShort}: {totalPrice} RON
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
-            <span className="flex items-center gap-1">
-              <Calendar size={12} />
-              {formatHikeDate(viaFerrata.date, null, LOCALE_MAP[lang] ?? 'ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </span>
-            {viaFerrata.durationHours && (
-              <span className="flex items-center gap-1"><Clock size={12} /> {viaFerrata.durationHours}h</span>
-            )}
-            <span className="flex items-center gap-1">
-              <Users size={12} />
-              {isUpcoming ? (
-                isFull
-                  ? <span className="text-red-500 font-semibold">{dict.full}</span>
-                  : <span>{viaFerrata.confirmedCount}/{viaFerrata.maxParticipants}</span>
-              ) : (
-                <span>{viaFerrata.confirmedCount} {dict.went}</span>
-              )}
-              {isUpcoming && viaFerrata.waitlistCount > 0 && (
-                <span className="text-stone-400">· {viaFerrata.waitlistCount} {dict.onWaitlist}</span>
-              )}
-            </span>
-          </div>
-          <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-        </div>
-      </div>
-    </Link>
+      )}
+      dateLabel={formatHikeDate(viaFerrata.date, null, CARD_DATE_LOCALE[lang] ?? 'ro-RO', CARD_DATE_FORMAT)}
+      durationHours={viaFerrata.durationHours}
+      isUpcoming={!isPastEvent(viaFerrata.status, viaFerrata.date)}
+      confirmedCount={viaFerrata.confirmedCount}
+      maxParticipants={viaFerrata.maxParticipants}
+      waitlistCount={viaFerrata.waitlistCount}
+      dict={dict}
+    />
   )
 }

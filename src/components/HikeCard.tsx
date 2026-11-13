@@ -1,14 +1,13 @@
-import Link from 'next/link'
-import { Calendar, Users, Clock, Tent, Hotel, ChevronRight, Mountain, MapPin } from 'lucide-react'
+import { Tent, Hotel } from 'lucide-react'
+import type { Hike } from '@prisma/client'
+import EventCard, { CARD_DATE_FORMAT, CARD_DATE_LOCALE } from '@/components/events/EventCard'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
-
-const LOCALE_MAP: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
+import { formatRon, priceOrFree } from '@/lib/money'
 
 type HikeCardData = {
   id: string
   title: string
   destination: string
-  description: string | null
   date: string
   endDate: string | null
   entryFee: number
@@ -27,11 +26,8 @@ type HikeCardData = {
 
 type HikeCardDict = {
   full: string
-  joined: string
   went: string
-  viewDetails: string
   free: string
-  noCoverPhoto: string
   camping: string
   accommodation: string
   onWaitlist: string
@@ -48,120 +44,75 @@ const DIFFICULTY_TEXT: Record<string, string> = {
   hard: 'text-red-600',
 }
 
-const STATUS_TEXT: Record<string, string> = {
-  upcoming: 'text-emerald-600',
-  ongoing: 'text-blue-600',
-  completed: 'text-stone-500',
-  cancelled: 'text-red-500',
+/** Serializable card data from a hike row with its participants' statuses. */
+export function toHikeCardData(hike: Hike & { participants: { status: string }[] }): HikeCardData {
+  return {
+    id: hike.id,
+    title: hike.title,
+    destination: hike.destination,
+    date: hike.date.toISOString(),
+    endDate: hike.endDate ? hike.endDate.toISOString() : null,
+    entryFee: Number(hike.entryFee),
+    maxParticipants: hike.maxParticipants,
+    durationHours: hike.durationHours ? Number(hike.durationHours) : null,
+    hasCamping: hike.hasCamping,
+    hasAccommodation: hike.hasAccommodation,
+    accommodationPrice: hike.accommodationPrice ? Number(hike.accommodationPrice) : null,
+    accommodationDeposit: hike.accommodationDeposit ? Number(hike.accommodationDeposit) : null,
+    difficulty: hike.difficulty,
+    status: hike.status,
+    coverImageUrl: hike.coverImageUrl,
+    confirmedCount: hike.participants.filter(p => p.status === 'confirmed').length,
+    waitlistCount: hike.participants.filter(p => p.status === 'waitlist').length,
+  }
 }
 
 export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lang: string; dict: HikeCardDict }) {
-  const spotsLeft = hike.maxParticipants - hike.confirmedCount
-  const isFull = spotsLeft <= 0
-  const isUpcoming = !isPastEvent(hike.status, hike.date, hike.endDate)
   const accommodationPrice = hike.hasAccommodation && hike.accommodationPrice ? hike.accommodationPrice : 0
   const accommodationDeposit = hike.hasAccommodation && hike.accommodationDeposit ? hike.accommodationDeposit : 0
+  // What confirms a spot (entry fee + deposit) vs. the full price including the rest of the accommodation.
   const confirmationPrice = hike.entryFee + accommodationDeposit
   const totalPrice = hike.entryFee + accommodationPrice
-  const priceLabel = confirmationPrice > 0 ? `${confirmationPrice} RON` : dict.free
 
   return (
-    <Link href={`/${lang}/hikes/${hike.id}`}
-      className="group block bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
-
-      {/* Image / overlay area */}
-      <div className="relative h-60 overflow-hidden">
-        {hike.coverImageUrl ? (
-          <img src={hike.coverImageUrl} alt={hike.title}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-emerald-900 via-emerald-800 to-stone-800 flex items-center justify-center">
-            <Mountain size={56} className="text-white/10" />
-          </div>
-        )}
-
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/5" />
-
-        {/* Price badge — top right */}
-        <div className="absolute top-3.5 right-3.5">
-          <span className="bg-white text-stone-900 font-bold text-sm px-3 py-1.5 rounded-full shadow-md">
-            {priceLabel}
-          </span>
-        </div>
-
-        {/* Status + difficulty — top left */}
-        <div className="absolute top-3.5 left-3.5 flex gap-1.5">
-          <span className={`bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1.5 rounded-full ${STATUS_TEXT[hike.status]}`}>
-            {dict.status[hike.status] ?? hike.status}
-          </span>
-          {hike.difficulty && (
-            <span className={`bg-white/90 backdrop-blur-sm text-xs font-semibold px-2.5 py-1.5 rounded-full ${DIFFICULTY_TEXT[hike.difficulty]}`}>
-              {dict.difficulty[hike.difficulty] ?? hike.difficulty}
+    <EventCard
+      href={`/${lang}/hikes/${hike.id}`}
+      title={hike.title}
+      location={hike.destination}
+      coverImageUrl={hike.coverImageUrl}
+      priceLabel={priceOrFree(confirmationPrice, dict.free)}
+      status={hike.status}
+      statusLabel={dict.status[hike.status] ?? hike.status}
+      difficulty={hike.difficulty
+        ? { label: dict.difficulty[hike.difficulty] ?? hike.difficulty, className: DIFFICULTY_TEXT[hike.difficulty] }
+        : null}
+      amenities={(hike.hasCamping || hike.hasAccommodation) && (
+        // Sits under the price badge; camping wins when a hike offers both.
+        <div className="absolute top-3.5 right-3.5 flex flex-col gap-1.5 items-end" style={{ top: '3.25rem' }}>
+          {hike.hasCamping && (
+            <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 font-medium">
+              <Tent size={11} /> {dict.camping}
+            </span>
+          )}
+          {hike.hasAccommodation && !hike.hasCamping && (
+            <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 font-medium">
+              <Hotel size={11} /> {dict.accommodation}
             </span>
           )}
         </div>
-
-        {/* Amenity badges — bottom right of image area, before title strip */}
-        {(hike.hasCamping || hike.hasAccommodation) && (
-          <div className="absolute top-3.5 right-3.5 flex flex-col gap-1.5 items-end" style={{ top: '3.25rem' }}>
-            {hike.hasCamping && (
-              <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 font-medium">
-                <Tent size={11} /> {dict.camping}
-              </span>
-            )}
-            {hike.hasAccommodation && !hike.hasCamping && (
-              <span className="bg-black/50 backdrop-blur-sm text-white text-xs px-2.5 py-1.5 rounded-full flex items-center gap-1 font-medium">
-                <Hotel size={11} /> {dict.accommodation}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Title + location overlaid on image */}
-        <div className="absolute bottom-0 left-0 right-0 p-5">
-          <h3 className="font-bold text-white text-lg leading-snug group-hover:text-emerald-300 transition-colors">
-            {hike.title}
-          </h3>
-          <p className="text-white/60 text-sm flex items-center gap-1 mt-1">
-            <MapPin size={13} className="shrink-0" /> {hike.destination}
-          </p>
+      )}
+      priceNote={hike.hasAccommodation && totalPrice > confirmationPrice && (
+        <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
+          <Hotel size={12} /> {dict.totalPriceShort}: {formatRon(totalPrice)}
         </div>
-      </div>
-
-      {/* Bottom info strip */}
-      <div className="px-5 py-3.5">
-        {hike.hasAccommodation && totalPrice > confirmationPrice && (
-          <div className="flex items-center gap-1 text-xs text-blue-600 font-semibold mb-2">
-            <Hotel size={12} /> {dict.totalPriceShort}: {totalPrice} RON
-          </div>
-        )}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-3.5 text-xs text-stone-400 font-medium">
-            <span className="flex items-center gap-1">
-              <Calendar size={12} />
-              {formatHikeDate(hike.date, hike.endDate, LOCALE_MAP[lang] ?? 'ro-RO', { day: 'numeric', month: 'short', year: 'numeric' })}
-            </span>
-            {hike.durationHours && (
-              <span className="flex items-center gap-1"><Clock size={12} /> {hike.durationHours}h</span>
-            )}
-            <span className="flex items-center gap-1">
-              <Users size={12} />
-              {isUpcoming ? (
-                isFull
-                  ? <span className="text-red-500 font-semibold">{dict.full}</span>
-                  : <span>{hike.confirmedCount}/{hike.maxParticipants}</span>
-              ) : (
-                <span>{hike.confirmedCount} {dict.went}</span>
-              )}
-              {isUpcoming && hike.waitlistCount > 0 && (
-                <span className="text-stone-400">· {hike.waitlistCount} {dict.onWaitlist}</span>
-              )}
-            </span>
-          </div>
-          <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-        </div>
-      </div>
-    </Link>
+      )}
+      dateLabel={formatHikeDate(hike.date, hike.endDate, CARD_DATE_LOCALE[lang] ?? 'ro-RO', CARD_DATE_FORMAT)}
+      durationHours={hike.durationHours}
+      isUpcoming={!isPastEvent(hike.status, hike.date, hike.endDate)}
+      confirmedCount={hike.confirmedCount}
+      maxParticipants={hike.maxParticipants}
+      waitlistCount={hike.waitlistCount}
+      dict={dict}
+    />
   )
 }

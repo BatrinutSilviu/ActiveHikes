@@ -7,7 +7,8 @@ import PickupLocationsMap from '@/components/admin/PickupLocationsMapWrapper'
 import HikeEditForm from '@/components/admin/HikeEditForm'
 import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import PhotoUploader from '@/components/admin/PhotoUploader'
-import JoinButton from '@/components/hikes/JoinButton'
+import JoinButton from '@/components/events/join/JoinButton'
+import { toRegistration } from '@/components/events/join/registration'
 import { ArrowLeft, Car, BedDouble, ChevronRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
@@ -15,6 +16,7 @@ import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isEventPast } from '@/lib/dates'
+import { waitlistPosition } from '@/lib/participantStats'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -52,9 +54,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     : null
 
   const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
-  const adminWaitlistPosition = adminParticipation?.status === 'waitlist'
-    ? waitlistParticipants.findIndex(p => p.userId === session?.user?.id) + 1
-    : null
+  const adminWaitlistPosition = waitlistPosition(hike.participants, session?.user?.id, adminParticipation?.status)
 
   const counts = {
     confirmed: hike.participants.filter(p => p.status === 'confirmed').length,
@@ -183,13 +183,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
               hikeId={hike.id}
               userId={session?.user?.id ?? null}
               isFull={isFull}
-              participationStatus={adminParticipation?.status ?? null}
-              currentBringsCar={adminParticipation?.bringsCar ?? false}
-              currentCarSeats={adminParticipation?.carSeats ?? null}
-              currentCarTrip={adminParticipation?.carTrip ?? 'both'}
-              currentPickupLat={adminParticipation?.pickupLat ?? null}
-              currentPickupLng={adminParticipation?.pickupLng ?? null}
-              paymentDeadline={adminParticipation?.paymentDeadline ? adminParticipation.paymentDeadline.toISOString() : null}
+              registration={toRegistration(adminParticipation)}
               waitlistPosition={adminWaitlistPosition}
               waitlistCount={waitlistParticipants.length}
               dict={d.joinButton}
