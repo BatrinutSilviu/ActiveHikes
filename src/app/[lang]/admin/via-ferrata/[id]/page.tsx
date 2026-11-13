@@ -1,22 +1,21 @@
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import ParticipantManager from '@/components/admin/ParticipantManager'
 import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
-import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import { isEventPast } from '@/lib/dates'
-import JoinButton from '@/components/events/join/JoinButton'
+import { AdminActionLink, AdminEventHeader, AdminRegistrationCard, StatusCountsGrid } from '@/components/admin/AdminEventParts'
 import { toRegistration } from '@/components/events/join/registration'
-import { ArrowLeft, Car, ChevronRight } from 'lucide-react'
+import { Car } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { waitlistPosition } from '@/lib/participantStats'
+import { participantStats, waitlistPosition } from '@/lib/participantStats'
+import { managedParticipantInclude, toManagedParticipant } from '@/lib/adminParticipants'
 
 export default async function AdminViaFerrataPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -30,14 +29,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     prisma.hike.findFirst({
       where: { id, type: 'via_ferrata' },
       include: {
-        participants: {
-          include: {
-            user: { select: { id: true, name: true, email: true, phone: true } },
-            friend: { select: { id: true, friendName: true } },
-            host: { select: { id: true, user: { select: { name: true } } } },
-          },
-          orderBy: { joinedAt: 'asc' },
-        },
+        participants: { include: managedParticipantInclude, orderBy: { joinedAt: 'asc' } },
         documents: { orderBy: { createdAt: 'asc' } },
         documentSubmissions: {
           include: {
@@ -60,33 +52,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
     ? viaFerrata.participants.find(p => p.userId === session.user.id) ?? null
     : null
 
-  const waitlistParticipants = viaFerrata.participants.filter(p => p.status === 'waitlist')
-  const adminWaitlistPosition = waitlistPosition(viaFerrata.participants, session?.user?.id, adminParticipation?.status)
-
-  const counts = {
-    confirmed: viaFerrata.participants.filter(p => p.status === 'confirmed').length,
-    pending: viaFerrata.participants.filter(p => p.status === 'pending').length,
-    waitlist: waitlistParticipants.length,
-    rejected: viaFerrata.participants.filter(p => p.status === 'rejected').length,
-  }
-
-  const participants = viaFerrata.participants.map(p => ({
-    id: p.id,
-    userId: p.userId,
-    status: p.status,
-    joinedAt: p.joinedAt.toISOString(),
-    paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
-    adminNotes: p.adminNotes,
-    friendName: p.friendName,
-    hostParticipantId: p.hostParticipantId,
-    hostName: p.host?.user?.name ?? null,
-    linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
-    user: p.user,
-  }))
-
-  const confirmedCount = counts.confirmed
-  const spotsLeft = viaFerrata.maxParticipants - confirmedCount
-  const isFull = spotsLeft <= 0
+  const { waitlistCount, isFull } = participantStats(viaFerrata.participants, viaFerrata.maxParticipants)
+  const participants = viaFerrata.participants.map(toManagedParticipant)
 
   const viaFerrataData = {
     id: viaFerrata.id,
@@ -131,34 +98,16 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <Link href={`/${lang}/admin`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
-        <ArrowLeft size={16} /> {da.backToDashboard}
-      </Link>
+      <AdminEventHeader
+        lang={lang}
+        title={viaFerrata.title}
+        subtitle={`${viaFerrata.destination} · ${new Date(viaFerrata.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+        publicUrl={`/${lang}/via-ferrata/${viaFerrata.id}`}
+        statusControl={{ hikeId: viaFerrata.id, status: viaFerrata.status, isPast: isEventPast(viaFerrata.date, viaFerrata.endDate, viaFerrata), dict: d.admin.hikeStatus }}
+        dict={da}
+      />
 
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-stone-900">{viaFerrata.title}</h1>
-          <p className="text-stone-500 mt-1">
-            {viaFerrata.destination} · {new Date(viaFerrata.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        </div>
-        <Link href={`/${lang}/via-ferrata/${viaFerrata.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">
-          {da.viewPublicPage}
-        </Link>
-      </div>
-
-      <div className="mb-8">
-        <HikeStatusControl hikeId={viaFerrata.id} status={viaFerrata.status} isPast={isEventPast(viaFerrata.date, viaFerrata.endDate, viaFerrata)} dict={d.admin.hikeStatus} />
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {Object.entries(counts).map(([status, count]) => (
-          <div key={status} className="bg-white border border-stone-100 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-stone-900">{count}</div>
-            <div className="text-xs text-stone-500 capitalize mt-0.5">{(da.status as Record<string, string>)[status] ?? status}</div>
-          </div>
-        ))}
-      </div>
+      <StatusCountsGrid participants={viaFerrata.participants} labels={da.status as Record<string, string>} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
@@ -186,29 +135,21 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
 
           <ParticipantDocumentUploads hikeId={viaFerrata.id} uploads={documentUploads} participants={documentUploadParticipants} dict={da.documentUploads} />
 
-          <div className="bg-white border border-stone-100 rounded-2xl p-5">
-            <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>
-            <JoinButton
-              hikeId={viaFerrata.id}
-              userId={session?.user?.id ?? null}
-              isFull={isFull}
-              registration={toRegistration(adminParticipation)}
-              waitlistPosition={adminWaitlistPosition}
-              waitlistCount={waitlistParticipants.length}
-              dict={d.joinButton}
-              tripDict={d.carTrip}
-              lang={lang}
-            />
-          </div>
+          <AdminRegistrationCard
+            title={da.myRegistration}
+            hikeId={viaFerrata.id}
+            userId={session?.user?.id ?? null}
+            isFull={isFull}
+            registration={toRegistration(adminParticipation)}
+            waitlistPosition={waitlistPosition(viaFerrata.participants, session?.user?.id, adminParticipation?.status)}
+            waitlistCount={waitlistCount}
+            dict={d.joinButton}
+            tripDict={d.carTrip}
+            lang={lang}
+          />
 
-          <Link href={`/${lang}/admin/hikes/${viaFerrata.id}/cars`}
-            className="group flex items-center gap-3 bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl p-4 shadow-md shadow-sky-200 hover:shadow-lg hover:shadow-sky-300 hover:-translate-y-0.5 transition-all">
-            <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <Car size={20} />
-            </span>
-            <span className="font-bold flex-1">{da.manageCars}</span>
-            <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+          {/* Via Ferrata events share the hikes' car management page. */}
+          <AdminActionLink color="sky" href={`/${lang}/admin/hikes/${viaFerrata.id}/cars`} icon={<Car size={20} />} label={da.manageCars} />
         </div>
       </div>
     </div>

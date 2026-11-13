@@ -1,22 +1,21 @@
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import ParticipantManager from '@/components/admin/ParticipantManager'
 import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import PickupLocationsMap from '@/components/admin/PickupLocationsMapWrapper'
 import HikeEditForm from '@/components/admin/HikeEditForm'
-import HikeStatusControl from '@/components/admin/HikeStatusControl'
 import PhotoUploader from '@/components/admin/PhotoUploader'
-import JoinButton from '@/components/events/join/JoinButton'
+import { AdminActionLink, AdminEventHeader, AdminRegistrationCard, StatusCountsGrid } from '@/components/admin/AdminEventParts'
 import { toRegistration } from '@/components/events/join/registration'
-import { ArrowLeft, Car, BedDouble, ChevronRight } from 'lucide-react'
+import { Car, BedDouble } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isEventPast } from '@/lib/dates'
-import { waitlistPosition } from '@/lib/participantStats'
+import { participantStats, waitlistPosition } from '@/lib/participantStats'
+import { managedParticipantInclude, toManagedParticipant } from '@/lib/adminParticipants'
 
 export default async function AdminHikePage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -30,14 +29,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     prisma.hike.findFirst({
       where: { id, type: 'hike' },
       include: {
-        participants: {
-        include: {
-          user: { select: { id: true, name: true, email: true, phone: true } },
-          friend: { select: { id: true, friendName: true } },
-          host: { select: { id: true, user: { select: { name: true } } } },
-        },
-        orderBy: { joinedAt: 'asc' },
-      },
+        participants: { include: managedParticipantInclude, orderBy: { joinedAt: 'asc' } },
         photos: { orderBy: { createdAt: 'asc' } },
         bankAccounts: { where: { isActive: true }, select: { id: true } },
       },
@@ -53,35 +45,16 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
     ? hike.participants.find(p => p.userId === session.user.id) ?? null
     : null
 
-  const waitlistParticipants = hike.participants.filter(p => p.status === 'waitlist')
-  const adminWaitlistPosition = waitlistPosition(hike.participants, session?.user?.id, adminParticipation?.status)
-
-  const counts = {
-    confirmed: hike.participants.filter(p => p.status === 'confirmed').length,
-    pending: hike.participants.filter(p => p.status === 'pending').length,
-    waitlist: waitlistParticipants.length,
-    rejected: hike.participants.filter(p => p.status === 'rejected').length,
-  }
+  const { waitlistCount, isFull } = participantStats(hike.participants, hike.maxParticipants)
 
   const participants = hike.participants.map(p => ({
-    id: p.id,
-    userId: p.userId,
-    hikeId: p.hikeId,
-    status: p.status,
-    joinedAt: p.joinedAt.toISOString(),
-    paymentDeadline: p.paymentDeadline ? p.paymentDeadline.toISOString() : null,
-    adminNotes: p.adminNotes,
-    friendName: p.friendName,
-    hostParticipantId: p.hostParticipantId,
-    hostName: p.host?.user?.name ?? null,
-    linkedFriend: p.friend ? { id: p.friend.id, name: p.friend.friendName } : null,
+    ...toManagedParticipant(p),
     bringsCar: p.bringsCar,
     carSeats: p.carSeats,
     carTrip: p.carTrip,
     carDriverParticipantId: p.carDriverParticipantId,
     pickupLat: p.pickupLat,
     pickupLng: p.pickupLng,
-    user: p.user,
   }))
 
   const photos = hike.photos.map(p => ({ ...p, createdAt: p.createdAt.toISOString() }))
@@ -95,10 +68,6 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       lng: p.pickupLng!,
       isDriver: p.bringsCar,
     }))
-
-  const confirmedCount = counts.confirmed
-  const spotsLeft = hike.maxParticipants - confirmedCount
-  const isFull = spotsLeft <= 0
 
   const hikeData = {
     ...hike,
@@ -117,34 +86,16 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <Link href={`/${lang}/admin`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
-        <ArrowLeft size={16} /> {da.backToDashboard}
-      </Link>
+      <AdminEventHeader
+        lang={lang}
+        title={hike.title}
+        subtitle={`${hike.destination} · ${formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+        publicUrl={`/${lang}/hikes/${hike.id}`}
+        statusControl={{ hikeId: hike.id, status: hike.status, isPast: isEventPast(hike.date, hike.endDate, hike), dict: d.admin.hikeStatus }}
+        dict={da}
+      />
 
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-stone-900">{hike.title}</h1>
-          <p className="text-stone-500 mt-1">
-            {hike.destination} · {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-        </div>
-        <Link href={`/${lang}/hikes/${hike.id}`} className="text-emerald-600 hover:underline text-sm font-medium" target="_blank">
-          {da.viewPublicPage}
-        </Link>
-      </div>
-
-      <div className="mb-8">
-        <HikeStatusControl hikeId={hike.id} status={hike.status} isPast={isEventPast(hike.date, hike.endDate, hike)} dict={d.admin.hikeStatus} />
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        {Object.entries(counts).map(([status, count]) => (
-          <div key={status} className="bg-white border border-stone-100 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-stone-900">{count}</div>
-            <div className="text-xs text-stone-500 capitalize mt-0.5">{(da.status as Record<string, string>)[status] ?? status}</div>
-          </div>
-        ))}
-      </div>
+      <StatusCountsGrid participants={hike.participants} labels={da.status as Record<string, string>} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
@@ -177,39 +128,23 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
             <HikeEditForm hike={hikeData} bankAccounts={bankAccounts} dict={d.admin.hikeEdit} lang={lang} />
           </div>
 
-          <div className="bg-white border border-stone-100 rounded-2xl p-5">
-            <h2 className="text-xl font-bold text-stone-800 mb-4">{da.myRegistration}</h2>
-            <JoinButton
-              hikeId={hike.id}
-              userId={session?.user?.id ?? null}
-              isFull={isFull}
-              registration={toRegistration(adminParticipation)}
-              waitlistPosition={adminWaitlistPosition}
-              waitlistCount={waitlistParticipants.length}
-              dict={d.joinButton}
-              tripDict={d.carTrip}
-              lang={lang}
-            />
-          </div>
+          <AdminRegistrationCard
+            title={da.myRegistration}
+            hikeId={hike.id}
+            userId={session?.user?.id ?? null}
+            isFull={isFull}
+            registration={toRegistration(adminParticipation)}
+            waitlistPosition={waitlistPosition(hike.participants, session?.user?.id, adminParticipation?.status)}
+            waitlistCount={waitlistCount}
+            dict={d.joinButton}
+            tripDict={d.carTrip}
+            lang={lang}
+          />
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link href={`/${lang}/admin/hikes/${hike.id}/cars`}
-              className="flex-1 group flex items-center gap-3 bg-gradient-to-br from-sky-500 to-sky-700 text-white rounded-2xl p-4 shadow-md shadow-sky-200 hover:shadow-lg hover:shadow-sky-300 hover:-translate-y-0.5 transition-all">
-              <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                <Car size={20} />
-              </span>
-              <span className="font-bold flex-1">{da.manageCars}</span>
-              <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            <AdminActionLink grow color="sky" href={`/${lang}/admin/hikes/${hike.id}/cars`} icon={<Car size={20} />} label={da.manageCars} />
             {hike.hasAccommodation && (
-              <Link href={`/${lang}/admin/hikes/${hike.id}/rooms`}
-                className="flex-1 group flex items-center gap-3 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl p-4 shadow-md shadow-violet-200 hover:shadow-lg hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
-                <span className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                  <BedDouble size={20} />
-                </span>
-                <span className="font-bold flex-1">{da.manageRooms}</span>
-                <ChevronRight size={18} className="text-white/70 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              <AdminActionLink grow color="violet" href={`/${lang}/admin/hikes/${hike.id}/rooms`} icon={<BedDouble size={20} />} label={da.manageRooms} />
             )}
           </div>
 
