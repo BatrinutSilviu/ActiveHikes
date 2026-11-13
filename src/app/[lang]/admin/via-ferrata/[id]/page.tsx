@@ -5,7 +5,7 @@ import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
 import ViaFerrataEditForm from '@/components/admin/ViaFerrataEditForm'
 import ViaFerrataDocumentUploader from '@/components/admin/ViaFerrataDocumentUploader'
 import ParticipantDocumentUploads from '@/components/admin/ParticipantDocumentUploads'
-import { isEventPast } from '@/lib/dates'
+import { DATE_LONG, isEventPast } from '@/lib/dates'
 import { AdminActionLink, AdminEventHeader, AdminRegistrationCard, StatusCountsGrid } from '@/components/admin/AdminEventParts'
 import { toRegistration } from '@/components/events/join/registration'
 import { Car } from 'lucide-react'
@@ -101,7 +101,7 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
       <AdminEventHeader
         lang={lang}
         title={viaFerrata.title}
-        subtitle={`${viaFerrata.destination} · ${new Date(viaFerrata.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+        subtitle={`${viaFerrata.destination} · ${new Date(viaFerrata.date).toLocaleDateString(d.locale, DATE_LONG)}`}
         publicUrl={`/${lang}/via-ferrata/${viaFerrata.id}`}
         statusControl={{ hikeId: viaFerrata.id, status: viaFerrata.status, isPast: isEventPast(viaFerrata.date, viaFerrata.endDate, viaFerrata), dict: d.admin.hikeStatus }}
         dict={da}

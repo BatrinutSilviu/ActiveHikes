@@ -17,7 +17,7 @@ import { Calendar, Users, Clock, Tent, Hotel, DollarSign, Mountain, ExternalLink
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate } from '@/lib/dates'
+import { DATE_LONG, DATE_LONG_WITH_WEEKDAY, formatHikeDate } from '@/lib/dates'
 import { getConfirmationPrice } from '@/lib/pricing'
 import { priceOrFree } from '@/lib/money'
 import { participantStats, waitlistPosition } from '@/lib/participantStats'
@@ -140,8 +140,8 @@ export default async function HikeDetailPage({ params, searchParams }: {
             </InfoCard>
             <InfoCard icon={<Calendar size={18} />} label={dd.dateLabel}>
               {hike.endDate
-                ? formatHikeDate(hike.date, hike.endDate, dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })
-                : new Date(hike.date).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                ? formatHikeDate(hike.date, hike.endDate, dateLocale, DATE_LONG)
+                : new Date(hike.date).toLocaleDateString(dateLocale, DATE_LONG_WITH_WEEKDAY)}
             </InfoCard>
             <InfoCard icon={<Clock size={18} />} label={dd.meetingTimeLabel}>
               {hike.meetingTime ?? dd.notSet}

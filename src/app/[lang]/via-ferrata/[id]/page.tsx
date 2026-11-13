@@ -17,6 +17,7 @@ import { getDictionary, hasLocale } from '@/lib/i18n'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { getConfirmationPrice } from '@/lib/pricing'
+import { DATE_LONG_WITH_WEEKDAY } from '@/lib/dates'
 import { priceOrFree } from '@/lib/money'
 import { participantStats, waitlistPosition } from '@/lib/participantStats'
 import { spotsApiUrl } from '@/lib/eventPaths'
@@ -100,7 +101,7 @@ export default async function ViaFerrataDetailPage({ params, searchParams }: {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <InfoCard icon={<Calendar size={18} />} label={dd.dateLabel}>
-              {new Date(viaFerrata.date).toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              {new Date(viaFerrata.date).toLocaleDateString(dateLocale, DATE_LONG_WITH_WEEKDAY)}
             </InfoCard>
             <InfoCard icon={<Clock size={18} />} label={dd.durationLabel}>
               {viaFerrata.durationHours ? `${Number(viaFerrata.durationHours)} ${dd.durationUnit}` : dd.notSet}

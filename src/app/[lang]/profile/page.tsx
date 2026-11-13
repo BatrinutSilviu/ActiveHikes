@@ -10,7 +10,7 @@ import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate, isPastEvent } from '@/lib/dates'
+import { DATE_SHORT, formatHikeDate, isPastEvent } from '@/lib/dates'
 import UploadedImage from '@/components/UploadedImage'
 
 const participationInclude = {
@@ -143,7 +143,7 @@ function ParticipationCard({ participation, lang, statusUI, dateLocale }: {
         <div className="font-semibold text-stone-800 truncate group-hover:text-emerald-700 transition-colors">{hike.title}</div>
         <div className="text-stone-400 text-sm flex items-center gap-1 mt-0.5">
           <Calendar size={12} />
-          {formatHikeDate(hike.date, hike.endDate, dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
+          {formatHikeDate(hike.date, hike.endDate, dateLocale, DATE_SHORT)}
         </div>
       </div>
       <div className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full ${ui.color} ${ui.bg} shrink-0`}>

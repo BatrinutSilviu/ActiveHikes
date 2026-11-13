@@ -1,7 +1,7 @@
 import { Tent, Hotel } from 'lucide-react'
 import type { Hike } from '@prisma/client'
-import EventCard, { CARD_DATE_FORMAT, CARD_DATE_LOCALE } from '@/components/events/EventCard'
-import { formatHikeDate, isPastEvent } from '@/lib/dates'
+import EventCard, { CARD_DATE_LOCALE } from '@/components/events/EventCard'
+import { DATE_SHORT, formatHikeDate, isPastEvent } from '@/lib/dates'
 import { formatRon, priceOrFree } from '@/lib/money'
 
 type HikeCardData = {
@@ -106,7 +106,7 @@ export default function HikeCard({ hike, lang, dict }: { hike: HikeCardData; lan
           <Hotel size={12} /> {dict.totalPriceShort}: {formatRon(totalPrice)}
         </div>
       )}
-      dateLabel={formatHikeDate(hike.date, hike.endDate, CARD_DATE_LOCALE[lang] ?? 'ro-RO', CARD_DATE_FORMAT)}
+      dateLabel={formatHikeDate(hike.date, hike.endDate, CARD_DATE_LOCALE[lang] ?? 'ro-RO', DATE_SHORT)}
       durationHours={hike.durationHours}
       isUpcoming={!isPastEvent(hike.status, hike.date, hike.endDate)}
       confirmedCount={hike.confirmedCount}

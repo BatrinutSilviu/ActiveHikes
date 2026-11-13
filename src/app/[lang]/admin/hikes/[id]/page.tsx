@@ -13,7 +13,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate, isEventPast } from '@/lib/dates'
+import { DATE_LONG, formatHikeDate, isEventPast } from '@/lib/dates'
 import { participantStats, waitlistPosition } from '@/lib/participantStats'
 import { managedParticipantInclude, toManagedParticipant } from '@/lib/adminParticipants'
 
@@ -89,7 +89,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
       <AdminEventHeader
         lang={lang}
         title={hike.title}
-        subtitle={`${hike.destination} · ${formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'long', year: 'numeric' })}`}
+        subtitle={`${hike.destination} · ${formatHikeDate(hike.date, hike.endDate, d.locale, DATE_LONG)}`}
         publicUrl={`/${lang}/hikes/${hike.id}`}
         statusControl={{ hikeId: hike.id, status: hike.status, isPast: isEventPast(hike.date, hike.endDate, hike), dict: d.admin.hikeStatus }}
         dict={da}

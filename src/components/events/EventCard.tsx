@@ -136,6 +136,5 @@ export default function EventCard({
   )
 }
 
-/** Card dates use the full regional locale (e.g. "12 iun. 2027"). */
+/** Cards only get the URL language; this is the matching date locale (same as the dictionaries' `locale`). */
 export const CARD_DATE_LOCALE: Record<string, string> = { en: 'en-GB', ro: 'ro-RO' }
-export const CARD_DATE_FORMAT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }

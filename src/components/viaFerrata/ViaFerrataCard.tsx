@@ -1,7 +1,7 @@
 import { DollarSign } from 'lucide-react'
 import type { Hike } from '@prisma/client'
-import EventCard, { CARD_DATE_FORMAT, CARD_DATE_LOCALE } from '@/components/events/EventCard'
-import { formatHikeDate, isPastEvent } from '@/lib/dates'
+import EventCard, { CARD_DATE_LOCALE } from '@/components/events/EventCard'
+import { DATE_SHORT, formatHikeDate, isPastEvent } from '@/lib/dates'
 import { formatRon, priceOrFree } from '@/lib/money'
 
 type ViaFerrataCardData = {
@@ -67,7 +67,7 @@ export default function ViaFerrataCard({ viaFerrata, lang, dict }: { viaFerrata:
           <DollarSign size={12} /> {dict.totalPriceShort}: {formatRon(totalPrice)}
         </div>
       )}
-      dateLabel={formatHikeDate(viaFerrata.date, null, CARD_DATE_LOCALE[lang] ?? 'ro-RO', CARD_DATE_FORMAT)}
+      dateLabel={formatHikeDate(viaFerrata.date, null, CARD_DATE_LOCALE[lang] ?? 'ro-RO', DATE_SHORT)}
       durationHours={viaFerrata.durationHours}
       isUpcoming={!isPastEvent(viaFerrata.status, viaFerrata.date)}
       confirmedCount={viaFerrata.confirmedCount}

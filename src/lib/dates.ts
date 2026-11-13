@@ -65,6 +65,12 @@ export function isPastEvent(status: string, date: Date | string, endDate?: Date 
   return isEventPast(date, endDate, timing)
 }
 
+// Date styles used across the app, e.g. "12 Jun 2027" / "12 June 2027" / "Saturday, 12 June 2027".
+export const DATE_SHORT: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
+export const DATE_LONG: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' }
+export const DATE_LONG_WITH_WEEKDAY: Intl.DateTimeFormatOptions = { weekday: 'long', ...DATE_LONG }
+
+/** A date, or a "start – end" range for multi-day events. */
 export function formatHikeDate(
   date: Date | string,
   endDate: Date | string | null | undefined,
