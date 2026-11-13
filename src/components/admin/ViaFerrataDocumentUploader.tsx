@@ -232,7 +232,7 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
             <label className="flex flex-col items-center gap-2 border-2 border-dashed border-stone-200 rounded-xl p-5 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors">
               <Upload size={20} className="text-stone-400" />
               <span className="text-stone-500 text-sm">{dict.selectFile}</span>
-              <input type="file" className="hidden" onChange={e => e.target.files?.[0] && setSelectedFile(e.target.files[0])} />
+              <input type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" className="hidden" onChange={e => e.target.files?.[0] && setSelectedFile(e.target.files[0])} />
             </label>
           )
         ) : (

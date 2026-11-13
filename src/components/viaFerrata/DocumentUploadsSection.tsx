@@ -107,7 +107,7 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
         <label className="flex items-center justify-center gap-2 border-2 border-dashed border-stone-200 rounded-xl py-3 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors text-sm font-semibold text-emerald-700">
           <Upload size={16} />
           {uploading ? dict.uploading : dict.uploadButton}
-          <input type="file" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }} />
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }} />
         </label>
       )}
       {error && <p role="alert" className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}

@@ -319,6 +319,7 @@
   },
   "auth": {
     "login": {
+      "tooManyAttempts": "Too many attempts — wait a few minutes and try again.",
       "title": "Welcome back",
       "subtitle": "Sign in to your account",
       "continueWithGoogle": "Continue with Google",

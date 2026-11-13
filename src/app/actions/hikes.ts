@@ -10,6 +10,7 @@ import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { notifyManagement } from '@/lib/managementSync'
+import { isPastEvent } from '@/lib/dates'
 import { type CarTrip, isCarTrip, tripCompatible, fitsInCar, goesThere, goesBack } from '@/lib/carTrip'
 
 const DRIVER_SELECT = {
@@ -25,6 +26,15 @@ const DRIVER_SELECT = {
  * Validates that the given riders (id + trip) can sit in the driver's car.
  * Returns an error message, or null when the move is allowed.
  */
+// Car details as a client may send them: seats 1–8, a pickup point only with both coordinates in range.
+function sanitizeSeats(seats: number | undefined): number | undefined {
+  return typeof seats === 'number' && Number.isInteger(seats) && seats >= 1 && seats <= 8 ? seats : undefined
+}
+function sanitizePickup(lat: number | null | undefined, lng: number | null | undefined): [number | undefined, number | undefined] {
+  const ok = typeof lat === 'number' && typeof lng === 'number' && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+  return ok ? [lat, lng] : [undefined, undefined]
+}
+
 async function checkDriverCanTake(
   hikeId: string,
   driverParticipantId: string,
@@ -53,17 +63,23 @@ export async function joinHike(
   if (!session) throw new Error('Not authenticated')
 
   const trip: CarTrip = isCarTrip(carTrip) ? carTrip : 'both'
-  const trimmedFriendName = friendName?.trim() || null
+  const trimmedFriendName = friendName?.trim().slice(0, 100) || null
+  carSeats = sanitizeSeats(carSeats)
+  ;[pickupLat, pickupLng] = sanitizePickup(pickupLat, pickupLng)
 
   const isAdmin = session.user.role === 'admin'
 
   await prisma.$transaction(async (tx) => {
     // Lock the hike row so concurrent joins are serialized
-    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string }[]>`
-      SELECT "maxParticipants", "status" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
+    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string; date: Date; endDate: Date | null; meetingTime: string | null; durationHours: string | null }[]>`
+      SELECT "maxParticipants", "status", "date", "endDate", "meetingTime", "durationHours"::text AS "durationHours" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
     `
     if (!hikes.length) throw new Error('Hike not found')
     if (hikes[0].status === 'draft' && !isAdmin) throw new Error('Hike not found')
+    // Nobody signs up for a cancelled or finished event (admins add people from the admin page).
+    if (!isAdmin && (hikes[0].status === 'cancelled' || isPastEvent(hikes[0].status, hikes[0].date, hikes[0].endDate, hikes[0]))) {
+      throw new Error('Registration is closed')
+    }
 
     const confirmed = await tx.hikeParticipant.count({
       where: { hikeId, status: 'confirmed' },
@@ -134,6 +150,11 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
   if (!session) throw new Error('Not authenticated')
 
   const trip: CarTrip | undefined = isCarTrip(carTrip) ? carTrip : undefined
+  carSeats = sanitizeSeats(carSeats)
+  // null clears the pickup point; numbers must be real coordinates.
+  if (typeof pickupLat === 'number' && typeof pickupLng === 'number') {
+    ;[pickupLat, pickupLng] = sanitizePickup(pickupLat, pickupLng)
+  }
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },

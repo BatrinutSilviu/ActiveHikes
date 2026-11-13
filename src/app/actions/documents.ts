@@ -2,13 +2,18 @@
 
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { unlink } from 'fs/promises'
-import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { requireAdmin } from '@/lib/session'
+import { removeUpload } from '@/lib/uploadStorage'
+
+// A document is an uploaded file or a web link — never a javascript: or other scheme.
+function assertDocumentUrl(url: string) {
+  if (!/^(https?:\/\/|\/uploads\/)/i.test(url.trim())) throw new Error('Invalid document link')
+}
 
 export async function addDocument(hikeId: string, url: string, name: string, requiresUpload: boolean) {
   await requireAdmin()
+  assertDocumentUrl(url)
 
   await prisma.hikeDocument.create({
     data: { hikeId, url, name, requiresUpload },
@@ -52,6 +57,7 @@ export async function editDocumentUrl(documentId: string, hikeId: string, url: s
 
   const trimmedUrl = url.trim()
   if (!trimmedUrl) throw new Error('URL is required')
+  assertDocumentUrl(trimmedUrl)
 
   const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
   if (!document) throw new Error('Document not found')
@@ -71,12 +77,7 @@ export async function deleteDocument(documentId: string, hikeId: string) {
   const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
   if (!document) return
 
-  try {
-    const relativePath = document.url.startsWith('/') ? document.url.slice(1) : document.url
-    await unlink(path.join(process.cwd(), 'public', relativePath))
-  } catch {
-    // File may not exist — continue
-  }
+  await removeUpload(document.url)
 
   await prisma.hikeDocument.delete({ where: { id: documentId } })
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)

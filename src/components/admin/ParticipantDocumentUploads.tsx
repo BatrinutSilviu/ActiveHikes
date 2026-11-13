@@ -104,7 +104,7 @@ export default function ParticipantDocumentUploads({ hikeId, uploads, participan
           }`}>
             <Upload size={16} />
             {uploading ? dict.uploading : dict.uploadButton}
-            <input type="file" className="hidden" disabled={!participantId || uploading}
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx" className="hidden" disabled={!participantId || uploading}
               onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
           </label>
         </div>

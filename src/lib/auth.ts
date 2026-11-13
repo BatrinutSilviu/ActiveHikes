@@ -4,13 +4,18 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { prisma } from './db'
+import { allow, clientIp, normalizeEmail } from './rateLimit'
+
+// How often a signed-in user's role and phone are re-read from the database, so a removed admin
+// right or a deleted account takes effect within minutes, not when the session expires.
+const REFRESH_MS = 5 * 60_000
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions['adapter'],
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60 * 24 * 365, // 1 year — keep users logged in across visits
-    updateAge: 60 * 60 * 24 * 7, // refresh the session on any visit within a week
+    maxAge: 60 * 60 * 24 * 30, // 30 days, renewed while the user keeps visiting
+    updateAge: 60 * 60 * 24, // renew the session cookie at most once a day
   },
   pages: {
     signIn: '/auth/login',
@@ -31,11 +36,18 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+      async authorize(credentials, req) {
+        const email = normalizeEmail(credentials?.email)
+        if (!email || !credentials?.password) return null
+        // Slow down password guessing: per account and per client.
+        const ip = clientIp(req?.headers)
+        if (!allow(`login:email:${email}`, 10, 15 * 60_000) || !allow(`login:ip:${ip}`, 30, 15 * 60_000)) {
+          throw new Error('TooManyAttempts')
+        }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        // Older accounts may have been saved with capitals in their email.
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: 'insensitive' } },
         })
 
         if (!user || !user.password) return null
@@ -54,16 +66,18 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user, trigger }) {
-      if (user) {
-        token.id = user.id
-        // For OAuth users, role/phone come from DB; for credentials, role is already in user
-        const dbUser = await prisma.user.findUnique({ where: { id: user.id }, select: { role: true, phone: true } })
+      if (user) token.id = user.id
+      // Role and phone always come from the database: on sign-in, when the client asks for an update
+      // (e.g. right after onboarding, so proxy.ts sees the phone) and every few minutes otherwise.
+      const stale = !token.refreshedAt || Date.now() - token.refreshedAt > REFRESH_MS
+      if (user || trigger === 'update' || stale) {
+        const dbUser = token.id
+          ? await prisma.user.findUnique({ where: { id: token.id }, select: { role: true, phone: true } })
+          : null
+        // A deleted account keeps no rights.
         token.role = dbUser?.role ?? 'user'
         token.phone = dbUser?.phone ?? null
-      } else if (trigger === 'update') {
-        // Re-read from DB so proxy.ts sees a freshly-completed onboarding immediately
-        const dbUser = await prisma.user.findUnique({ where: { id: token.id }, select: { phone: true } })
-        token.phone = dbUser?.phone ?? null
+        token.refreshedAt = Date.now()
       }
       return token
     },

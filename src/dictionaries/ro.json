@@ -319,6 +319,7 @@
   },
   "auth": {
     "login": {
+      "tooManyAttempts": "Prea multe încercări — așteaptă câteva minute și încearcă din nou.",
       "title": "Bine ai revenit",
       "subtitle": "Autentifică-te în contul tău",
       "continueWithGoogle": "Continuă cu Google",

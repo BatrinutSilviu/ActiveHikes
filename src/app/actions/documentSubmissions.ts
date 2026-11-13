@@ -4,19 +4,17 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { unlink } from 'fs/promises'
-import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { requireAdmin } from '@/lib/session'
+import { isSubmissionUrl, removeUpload } from '@/lib/uploadStorage'
 
-async function unlinkUpload(url: string) {
-  try {
-    const relativePath = url.startsWith('/') ? url.slice(1) : url
-    await unlink(path.join(process.cwd(), 'public', relativePath))
-  } catch {
-    // File may not exist — continue
-  }
+// A document's display name, as the uploader called it (shown in lists, never used as a path).
+const cleanName = (name: string) => name.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 150) || 'document'
+
+function assertSubmissionUrl(url: string, hikeId: string) {
+  if (!isSubmissionUrl(url, hikeId)) throw new Error('Invalid document')
 }
+
 
 function revalidateHikePaths(hikeId: string) {
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
@@ -40,7 +38,8 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
   const participant = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
   })
-  if (!participant) throw new Error('Not registered for this event')
+  if (!participant || participant.status === 'rejected') throw new Error('Not registered for this event')
+  assertSubmissionUrl(url, hikeId)
 
   const [existingCount, requiredCount] = await Promise.all([
     prisma.hikeDocumentSubmission.count({ where: { participantId: participant.id } }),
@@ -49,7 +48,7 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
   if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
   await prisma.hikeDocumentSubmission.create({
-    data: { hikeId, participantId: participant.id, url, fileName },
+    data: { hikeId, participantId: participant.id, url, fileName: cleanName(fileName) },
   })
 
   revalidateHikePaths(hikeId)
@@ -63,6 +62,7 @@ export async function submitDocumentForParticipant(hikeId: string, participantId
 
   const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId } })
   if (!participant || participant.hikeId !== hikeId) throw new Error('Participant not found')
+  assertSubmissionUrl(url, hikeId)
 
   const [existingCount, requiredCount] = await Promise.all([
     prisma.hikeDocumentSubmission.count({ where: { participantId } }),
@@ -71,7 +71,7 @@ export async function submitDocumentForParticipant(hikeId: string, participantId
   if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
   await prisma.hikeDocumentSubmission.create({
-    data: { hikeId, participantId, url, fileName },
+    data: { hikeId, participantId, url, fileName: cleanName(fileName) },
   })
 
   revalidateHikePaths(hikeId)
@@ -82,6 +82,7 @@ export async function submitDocumentForParticipant(hikeId: string, participantId
 // row) so it never touches real participant data.
 export async function submitPreviewDocument(hikeId: string, url: string, fileName: string) {
   const session = await requireAdmin()
+  assertSubmissionUrl(url, hikeId)
 
   const [existingCount, requiredCount] = await Promise.all([
     prisma.hikeDocumentSubmission.count({ where: { hikeId, previewAdminId: session.user.id } }),
@@ -90,7 +91,7 @@ export async function submitPreviewDocument(hikeId: string, url: string, fileNam
   if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
   await prisma.hikeDocumentSubmission.create({
-    data: { hikeId, previewAdminId: session.user.id, url, fileName },
+    data: { hikeId, previewAdminId: session.user.id, url, fileName: cleanName(fileName) },
   })
 
   revalidateHikePaths(hikeId)
@@ -104,13 +105,13 @@ export async function deleteSubmission(submissionId: string, hikeId: string) {
     where: { id: submissionId },
     include: { participant: true },
   })
-  if (!submission) return
+  if (!submission || submission.hikeId !== hikeId) return
 
   const isOwner = submission.participant?.userId === session.user.id || submission.previewAdminId === session.user.id
   const isAdmin = session.user.role === 'admin'
   if (!isOwner && !isAdmin) throw new Error('Unauthorized')
 
-  await unlinkUpload(submission.url)
+  await removeUpload(submission.url)
   await prisma.hikeDocumentSubmission.delete({ where: { id: submissionId } })
 
   revalidateHikePaths(hikeId)

@@ -5,13 +5,7 @@ import { redirect } from 'next/navigation'
 import { notFound } from 'next/navigation'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import OnboardingForm from '@/components/auth/OnboardingForm'
-
-function resolveCallbackUrl(raw: string | undefined, lang: string): string {
-  const home = `/${lang}`
-  if (!raw || (!raw.startsWith(`${home}/`) && raw !== home)) return home
-  if (raw.startsWith(`${home}/onboarding`) || raw.startsWith(`${home}/auth/`)) return home
-  return raw
-}
+import { resolveCallbackUrl } from '@/lib/callbackUrl'
 
 export default async function OnboardingPage({
   params,

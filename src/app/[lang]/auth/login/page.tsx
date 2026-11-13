@@ -7,6 +7,7 @@ import { signIn } from 'next-auth/react'
 import { useDict } from '@/hooks/useDict'
 import { isNetworkError, withTimeout } from '@/lib/net'
 import AuthShell from '@/components/auth/AuthShell'
+import { resolveCallbackUrl } from '@/lib/callbackUrl'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -20,7 +21,7 @@ function LoginForm() {
   const dict = useDict()
   const d = dict.auth.login
 
-  const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`
+  const callbackUrl = resolveCallbackUrl(searchParams.get('callbackUrl'), lang)
   const authError = searchParams.get('error')
   const resetSuccess = searchParams.get('reset') === 'success'
 
@@ -38,7 +39,7 @@ function LoginForm() {
       return
     }
     if (result?.error) {
-      setError(d.invalidCredentials)
+      setError(result.error === 'TooManyAttempts' ? d.tooManyAttempts : d.invalidCredentials)
       setLoading(false)
     } else {
       router.push(callbackUrl)

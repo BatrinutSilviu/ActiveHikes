@@ -19,5 +19,7 @@ declare module 'next-auth/jwt' {
     id: string
     role: string
     phone?: string | null
+    /** When role and phone were last read from the database (ms). */
+    refreshedAt?: number
   }
 }
