@@ -19,11 +19,12 @@ export function notifyManagement(hikeId: string) {
   clearTimeout(pending.get(hikeId))
   pending.set(hikeId, setTimeout(() => {
     pending.delete(hikeId)
-    push(hikeId).catch((err) => logger.error('management sync push failed', { job: 'management-sync', hikeId, err }))
+    pushHike(hikeId).catch((err) => logger.error('management sync push failed', { job: 'management-sync', hikeId, err }))
   }, 1500))
 }
 
-async function push(hikeId: string) {
+/** Sends one hike/event as it is now (or that it was deleted). Also used by the nightly resync. */
+export async function pushHike(hikeId: string) {
   const hike = await prisma.hike.findUnique({ where: { id: hikeId } })
   const base = (process.env.NEXTAUTH_URL || '').replace(/\/$/, '')
   const body = hike
@@ -45,4 +46,20 @@ async function push(hikeId: string) {
   })
   if (!res.ok) throw new Error(`${res.status} ${await res.text().catch(() => '')}`)
   logger.info('management sync pushed', { job: 'management-sync', hikeId, deleted: !hike })
+}
+
+/**
+ * Sends every hike and event from yesterday on again, so a change whose push was lost (the management
+ * app was down or restarting) is caught up. Called nightly by the server (api/integrations/resync).
+ */
+export async function resyncUpcoming(): Promise<{ sent: number; failed: string[] }> {
+  const hikes = await prisma.hike.findMany({
+    where: { date: { gte: new Date(Date.now() - 86_400_000) } },
+    select: { id: true },
+  })
+  const failed: string[] = []
+  for (const { id } of hikes) {
+    await pushHike(id).catch((err: unknown) => { failed.push(`${id}: ${err instanceof Error ? err.message : err}`) })
+  }
+  return { sent: hikes.length - failed.length, failed }
 }
