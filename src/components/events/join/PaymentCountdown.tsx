@@ -13,15 +13,18 @@ export default function PaymentCountdown({
   deadline: string
   dict: { payWithin: string; paymentWindowExpired: string }
 }) {
-  const [remainingMs, setRemainingMs] = useState(() => new Date(deadline).getTime() - Date.now())
+  // Unknown until mounted: the server's clock (and render time) differs from the browser's,
+  // so rendering the time left on the server would never match what hydrates.
+  const [remainingMs, setRemainingMs] = useState<number | null>(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRemainingMs(new Date(deadline).getTime() - Date.now())
-    }, 1000)
+    const tick = () => setRemainingMs(new Date(deadline).getTime() - Date.now())
+    tick()
+    const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [deadline])
 
+  if (remainingMs === null) return <p className="text-sm mt-2 font-semibold invisible" aria-hidden>{dict.payWithin}</p>
   if (remainingMs <= 0) return <p className="text-sm mt-2 font-semibold">{dict.paymentWindowExpired}</p>
 
   const totalSeconds = Math.floor(remainingMs / 1000)
