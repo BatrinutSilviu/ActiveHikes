@@ -1,21 +1,19 @@
 'use server'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { ParticipantStatus } from '@prisma/client'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { resolvePair } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { confirmParticipant } from '@/lib/participantConfirm'
+import { requireAdmin } from '@/lib/session'
 
 export async function updateParticipantStatus(
   participantId: string,
   newStatus: ParticipantStatus,
   hikeId: string
 ) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   if (newStatus === 'confirmed') {
     await confirmParticipant(participantId, hikeId)
@@ -39,8 +37,7 @@ export async function updateParticipantStatus(
 }
 
 export async function removeFriend(hikeId: string, hostParticipantId: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const host = await prisma.hikeParticipant.findUnique({
     where: { id: hostParticipantId },
@@ -54,8 +51,7 @@ export async function removeFriend(hikeId: string, hostParticipantId: string) {
 }
 
 export async function adminAddParticipant(hikeId: string, email: string): Promise<{ status: ParticipantStatus }> {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const user = await prisma.user.findFirst({ where: { email: { equals: email.trim(), mode: 'insensitive' } } })
   if (!user) throw new Error('No account found with that email')
@@ -86,8 +82,7 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
 }
 
 export async function adminImportParticipant(hikeId: string, name: string): Promise<{ id: string }> {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const trimmedName = name.trim()
   if (!trimmedName) throw new Error('Name is required')
@@ -111,8 +106,7 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
 }
 
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const [hike, alreadyConfirmed, pendingHosts] = await Promise.all([
     prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } }),

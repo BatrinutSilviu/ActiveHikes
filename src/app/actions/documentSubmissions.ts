@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { unlink } from 'fs/promises'
 import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { requireAdmin } from '@/lib/session'
 
 async function unlinkUpload(url: string) {
   try {
@@ -58,8 +59,7 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
 // handed it in some other way (in person, by email, etc.) instead of using
 // the self-serve upload.
 export async function submitDocumentForParticipant(hikeId: string, participantId: string, url: string, fileName: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId } })
   if (!participant || participant.hikeId !== hikeId) throw new Error('Participant not found')
@@ -81,8 +81,7 @@ export async function submitDocumentForParticipant(hikeId: string, participantId
 // real participant submissions (keyed by admin user, not a HikeParticipant
 // row) so it never touches real participant data.
 export async function submitPreviewDocument(hikeId: string, url: string, fileName: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  const session = await requireAdmin()
 
   const [existingCount, requiredCount] = await Promise.all([
     prisma.hikeDocumentSubmission.count({ where: { hikeId, previewAdminId: session.user.id } }),

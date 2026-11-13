@@ -1,16 +1,14 @@
 'use server'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { unlink } from 'fs/promises'
 import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { requireAdmin } from '@/lib/session'
 
 export async function addPhoto(hikeId: string, url: string, caption?: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  const session = await requireAdmin()
 
   await prisma.hikePhoto.create({
     data: { hikeId, url, caption: caption || null, uploadedById: session.user.id },
@@ -21,8 +19,7 @@ export async function addPhoto(hikeId: string, url: string, caption?: string) {
 }
 
 export async function deletePhoto(photoId: string, hikeId: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const photo = await prisma.hikePhoto.findUnique({ where: { id: photoId } })
   if (!photo) return

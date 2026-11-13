@@ -1,10 +1,9 @@
 'use server'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { requireAdmin } from '@/lib/session'
 
 export async function createBankAccount(data: {
   type: 'bank' | 'revolut' | 'btpay'
@@ -15,8 +14,7 @@ export async function createBankAccount(data: {
   currency: string
   notes?: string
 }) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   await prisma.bankAccount.create({
     data: {
@@ -34,16 +32,14 @@ export async function createBankAccount(data: {
 }
 
 export async function toggleBankAccount(id: string, isActive: boolean) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   await prisma.bankAccount.update({ where: { id }, data: { isActive } })
   revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
 }
 
 export async function deleteBankAccount(id: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   await prisma.bankAccount.delete({ where: { id } })
   revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
@@ -51,8 +47,7 @@ export async function deleteBankAccount(id: string) {
 
 // The active payment methods, for picking which ones a new event shows.
 export async function listActivePaymentMethods() {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
   return prisma.bankAccount.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'asc' },

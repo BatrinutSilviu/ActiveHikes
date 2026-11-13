@@ -1,16 +1,14 @@
 'use server'
 
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { unlink } from 'fs/promises'
 import path from 'path'
 import { revalidateLocalePaths } from '@/lib/i18n'
+import { requireAdmin } from '@/lib/session'
 
 export async function addDocument(hikeId: string, url: string, name: string, requiresUpload: boolean) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   await prisma.hikeDocument.create({
     data: { hikeId, url, name, requiresUpload },
@@ -23,8 +21,7 @@ export async function addDocument(hikeId: string, url: string, name: string, req
 }
 
 export async function setDocumentRequiresUpload(documentId: string, hikeId: string, requiresUpload: boolean) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   await prisma.hikeDocument.update({ where: { id: documentId }, data: { requiresUpload } })
 
@@ -35,8 +32,7 @@ export async function setDocumentRequiresUpload(documentId: string, hikeId: stri
 }
 
 export async function renameDocument(documentId: string, hikeId: string, name: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const trimmedName = name.trim()
   if (!trimmedName) throw new Error('Name is required')
@@ -52,8 +48,7 @@ export async function renameDocument(documentId: string, hikeId: string, name: s
 // Only allowed for link documents — an uploaded file's url points at a file on
 // disk, so changing it here would silently detach the record from the file.
 export async function editDocumentUrl(documentId: string, hikeId: string, url: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const trimmedUrl = url.trim()
   if (!trimmedUrl) throw new Error('URL is required')
@@ -71,8 +66,7 @@ export async function editDocumentUrl(documentId: string, hikeId: string, url: s
 }
 
 export async function deleteDocument(documentId: string, hikeId: string) {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const document = await prisma.hikeDocument.findUnique({ where: { id: documentId } })
   if (!document) return

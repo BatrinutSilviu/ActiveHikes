@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAdminSession } from '@/lib/session'
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { exchangeAuthorizationCode } from '@/lib/revolutSync'
@@ -8,10 +7,10 @@ import { exchangeAuthorizationCode } from '@/lib/revolutSync'
 const CONSENT_VALID_DAYS = 90
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getAdminSession()
   const origin = process.env.NEXTAUTH_URL
 
-  if (!session || session.user.role !== 'admin') {
+  if (!session) {
     return NextResponse.redirect(`${origin}/ro/admin/bank-accounts?bankError=1`)
   }
 
