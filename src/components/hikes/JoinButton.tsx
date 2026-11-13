@@ -7,6 +7,8 @@ import { joinHike, cancelRegistration, updateCarPreference } from '@/app/actions
 import { X, UserPlus, User, Car, MapPin, Pencil, Timer } from 'lucide-react'
 import LocationPickerModal from './LocationPickerModalWrapper'
 import { type CarTrip, CAR_TRIPS } from '@/lib/carTrip'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type CarTripDict = { label: string; both: string; there: string; back: string }
 
@@ -261,6 +263,7 @@ export default function JoinButton({
   const [modalForEdit, setModalForEdit] = useState(false)
 
   const router = useRouter()
+  const networkError = useDict().network.error
 
   const clampSeats = (raw: string) => {
     const n = parseInt(raw, 10)
@@ -298,17 +301,17 @@ export default function JoinButton({
     setCarSaveError('')
     startCarTransition(async () => {
       try {
-        await updateCarPreference(
+        await withTimeout(updateCarPreference(
           hikeId,
           editBringsCar,
           editBringsCar ? clampSeats(editCarSeats) : undefined,
           editPickupLat,
           editPickupLng,
           editCarTrip,
-        )
+        ))
         router.refresh()
-      } catch {
-        setCarSaveError(dict.carSaveError)
+      } catch (err) {
+        setCarSaveError(isNetworkError(err) ? networkError : dict.carSaveError)
       }
     })
   }
@@ -327,20 +330,23 @@ export default function JoinButton({
     setCancelError('')
     startTransition(async () => {
       try {
-        await cancelRegistration(hikeId)
+        await withTimeout(cancelRegistration(hikeId))
         router.refresh()
-      } catch {
-        setCancelError(dict.cancelError)
+      } catch (err) {
+        setCancelError(isNetworkError(err) ? networkError : dict.cancelError)
         setCancelling(false)
+        // The cancellation may have gone through before the connection dropped — show the real state.
+        router.refresh()
       }
     })
   }
 
   const handleJoin = () => {
+    if (isPending) return
     setError('')
     startTransition(async () => {
       try {
-        await joinHike(
+        await withTimeout(joinHike(
           hikeId,
           bringingFriend && friendName.trim() ? friendName.trim() : undefined,
           bringingCar,
@@ -349,10 +355,12 @@ export default function JoinButton({
           pickupLng ?? undefined,
           agreedToTerms,
           carTrip,
-        )
+        ))
         router.refresh()
-      } catch {
-        setError(dict.joinError)
+      } catch (err) {
+        setError(isNetworkError(err) ? networkError : dict.joinError)
+        // The registration may have been saved before the connection dropped — show the real state.
+        router.refresh()
       }
     })
   }

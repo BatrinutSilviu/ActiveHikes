@@ -36,5 +36,6 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run migrations then start
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]
+# Run migrations then start. `exec` replaces the shell with node so it is PID 1 and gets
+# Docker's SIGTERM directly (Next's standalone server then shuts down gracefully).
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && exec node server.js"]

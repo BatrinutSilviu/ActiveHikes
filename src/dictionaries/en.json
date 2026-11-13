@@ -11,6 +11,11 @@
     "signUp": "Sign up"
   },
   "footer": "Made with ❤️ for the mountains",
+  "network": {
+    "offlineBanner": "You're offline — we'll retry when you're back.",
+    "error": "Couldn't reach the server — check your connection and try again.",
+    "failed": "Something went wrong — please try again."
+  },
   "home": {
     "heroTitle": "Every summit,\nshared together.",
     "heroSubtitle": "Join our hiking community. Discover upcoming trails, register for group hikes, and relive the memories.",

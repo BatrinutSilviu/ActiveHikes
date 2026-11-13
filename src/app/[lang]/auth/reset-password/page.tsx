@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { useDict } from '@/hooks/useDict'
+import { apiFetch, isNetworkError } from '@/lib/net'
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('')
@@ -14,7 +15,8 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams()
   const params = useParams()
   const lang = (params?.lang as string) ?? 'ro'
-  const d = useDict().auth.resetPassword
+  const dict = useDict()
+  const d = dict.auth.resetPassword
   const token = searchParams.get('token')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,16 +25,23 @@ function ResetPasswordForm() {
       setError(d.passwordMismatch)
       return
     }
+    if (loading) return
     setLoading(true)
     setError('')
-    const res = await fetch('/api/auth/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || d.genericError)
+    try {
+      const res = await apiFetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || d.genericError)
+        setLoading(false)
+        return
+      }
+    } catch (err) {
+      setError(isNetworkError(err) ? dict.network.error : d.genericError)
       setLoading(false)
       return
     }

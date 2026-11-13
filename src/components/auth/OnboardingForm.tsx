@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { completeOnboarding } from '@/app/actions/profile'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type OnboardingDict = {
   fullName: string
@@ -33,18 +35,20 @@ export default function OnboardingForm({
   const [phone, setPhone] = useState('')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const networkError = useDict().network.error
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving) return
     setSaving(true)
     setError('')
     try {
-      await completeOnboarding(name, phone)
-      await update()
+      await withTimeout(completeOnboarding(name, phone))
+      await withTimeout(update())
       router.push(callbackUrl)
       router.refresh()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : dict.error)
+      setError(isNetworkError(err) ? networkError : err instanceof Error ? err.message : dict.error)
       setSaving(false)
     }
   }

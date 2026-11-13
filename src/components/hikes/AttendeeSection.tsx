@@ -4,6 +4,8 @@ import { useEffect, useState, useTransition } from 'react'
 import { assignCarDriver, assignFriendCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg, goesThere, goesBack } from '@/lib/carTrip'
+import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type Participant = {
   id: string
@@ -44,6 +46,9 @@ function pName(p: Participant) {
   return p.user?.name ?? p.friendName ?? '?'
 }
 
+// Polled every 5s, so a failed poll isn't retried — the next one is the retry.
+const POLL = { timeoutMs: 4000, retries: 0 }
+
 export default function AttendeeSection({
   hikeId,
   participants: initialParticipants,
@@ -61,10 +66,12 @@ export default function AttendeeSection({
 }) {
   const [participants, setParticipants] = useState(initialParticipants)
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState('')
+  const net = useDict().network
 
   const refetch = async () => {
     try {
-      const res = await fetch(`/api/hikes/${hikeId}/carpool`, { cache: 'no-store' })
+      const res = await apiFetch(`/api/hikes/${hikeId}/carpool`, { cache: 'no-store', ...POLL })
       if (res.ok) setParticipants((await res.json()).participants)
     } catch {
       // silent
@@ -85,19 +92,21 @@ export default function AttendeeSection({
   const userIsDiver = userParticipant?.bringsCar ?? false
   const friendParticipant = participants.find(p => p.id === userFriendParticipantId)
 
-  const assign = (driverParticipantId: string | null) => {
+  const runAssign = (action: () => Promise<unknown>) => {
+    if (isPending) return
+    setError('')
     startTransition(async () => {
-      await assignCarDriver(hikeId, driverParticipantId)
+      try {
+        await withTimeout(action())
+      } catch (err) {
+        setError(isNetworkError(err) ? net.error : net.failed)
+      }
       await refetch()
     })
   }
 
-  const assignFriend = (driverParticipantId: string | null) => {
-    startTransition(async () => {
-      await assignFriendCarDriver(hikeId, driverParticipantId)
-      await refetch()
-    })
-  }
+  const assign = (driverParticipantId: string | null) => runAssign(() => assignCarDriver(hikeId, driverParticipantId))
+  const assignFriend = (driverParticipantId: string | null) => runAssign(() => assignFriendCarDriver(hikeId, driverParticipantId))
 
   const drivers = confirmed.filter(p => p.bringsCar && p.carSeats !== null)
   const hasCarpoolData = drivers.length > 0
@@ -108,6 +117,8 @@ export default function AttendeeSection({
   return (
     <div>
       <h2 className="text-2xl font-bold text-stone-900 mb-4">{dict.title}</h2>
+
+      {error && <p role="alert" className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl mb-3">{error}</p>}
 
       {confirmed.length === 0 ? (
         <p className="text-stone-400 text-sm">{dict.noConfirmedYet}</p>

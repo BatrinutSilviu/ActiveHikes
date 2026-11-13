@@ -1,9 +1,11 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { assignCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type Driver = {
   participantId: string
@@ -39,10 +41,18 @@ export default function CarpoolSection({
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState('')
+  const net = useDict().network
 
   const assign = (driverParticipantId: string | null) => {
+    if (isPending) return
+    setError('')
     startTransition(async () => {
-      await assignCarDriver(hikeId, driverParticipantId)
+      try {
+        await withTimeout(assignCarDriver(hikeId, driverParticipantId))
+      } catch (err) {
+        setError(isNetworkError(err) ? net.error : net.failed)
+      }
       router.refresh()
     })
   }
@@ -54,6 +64,8 @@ export default function CarpoolSection({
       <h2 className="text-2xl font-bold text-stone-900 mb-4 flex items-center gap-2">
         <Car size={22} /> {dict.title}
       </h2>
+
+      {error && <p role="alert" className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl mb-3">{error}</p>}
 
       <div className="space-y-3">
         {drivers.map(driver => {

@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
+import OfflineBanner from '@/components/OfflineBanner'
 
 const inter = Inter({
   subsets: ['latin', 'latin-ext'],
@@ -15,6 +16,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={`h-full antialiased ${inter.variable}`}>
       <body className="min-h-screen flex flex-col bg-stone-50">
         {children}
+        <OfflineBanner />
       </body>
     </html>
   )

@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { logger } from '@/lib/logger'
 
 // Lazy — RESEND_API_KEY is a runtime secret, not available during `next build`,
 // and the Resend constructor throws immediately if it's missing.
@@ -9,7 +10,8 @@ function getResendClient() {
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
-  await getResendClient().emails.send({
+  // Resend reports API failures (bad key, rate limit, …) in `error` instead of throwing.
+  const { data, error } = await getResendClient().emails.send({
     from: process.env.EMAIL_FROM!,
     to,
     subject: 'Reset your ActiveHikes password',
@@ -19,4 +21,6 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
       <p>If you didn't request this, you can ignore this email.</p>
     `,
   })
+  if (error) throw new Error(`Resend: ${error.name}: ${error.message}`)
+  logger.info('email sent', { job: 'email', kind: 'password-reset', emailId: data?.id })
 }

@@ -11,6 +11,11 @@
     "signUp": "Înregistrare"
   },
   "footer": "Cu ❤️ pentru munți",
+  "network": {
+    "offlineBanner": "Ești offline — reîncercăm când revine conexiunea.",
+    "error": "Nu am putut contacta serverul — verifică conexiunea și încearcă din nou.",
+    "failed": "Ceva n-a mers — te rugăm să încerci din nou."
+  },
   "home": {
     "heroTitle": "Fiecare vârf,\nîmpărtășit împreună.",
     "heroSubtitle": "Alătură-te comunității noastre. Descoperă trasee, înscrie-te la ieșiri în grup și retrăiește amintirile.",

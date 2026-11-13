@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
 import { submitDocument, submitPreviewDocument, deleteSubmission } from '@/app/actions/documentSubmissions'
+import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type Submission = { id: string; url: string; fileName: string }
 
@@ -25,33 +27,58 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
 }) {
   const [items, setItems] = useState(submissions)
   const [uploading, setUploading] = useState(false)
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
+  const [error, setError] = useState('')
+  const net = useDict().network
   const atLimit = items.length >= maxUploads
 
+  const failMessage = (err: unknown) => (isNetworkError(err) ? net.error : net.failed)
+
   const handleFile = async (file: File) => {
+    if (uploading) return
     setUploading(true)
+    setError('')
     const formData = new FormData()
     formData.append('file', file)
     formData.append('bucket', 'hike-document-submissions')
     formData.append('hikeId', hikeId)
-    const res = await fetch('/api/upload', { method: 'POST', body: formData })
-    const { url } = await res.json()
-    startTransition(async () => {
-      if (previewMode) {
-        await submitPreviewDocument(hikeId, url, file.name)
-      } else {
-        await submitDocument(hikeId, url, file.name)
-      }
-      setItems(prev => [...prev, { id: `${Date.now()}`, url, fileName: file.name }])
+    let url: string
+    try {
+      // Phone photos of documents can be large on a slow connection — allow a couple of minutes.
+      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
+      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
+      url = (await res.json()).url
+    } catch (err) {
+      setError(failMessage(err))
       setUploading(false)
+      return
+    }
+    startTransition(async () => {
+      try {
+        if (previewMode) {
+          await withTimeout(submitPreviewDocument(hikeId, url, file.name))
+        } else {
+          await withTimeout(submitDocument(hikeId, url, file.name))
+        }
+        setItems(prev => [...prev, { id: `${Date.now()}`, url, fileName: file.name }])
+      } catch (err) {
+        setError(failMessage(err))
+      } finally {
+        setUploading(false)
+      }
     })
   }
 
   const handleDelete = (item: Submission) => {
-    if (!confirm(dict.deleteConfirm)) return
+    if (isPending || !confirm(dict.deleteConfirm)) return
+    setError('')
     startTransition(async () => {
-      await deleteSubmission(item.id, hikeId)
-      setItems(prev => prev.filter(i => i.id !== item.id))
+      try {
+        await withTimeout(deleteSubmission(item.id, hikeId))
+        setItems(prev => prev.filter(i => i.id !== item.id))
+      } catch (err) {
+        setError(failMessage(err))
+      }
     })
   }
 
@@ -72,7 +99,7 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
                 className="flex-1 truncate text-sm text-stone-700 hover:text-emerald-600 hover:underline">
                 {item.fileName}
               </a>
-              <button onClick={() => handleDelete(item)} className="text-stone-400 hover:text-red-500 shrink-0">
+              <button onClick={() => handleDelete(item)} disabled={isPending} className="text-stone-400 hover:text-red-500 disabled:opacity-50 shrink-0">
                 <X size={14} />
               </button>
             </li>
@@ -86,9 +113,10 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
         <label className="flex items-center justify-center gap-2 border-2 border-dashed border-stone-200 rounded-xl py-3 cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/50 transition-colors text-sm font-semibold text-emerald-700">
           <Upload size={16} />
           {uploading ? dict.uploading : dict.uploadButton}
-          <input type="file" className="hidden" disabled={uploading} onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])} />
+          <input type="file" className="hidden" disabled={uploading} onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f) }} />
         </label>
       )}
+      {error && <p role="alert" className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
     </div>
   )
 }

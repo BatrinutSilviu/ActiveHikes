@@ -35,6 +35,8 @@ function signJwt(): string {
 
 async function ebFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    // A hung request would otherwise block the background sync (it never overlaps itself) indefinitely.
+    signal: AbortSignal.timeout(30_000),
     ...init,
     headers: {
       'Content-Type': 'application/json',

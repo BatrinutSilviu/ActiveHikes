@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 import { exchangeAuthorizationCode } from '@/lib/revolutSync'
 
 const CONSENT_VALID_DAYS = 90
@@ -51,7 +52,8 @@ export async function GET(req: NextRequest) {
 
     await prisma.bankConnection.update({ where: { id: connection.id }, data: { status: 'expired' } })
     return NextResponse.redirect(`${origin}/ro/admin/bank-accounts?bankError=1`)
-  } catch {
+  } catch (err) {
+    logger.error('bank connection callback failed', { route: 'GET /api/bank-connection/callback', connectionId: connection.id, err })
     return NextResponse.redirect(`${origin}/ro/admin/bank-accounts?bankError=1`)
   }
 }

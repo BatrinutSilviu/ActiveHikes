@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { addPhoto, deletePhoto } from '@/app/actions/photos'
 import { Upload, Trash2, X } from 'lucide-react'
+import { apiFetch, isNetworkError } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 const MAX_PHOTOS = 2
 
@@ -17,6 +19,7 @@ export default function PhotoUploader({ hikeId, existingPhotos }: {
   const [caption, setCaption] = useState('')
   const [uploading, setUploading] = useState(false)
   const [, startTransition] = useTransition()
+  const net = useDict().network
 
   const canUpload = photos.length < MAX_PHOTOS
 
@@ -28,8 +31,16 @@ export default function PhotoUploader({ hikeId, existingPhotos }: {
     formData.append('file', selectedFile)
     formData.append('bucket', 'hike-photos')
 
-    const res = await fetch('/api/upload', { method: 'POST', body: formData })
-    const { url } = await res.json()
+    let url: string
+    try {
+      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
+      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
+      url = (await res.json()).url
+    } catch (err) {
+      setUploading(false)
+      window.alert(isNetworkError(err) ? net.error : net.failed)
+      return
+    }
 
     startTransition(async () => {
       await addPhoto(hikeId, url, caption)

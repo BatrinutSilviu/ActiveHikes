@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
+import { apiFetch } from '@/lib/net'
 
 type Pin = { id: string; label: string; lat: number; lng: number; isDriver: boolean }
 
@@ -58,7 +59,7 @@ export default function PickupLocationsMap({ pins, dict }: { pins: Pin[]; dict: 
           </div>`
         )
         marker.on('popupopen', () => {
-          fetch(`/api/geocode/reverse?lat=${pin.lat}&lng=${pin.lng}`)
+          apiFetch(`/api/geocode/reverse?lat=${pin.lat}&lng=${pin.lng}`)
             .then(r => r.json())
             .then(data => {
               const el = document.getElementById(popupId)

@@ -3,6 +3,8 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { assignRoom, assignFriendRoom } from '@/app/actions/hikes'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 type Dict = {
   join: string
@@ -32,16 +34,17 @@ export default function RoomJoinButton({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
+  const networkError = useDict().network.error
 
   const handleClick = () => {
     setError('')
     startTransition(async () => {
       try {
         const assign = forFriend ? assignFriendRoom : assignRoom
-        await assign(hikeId, isCurrent ? null : roomId)
+        await withTimeout(assign(hikeId, isCurrent ? null : roomId))
         router.refresh()
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : dict.error)
+        setError(isNetworkError(err) ? networkError : err instanceof Error ? err.message : dict.error)
       }
     })
   }

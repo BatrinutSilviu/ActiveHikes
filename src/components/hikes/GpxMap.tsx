@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Ruler, TrendingUp } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import { apiFetch } from '@/lib/net'
 
 type GpxPoint = { lat: number; lon: number; ele: number }
 type TrackStats = { distanceKm: number; elevationGainM: number }
@@ -65,7 +66,7 @@ export default function GpxMap({
       const L = (await import('leaflet')).default
 
       const parseGpx = async (url: string): Promise<GpxPoint[]> => {
-        const res = await fetch(url)
+        const res = await apiFetch(url)
         const text = await res.text()
         const doc = new DOMParser().parseFromString(text, 'text/xml')
         return Array.from(doc.querySelectorAll('trkpt, wpt'))

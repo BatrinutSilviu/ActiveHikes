@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
   const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=0`
   const res = await fetch(url, {
     headers: { 'User-Agent': 'ActiveHikes/1.0 (hike pickup lookup)' },
-  })
+    signal: AbortSignal.timeout(8000),
+  }).catch(() => null)
+  if (!res) return NextResponse.json({ address: null })
   if (!res.ok) return NextResponse.json({ address: null })
 
   const data = await res.json()

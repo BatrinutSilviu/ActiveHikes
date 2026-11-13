@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiFetch } from '@/lib/net'
 
 type Spots = {
   confirmedCount: number
@@ -18,6 +19,9 @@ type SpotsDict = {
   onWaitlist: string
 }
 
+// Polled every 5s, so a failed poll isn't retried — the next one is the retry.
+const POLL = { timeoutMs: 4000, retries: 0 }
+
 export default function SpotsCounterVF({
   viaFerrataId,
   initial,
@@ -32,7 +36,7 @@ export default function SpotsCounterVF({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/via-ferrata/${viaFerrataId}/spots`, { cache: 'no-store' })
+        const res = await apiFetch(`/api/via-ferrata/${viaFerrataId}/spots`, { cache: 'no-store', ...POLL })
         if (res.ok) setSpots(await res.json())
       } catch {
         // silent

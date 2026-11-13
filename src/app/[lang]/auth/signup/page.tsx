@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useDict } from '@/hooks/useDict'
+import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
 
 export default function SignupPage() {
   const [name, setName] = useState('')
@@ -16,25 +17,34 @@ export default function SignupPage() {
   const router = useRouter()
   const params = useParams()
   const lang = (params?.lang as string) ?? 'ro'
-  const d = useDict().auth.signup
+  const dict = useDict()
+  const d = dict.auth.signup
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     setError('')
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, phone }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'Something went wrong.')
+    try {
+      const res = await apiFetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, phone }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong.')
+        setLoading(false)
+        return
+      }
+    } catch (err) {
+      setError(isNetworkError(err) ? dict.network.error : 'Something went wrong.')
       setLoading(false)
       return
     }
-    const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.error) router.push(`/${lang}/auth/login`)
+    // The account exists now; if signing in fails, the login page takes it from there.
+    const result = await withTimeout(signIn('credentials', { email, password, redirect: false })).catch(() => null)
+    if (!result || result.error) router.push(`/${lang}/auth/login`)
     else { router.push(`/${lang}`); router.refresh() }
   }
 

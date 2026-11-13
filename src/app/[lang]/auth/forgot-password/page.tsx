@@ -4,25 +4,35 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useDict } from '@/hooks/useDict'
+import { apiFetch } from '@/lib/net'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
   const params = useParams()
   const lang = (params?.lang as string) ?? 'ro'
-  const d = useDict().auth.forgotPassword
+  const dict = useDict()
+  const d = dict.auth.forgotPassword
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
-    await fetch('/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, lang }),
-    })
-    setLoading(false)
-    setSent(true)
+    setError('')
+    try {
+      await apiFetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lang }),
+      })
+      setSent(true)
+    } catch {
+      setError(dict.network.error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -49,6 +59,7 @@ export default function ForgotPasswordPage() {
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-stone-50 focus:bg-white transition-colors"
                   placeholder="you@example.com" />
               </div>
+              {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
               <button type="submit" disabled={loading}
                 className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm mt-1">
                 {loading ? d.sending : d.sendLink}

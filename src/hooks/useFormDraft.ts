@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { apiFetch } from '@/lib/net'
 
 // Keeps an unsaved copy of a form in localStorage so a failed save, a crash or
 // an accidental reload never loses what the admin typed. The draft is restored
@@ -55,7 +56,7 @@ export async function uploadFile(file: File, bucket: string): Promise<string> {
   const fd = new FormData()
   fd.append('file', file)
   fd.append('bucket', bucket)
-  const res = await fetch('/api/upload', { method: 'POST', body: fd })
+  const res = await apiFetch('/api/upload', { method: 'POST', body: fd, timeoutMs: 120_000 })
   const data = await res.json().catch(() => null)
   if (!res.ok || !data?.url) throw new Error(data?.error ?? `Upload failed (${res.status})`)
   return data.url

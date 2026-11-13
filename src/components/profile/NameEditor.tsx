@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil, Check, X } from 'lucide-react'
 import { updateProfileName } from '@/app/actions/profile'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { useDict } from '@/hooks/useDict'
 
 export default function NameEditor({
   fullName,
@@ -23,6 +25,7 @@ export default function NameEditor({
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const networkError = useDict().network.error
 
   const [initialFirst, ...rest] = fullName.trim().split(/\s+/)
   const [firstName, setFirstName] = useState(initialFirst ?? '')
@@ -30,14 +33,15 @@ export default function NameEditor({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (saving) return
     setSaving(true)
     setError('')
     try {
-      await updateProfileName(firstName, lastName)
+      await withTimeout(updateProfileName(firstName, lastName))
       setEditing(false)
       router.refresh()
-    } catch {
-      setError(labels.error)
+    } catch (err) {
+      setError(isNetworkError(err) ? networkError : labels.error)
     } finally {
       setSaving(false)
     }

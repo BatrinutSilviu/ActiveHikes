@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useDict } from '@/hooks/useDict'
+import { isNetworkError, withTimeout } from '@/lib/net'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -15,7 +16,8 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const params = useParams()
   const lang = (params?.lang as string) ?? 'ro'
-  const d = useDict().auth.login
+  const dict = useDict()
+  const d = dict.auth.login
 
   const callbackUrl = searchParams.get('callbackUrl') || `/${lang}`
   const authError = searchParams.get('error')
@@ -23,9 +25,17 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
     setError('')
-    const result = await signIn('credentials', { email, password, redirect: false })
+    let result
+    try {
+      result = await withTimeout(signIn('credentials', { email, password, redirect: false }))
+    } catch (err) {
+      setError(isNetworkError(err) ? dict.network.error : d.invalidCredentials)
+      setLoading(false)
+      return
+    }
     if (result?.error) {
       setError(d.invalidCredentials)
       setLoading(false)

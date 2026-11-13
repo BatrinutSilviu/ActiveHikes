@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 import { sendPasswordResetEmail } from '@/lib/mailer'
 import { generateResetToken, RESET_TOKEN_TTL_MS } from '@/lib/passwordReset'
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       // Don't let an email provider outage turn into a 500 here — that would
       // leak account existence (registered emails would fail, others wouldn't).
-      console.error('Failed to send password reset email:', err)
+      logger.error('password reset email failed', { route: 'POST /api/auth/forgot-password', err })
     }
   }
 

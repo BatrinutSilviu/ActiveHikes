@@ -1,8 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { apiFetch } from '@/lib/net'
 
 type Counts = { confirmedCount: number; maxParticipants: number; waitlistCount: number }
+
+// Polled every 5s, so a failed poll isn't retried — the next one is the retry.
+const POLL = { timeoutMs: 4000, retries: 0 }
 
 export default function ParticipantsCount({
   hikeId,
@@ -18,7 +22,7 @@ export default function ParticipantsCount({
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/hikes/${hikeId}/spots`, { cache: 'no-store' })
+        const res = await apiFetch(`/api/hikes/${hikeId}/spots`, { cache: 'no-store', ...POLL })
         if (res.ok) setCounts(await res.json())
       } catch {
         // silent
