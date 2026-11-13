@@ -179,7 +179,7 @@ export default function ViaFerrataEditForm({ viaFerrata, bankAccounts, dict }: {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.date}</label>
-          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={cls} />
+          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required min="2020-01-01" max="2099-12-31" className={cls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.duration}</label>

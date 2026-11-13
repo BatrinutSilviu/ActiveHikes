@@ -376,6 +376,14 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
 
+// A half-typed year in a date picker (e.g. "26" → year 0026) silently produces a
+// date in the distant past, which drops the event straight into History.
+function assertSaneDate(value: string | null | undefined) {
+  if (!value) return
+  const year = new Date(value).getUTCFullYear()
+  if (!(year >= 2020 && year <= 2099)) throw new Error(`Invalid date: ${value}`)
+}
+
 export async function createHike(data: {
   type?: HikeType
   // Payment methods to show; left out = every active one.
@@ -426,6 +434,9 @@ export async function createHike(data: {
   // Via Ferrata events don't support camping/accommodation/rooms/difficulty —
   // ignore those fields server-side even if the client sent stale values.
   const isHike = type === 'hike'
+  assertSaneDate(data.date)
+  assertSaneDate(data.endDate)
+  if (isHike && data.endDate && data.endDate < data.date) throw new Error('End date cannot be before the start date')
 
   const hike = await prisma.hike.create({
     data: {
@@ -543,6 +554,9 @@ export async function updateHike(
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
 
   const { date, endDate, difficulty, bankAccountIds, ...rest } = data
+  assertSaneDate(date)
+  assertSaneDate(endDate)
+  if (date && endDate && endDate < date) throw new Error('End date cannot be before the start date')
   const updated = await prisma.hike.update({
     where: { id: hikeId },
     data: {

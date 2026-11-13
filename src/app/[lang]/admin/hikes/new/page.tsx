@@ -83,6 +83,7 @@ function NewHikeForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); setError('')
+    if (isHike && form.end_date && form.date && form.end_date < form.date) { setError(d.endDateBeforeStart); return }
     startTransition(async () => {
       try {
         let coverImageUrl: string | undefined
@@ -160,11 +161,11 @@ function NewHikeForm() {
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Field label={d.date} required>
-              <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={input} />
+              <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required min="2020-01-01" max="2099-12-31" className={input} />
             </Field>
             {isHike && (
               <Field label={d.endDate}>
-                <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} className={input} />
+                <input type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} min={form.date || undefined} max="2099-12-31" className={input} />
               </Field>
             )}
             <Field label={d.meetingTime}>

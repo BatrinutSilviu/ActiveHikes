@@ -1,15 +1,20 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { Users, UserX, UserCheck, AlertTriangle, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Users, UserX, UserCheck, AlertTriangle, X, Bookmark } from 'lucide-react'
 import PhoneContact from './PhoneContact'
 import {
   compareWithGroup, parseGroupList, participantName, type ComparableParticipant,
 } from '@/lib/whatsappGroup'
+import { buildBookmarklet, type BookmarkletLabels } from '@/lib/whatsappBookmarklet'
 
 type WhatsAppCompareDict = {
   title: string
   hint: string
+  bookmarkletSteps: string
+  bookmarkletButton: string
+  bookmarkletDragHint: string
+  bookmarklet: BookmarkletLabels
   placeholder: string
   clear: string
   missingTitle: string
@@ -46,6 +51,12 @@ export default function WhatsAppGroupCompare({
   const [text, setText] = useState('')
   const [ignored, setIgnored] = useState<string[]>([])
   const [loaded, setLoaded] = useState(false)
+  const bookmarkletRef = useRef<HTMLAnchorElement>(null)
+
+  // React refuses javascript: URLs in href, so the bookmarklet is set directly on the DOM node
+  useEffect(() => {
+    bookmarkletRef.current?.setAttribute('href', buildBookmarklet(dict.bookmarklet))
+  }, [dict.bookmarklet])
 
   // The pasted list is a per-browser convenience so it survives a page reload
   useEffect(() => {
@@ -89,6 +100,14 @@ export default function WhatsAppGroupCompare({
         <Users size={18} className="text-emerald-600" /> {dict.title}
       </summary>
 
+      <div className="mt-3 bg-stone-50 rounded-xl p-3 text-sm text-stone-600">
+        <p className="whitespace-pre-line">{dict.bookmarkletSteps}</p>
+        <a ref={bookmarkletRef} onClick={e => { e.preventDefault(); alert(dict.bookmarkletDragHint) }}
+          title={dict.bookmarkletDragHint}
+          className="mt-2 inline-flex items-center gap-1.5 bg-emerald-600 text-white font-semibold px-3 py-1.5 rounded-lg cursor-grab">
+          <Bookmark size={14} /> {dict.bookmarkletButton}
+        </a>
+      </div>
       <p className="text-stone-500 text-sm mt-3 whitespace-pre-line">{dict.hint}</p>
       <textarea
         value={text}

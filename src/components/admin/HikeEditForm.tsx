@@ -60,6 +60,7 @@ type HikeEditDict = {
   descriptionPlaceholder: string
   date: string
   endDate: string
+  endDateBeforeStart: string
   meetingTime: string
   duration: string
   durationPlaceholder: string
@@ -173,6 +174,7 @@ export default function HikeEditForm({ hike, bankAccounts, dict, lang = 'ro' }: 
     e.preventDefault()
     setError('')
     setSuccess(false)
+    if (form.endDate && form.endDate < form.date) { setError(dict.endDateBeforeStart); return }
     startTransition(async () => {
       try {
         let gpxActualUrl = hike.gpxActualUrl
@@ -261,11 +263,11 @@ export default function HikeEditForm({ hike, bankAccounts, dict, lang = 'ro' }: 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.date}</label>
-          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required className={cls} />
+          <input type="date" value={form.date} onChange={e => set('date', e.target.value)} required min="2020-01-01" max="2099-12-31" className={cls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.endDate}</label>
-          <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} min={form.date || undefined} className={cls} />
+          <input type="date" value={form.endDate} onChange={e => set('endDate', e.target.value)} min={form.date || undefined} max="2099-12-31" className={cls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">{dict.meetingTime}</label>
