@@ -96,7 +96,7 @@ export default async function ViaFerrataPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcoming.map(event => <ViaFerrataCard key={event.id} viaFerrata={event as any} lang={lang} dict={d.viaFerrataCard} />)}
+            {upcoming.map(event => <ViaFerrataCard key={event.id} viaFerrata={event} lang={lang} dict={d.viaFerrataCard} />)}
           </div>
         )}
       </section>
@@ -118,7 +118,7 @@ export default async function ViaFerrataPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPast.map(event => <ViaFerrataCard key={event.id} viaFerrata={event as any} lang={lang} dict={d.viaFerrataCard} />)}
+              {filteredPast.map(event => <ViaFerrataCard key={event.id} viaFerrata={event} lang={lang} dict={d.viaFerrataCard} />)}
             </div>
           )}
         </section>

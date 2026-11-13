@@ -1,15 +1,24 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Mountain, Calendar, CheckCircle, Clock, List, ShieldCheck, Phone, Mail, XCircle } from 'lucide-react'
+import { Mountain, Calendar, CheckCircle, Clock, List, ShieldCheck, Phone, Mail } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate, isPastEvent } from '@/lib/dates'
+
+const participationInclude = {
+  hike: { select: { id: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } },
+} satisfies Prisma.HikeParticipantInclude
+
+type Participation = Prisma.HikeParticipantGetPayload<{ include: typeof participationInclude }>
+
+type StatusUI = Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }>
 
 export default async function ProfilePage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -25,7 +34,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
     prisma.hikeParticipant.findMany({
       where: { userId: session.user.id },
       orderBy: { joinedAt: 'desc' },
-      include: { hike: { select: { id: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } } },
+      include: participationInclude,
     }),
   ])
 
@@ -35,7 +44,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
   const dp = d.profile
   const statusLabels = dp.participationStatus as Record<string, string>
 
-  const STATUS_UI: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
+  const STATUS_UI: StatusUI = {
     confirmed: { label: statusLabels.confirmed, icon: <CheckCircle size={13} />, color: 'text-emerald-700', bg: 'bg-emerald-50' },
     pending: { label: statusLabels.pending, icon: <Clock size={13} />, color: 'text-amber-700', bg: 'bg-amber-50' },
     waitlist: { label: statusLabels.waitlist, icon: <List size={13} />, color: 'text-blue-700', bg: 'bg-blue-50' },
@@ -110,9 +119,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
 }
 
 function ParticipationCard({ participation, lang, statusUI, dateLocale }: {
-  participation: any
+  participation: Participation
   lang: string
-  statusUI: Record<string, { label: string; icon: React.ReactNode; color: string; bg: string }>
+  statusUI: StatusUI
   dateLocale: string
 }) {
   const hike = participation.hike

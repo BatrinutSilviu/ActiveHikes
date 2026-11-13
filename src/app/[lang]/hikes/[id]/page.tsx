@@ -403,7 +403,7 @@ export default async function HikeDetailPage({ params, searchParams }: {
 
         {/* Route — mobile order last, desktop left column (unchanged position) */}
         <div className="order-6 lg:col-start-1 lg:col-span-2 lg:row-start-3">
-          <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} isCompleted={hike.status === 'completed'} dict={d.gpx} />
+          <GpxSection approximateUrl={hike.gpxApproximateUrl} actualUrl={hike.gpxActualUrl} dict={d.gpx} />
         </div>
 
         {/* Photos — mobile order 5, desktop left column (unchanged position) */}

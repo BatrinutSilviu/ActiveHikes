@@ -22,14 +22,6 @@ export function seatsLeftByLeg(carSeats: number, passengerTrips: CarTrip[]) {
   }
 }
 
-/** Seats still free on the legs a passenger with `trip` needs (min across their legs). */
-export function seatsLeftFor(carSeats: number, passengerTrips: CarTrip[], trip: CarTrip) {
-  const left = seatsLeftByLeg(carSeats, passengerTrips)
-  if (trip === 'there') return left.there
-  if (trip === 'back') return left.back
-  return Math.min(left.there, left.back)
-}
-
 /** Whether `adding` more passengers (with the given trips) fit in the car alongside `existing`. */
 export function fitsInCar(carSeats: number, existing: CarTrip[], adding: CarTrip[]) {
   const left = seatsLeftByLeg(carSeats, [...existing, ...adding])

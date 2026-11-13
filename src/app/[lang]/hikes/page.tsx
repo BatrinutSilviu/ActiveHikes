@@ -96,7 +96,7 @@ export default async function HikesPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcoming.map(hike => <HikeCard key={hike.id} hike={hike as any} lang={lang} dict={d.hikeCard} />)}
+            {upcoming.map(hike => <HikeCard key={hike.id} hike={hike} lang={lang} dict={d.hikeCard} />)}
           </div>
         )}
       </section>
@@ -118,7 +118,7 @@ export default async function HikesPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPast.map(hike => <HikeCard key={hike.id} hike={hike as any} lang={lang} dict={d.hikeCard} />)}
+              {filteredPast.map(hike => <HikeCard key={hike.id} hike={hike} lang={lang} dict={d.hikeCard} />)}
             </div>
           )}
         </section>

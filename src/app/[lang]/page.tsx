@@ -101,7 +101,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingHikes.map(hike => <HikeCard key={hike.id} hike={hike as any} lang={lang} dict={d.hikeCard} />)}
+            {upcomingHikes.map(hike => <HikeCard key={hike.id} hike={hike} lang={lang} dict={d.hikeCard} />)}
           </div>
         )}
 

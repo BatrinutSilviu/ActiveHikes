@@ -174,7 +174,7 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.editTitle}</h2>
-            <HikeEditForm hike={hikeData as any} bankAccounts={bankAccounts} dict={d.admin.hikeEdit} lang={lang} />
+            <HikeEditForm hike={hikeData} bankAccounts={bankAccounts} dict={d.admin.hikeEdit} lang={lang} />
           </div>
 
           <div className="bg-white border border-stone-100 rounded-2xl p-5">

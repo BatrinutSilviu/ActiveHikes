@@ -17,10 +17,14 @@ export function useFormDraft<T>(key: string, value: T, restore: (draft: T) => vo
       const saved = localStorage.getItem(storageKey)
       if (saved && saved !== initial.current) {
         restore(JSON.parse(saved) as T)
+        // localStorage only exists in the browser, so the draft can only be read after
+        // hydration; setting state from this effect is the intended way to show it.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setRestored(true)
       }
     } catch {}
     loaded.current = true
+    // `restore` is a new closure on every render; the draft only needs re-reading when the key changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey])
 

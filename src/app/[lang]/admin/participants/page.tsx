@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
@@ -14,6 +15,14 @@ const STATUS_BADGE: Record<string, string> = {
   rejected: 'bg-red-100 text-red-600',
 }
 
+const participantInclude = {
+  user: { select: { name: true, email: true, phone: true } },
+  host: { select: { user: { select: { name: true } } } },
+  hike: { select: { id: true, type: true, title: true, date: true, endDate: true } },
+} satisfies Prisma.HikeParticipantInclude
+
+type ParticipantRow = Prisma.HikeParticipantGetPayload<{ include: typeof participantInclude }>
+
 export default async function AllParticipantsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
   if (!hasLocale(lang)) notFound()
@@ -24,11 +33,7 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
     getDictionary(lang),
     prisma.hikeParticipant.findMany({
       orderBy: { joinedAt: 'desc' },
-      include: {
-        user: { select: { name: true, email: true, phone: true } },
-        host: { select: { user: { select: { name: true } } } },
-        hike: { select: { id: true, type: true, title: true, date: true, endDate: true } },
-      },
+      include: participantInclude,
     }),
   ])
 
@@ -58,11 +63,11 @@ export default async function AllParticipantsPage({ params }: { params: Promise<
   )
 }
 
-function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { participants: any[]; lang: string; dateLocale: string; none: string; friendOf: string }) {
+function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { participants: ParticipantRow[]; lang: string; dateLocale: string; none: string; friendOf: string }) {
   if (participants.length === 0) return <p className="text-stone-400">{none}</p>
   return (
     <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden divide-y divide-stone-50">
-      {participants.map((p: any) => (
+      {participants.map(p => (
         <Link key={p.id} href={`/${lang}/admin/${p.hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'}/${p.hike.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">

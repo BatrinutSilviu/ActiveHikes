@@ -20,12 +20,10 @@ type GpxDict = {
 export default function GpxSection({
   approximateUrl,
   actualUrl,
-  isCompleted,
   dict,
 }: {
   approximateUrl: string | null
   actualUrl: string | null
-  isCompleted: boolean
   dict: GpxDict
 }) {
   if (!approximateUrl && !actualUrl) return null

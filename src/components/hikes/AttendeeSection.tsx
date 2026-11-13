@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { assignCarDriver, assignFriendCarDriver } from '@/app/actions/hikes'
 import { Car, UserCheck, X } from 'lucide-react'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg, goesThere, goesBack } from '@/lib/carTrip'
@@ -69,20 +69,20 @@ export default function AttendeeSection({
   const [error, setError] = useState('')
   const net = useDict().network
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     try {
       const res = await apiFetch(`/api/hikes/${hikeId}/carpool`, { cache: 'no-store', ...POLL })
       if (res.ok) setParticipants((await res.json()).participants)
     } catch {
-      // silent
+      // A failed poll is fine: the next one (or the next assignment) refreshes the list.
     }
-  }
+  }, [hikeId])
 
   useEffect(() => {
     if (!isUpcoming) return
     const interval = setInterval(refetch, 5000)
     return () => clearInterval(interval)
-  }, [hikeId, isUpcoming])
+  }, [refetch, isUpcoming])
 
   const confirmed = participants.filter(p => p.status === 'confirmed')
   const pendingCount = participants.filter(p => p.status === 'pending').length

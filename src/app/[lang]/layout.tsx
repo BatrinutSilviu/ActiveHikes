@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Providers from '@/components/Providers'
-import { hasLocale, defaultLocale } from '@/lib/i18n'
+import { hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 
 export const metadata: Metadata = {
