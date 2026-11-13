@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
 import { submitDocument, submitPreviewDocument, deleteSubmission } from '@/app/actions/documentSubmissions'
-import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
+import { isNetworkError, withTimeout } from '@/lib/net'
+import { uploadFile } from '@/lib/upload'
 import { useDict } from '@/hooks/useDict'
 
 type Submission = { id: string; url: string; fileName: string }
@@ -38,16 +39,9 @@ export default function DocumentUploadsSection({ hikeId, previewMode, submission
     if (uploading) return
     setUploading(true)
     setError('')
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('bucket', 'hike-document-submissions')
-    formData.append('hikeId', hikeId)
     let url: string
     try {
-      // Phone photos of documents can be large on a slow connection — allow a couple of minutes.
-      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
-      url = (await res.json()).url
+      url = await uploadFile(file, 'hike-document-submissions', { hikeId })
     } catch (err) {
       setError(failMessage(err))
       setUploading(false)

@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { addDocument, deleteDocument, editDocumentUrl, renameDocument, setDocumentRequiresUpload } from '@/app/actions/documents'
 import { Upload, Trash2, X, FileText, Link as LinkIcon, Pencil, Check } from 'lucide-react'
-import { apiFetch, isNetworkError } from '@/lib/net'
+import { isNetworkError } from '@/lib/net'
+import { uploadFile } from '@/lib/upload'
 import { useDict } from '@/hooks/useDict'
 
 type ViaFerrataDoc = { id: string; url: string; name: string; requiresUpload: boolean }
@@ -108,15 +109,9 @@ export default function ViaFerrataDocumentUploader({ viaFerrataId, existingDocum
     if (!selectedFile) return
     setUploading(true)
 
-    const formData = new FormData()
-    formData.append('file', selectedFile)
-    formData.append('bucket', 'via-ferrata-documents')
-
     let url: string
     try {
-      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
-      url = (await res.json()).url
+      url = await uploadFile(selectedFile, 'via-ferrata-documents')
     } catch (err) {
       setUploading(false)
       window.alert(isNetworkError(err) ? net.error : net.failed)

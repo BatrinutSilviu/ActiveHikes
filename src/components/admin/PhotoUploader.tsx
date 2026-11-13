@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { addPhoto, deletePhoto } from '@/app/actions/photos'
 import { Upload, Trash2, X } from 'lucide-react'
-import { apiFetch, isNetworkError } from '@/lib/net'
+import { isNetworkError } from '@/lib/net'
+import { uploadFile } from '@/lib/upload'
 import { useDict } from '@/hooks/useDict'
 import UploadedImage from '@/components/UploadedImage'
 
@@ -28,15 +29,9 @@ export default function PhotoUploader({ hikeId, existingPhotos }: {
     if (!selectedFile) return
     setUploading(true)
 
-    const formData = new FormData()
-    formData.append('file', selectedFile)
-    formData.append('bucket', 'hike-photos')
-
     let url: string
     try {
-      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
-      url = (await res.json()).url
+      url = await uploadFile(selectedFile, 'hike-photos')
     } catch (err) {
       setUploading(false)
       window.alert(isNetworkError(err) ? net.error : net.failed)

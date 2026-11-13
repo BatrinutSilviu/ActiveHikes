@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { apiFetch } from '@/lib/net'
 
 // Keeps an unsaved copy of a form in localStorage so a failed save, a crash or
 // an accidental reload never loses what the admin typed. The draft is restored
@@ -54,14 +53,5 @@ export function useFormDraft<T>(key: string, value: T, restore: (draft: T) => vo
   return { restored, clearDraft, discardDraft }
 }
 
-// Uploads a file through /api/upload and fails loudly instead of silently
-// continuing with an undefined URL when the server rejects it.
-export async function uploadFile(file: File, bucket: string): Promise<string> {
-  const fd = new FormData()
-  fd.append('file', file)
-  fd.append('bucket', bucket)
-  const res = await apiFetch('/api/upload', { method: 'POST', body: fd, timeoutMs: 120_000 })
-  const data = await res.json().catch(() => null)
-  if (!res.ok || !data?.url) throw new Error(data?.error ?? `Upload failed (${res.status})`)
-  return data.url
-}
+// Kept here as well because the admin edit forms import it from this module.
+export { uploadFile } from '@/lib/upload'

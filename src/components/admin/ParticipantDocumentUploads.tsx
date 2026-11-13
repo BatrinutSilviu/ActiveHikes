@@ -3,7 +3,8 @@
 import { useState, useTransition } from 'react'
 import { FileText, User, Upload, X } from 'lucide-react'
 import { submitDocumentForParticipant, deleteSubmission } from '@/app/actions/documentSubmissions'
-import { apiFetch, isNetworkError } from '@/lib/net'
+import { isNetworkError } from '@/lib/net'
+import { uploadFile } from '@/lib/upload'
 import { useDict } from '@/hooks/useDict'
 
 type Upload = { id: string; url: string; fileName: string; participantName: string; isPreview: boolean }
@@ -38,15 +39,9 @@ export default function ParticipantDocumentUploads({ hikeId, uploads, participan
     if (!participant) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('bucket', 'hike-document-submissions')
-    formData.append('hikeId', hikeId)
     let url: string
     try {
-      const res = await apiFetch('/api/upload', { method: 'POST', body: formData, timeoutMs: 120_000 })
-      if (!res.ok) throw new Error(`Upload failed (${res.status})`)
-      url = (await res.json()).url
+      url = await uploadFile(file, 'hike-document-submissions', { hikeId })
     } catch (err) {
       setUploading(false)
       window.alert(isNetworkError(err) ? net.error : net.failed)
