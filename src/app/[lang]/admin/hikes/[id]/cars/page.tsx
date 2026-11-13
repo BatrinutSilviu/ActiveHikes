@@ -6,6 +6,7 @@ import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
 import ManualCarAssignmentList from '@/components/admin/ManualCarAssignmentList'
 import { ArrowLeft, Users, Download } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
+import { EVENT_PATH } from '@/lib/eventPaths'
 
 export default async function AdminHikeCarsPage({ params }: { params: Promise<{ lang: string; id: string }> }) {
   const { lang, id } = await params
@@ -44,7 +45,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
   if (!hike) notFound()
 
   const dc = d.admin.carsPage
-  const basePath = hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'
+  const basePath = EVENT_PATH[hike.type]
   const pName = (p: { user: { name: string | null } | null; friendName: string | null }) => p.user?.name ?? p.friendName ?? '?'
   const drivers = hike.participants
     .filter(p => p.bringsCar && p.carSeats != null)

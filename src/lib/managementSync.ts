@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
+import { EVENT_PATH } from './eventPaths'
 
 // Pushes hikes and via ferratas to the community's management app (management.activetimisoara.ro),
 // which keeps a matching event with its date, price, place and confirmed participants.
@@ -32,7 +33,7 @@ async function push(hikeId: string) {
         record: {
           ...hike,
           confirmedCount: await prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } }),
-          url: base ? `${base}/ro/${hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'}/${hike.id}` : null,
+          url: base ? `${base}/ro/${EVENT_PATH[hike.type]}/${hike.id}` : null,
         },
       }
     : { source: 'hikes', id: hikeId, deleted: true }

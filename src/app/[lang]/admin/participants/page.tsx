@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { formatHikeDate } from '@/lib/dates'
+import { EVENT_PATH } from '@/lib/eventPaths'
 
 const STATUS_BADGE: Record<string, string> = {
   confirmed: 'bg-emerald-100 text-emerald-700',
@@ -68,7 +69,7 @@ function ParticipantTable({ participants, lang, dateLocale, none, friendOf }: { 
   return (
     <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden divide-y divide-stone-50">
       {participants.map(p => (
-        <Link key={p.id} href={`/${lang}/admin/${p.hike.type === 'via_ferrata' ? 'via-ferrata' : 'hikes'}/${p.hike.id}`}
+        <Link key={p.id} href={`/${lang}/admin/${EVENT_PATH[p.hike.type]}/${p.hike.id}`}
           className="px-5 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors">
           <div className="flex-1 min-w-0">
             <div className="font-medium text-stone-800">{p.user?.name ?? p.friendName}</div>
