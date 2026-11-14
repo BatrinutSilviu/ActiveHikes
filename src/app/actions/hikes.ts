@@ -10,6 +10,7 @@ import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { notifyManagement } from '@/lib/managementSync'
+import { canonicalCategory } from '@/lib/eventCategories'
 import { isPastEvent } from '@/lib/dates'
 import { type CarTrip, isCarTrip, tripCompatible, fitsInCar, goesThere, goesBack } from '@/lib/carTrip'
 
@@ -480,6 +481,8 @@ export async function createHike(data: {
     assertTime(data.endTime)
     assertAdvance(data.advanceFee, data.entryFee)
   }
+  // One of the management app's event types, spelled as it spells it.
+  const category = isEvent && data.category?.trim() ? await canonicalCategory(data.category.trim()) : null
 
   const hike = await prisma.hike.create({
     data: {
@@ -523,7 +526,7 @@ export async function createHike(data: {
       essentials: data.essentials ?? [],
       externalPhotosUrl: data.externalPhotosUrl || null,
       whatsappGroupUrl: data.whatsappGroupUrl || null,
-      category: isEvent ? (data.category?.trim() || null) : null,
+      category,
       endTime: isEvent ? (data.endTime || null) : null,
       advanceFee: isEvent ? (data.advanceFee ?? null) : null,
       status: 'draft',
@@ -609,6 +612,11 @@ export async function updateHike(
   // Only general events send these (hikes keep their meeting time as free text).
   assertTime(data.endTime)
   if (data.advanceFee !== undefined) assertAdvance(data.advanceFee, data.entryFee)
+  // A changed kind of event must be one of the management app's event types (an unchanged one is kept as is).
+  if (rest.category?.trim()) {
+    const current = (await prisma.hike.findUnique({ where: { id: hikeId }, select: { category: true } }))?.category
+    rest.category = current?.toLowerCase() === rest.category.trim().toLowerCase() ? current : await canonicalCategory(rest.category.trim())
+  }
   const updated = await prisma.hike.update({
     where: { id: hikeId },
     data: {

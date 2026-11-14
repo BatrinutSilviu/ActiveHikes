@@ -957,6 +957,8 @@
         "titlePlaceholder": "ex. Alergare de duminică dimineața",
         "category": "Tipul evenimentului",
         "categoryPlaceholder": "ex. Alergare, Yoga, Jocuri de societate",
+        "categoryPick": "Alege tipul evenimentului",
+        "categoryHint": "Lista vine din aplicația de management (pagina Sports); un tip nou se adaugă acolo.",
         "place": "Locul",
         "placePlaceholder": "ex. Parcul Rozelor",
         "address": "Adresa sau punctul de întâlnire",

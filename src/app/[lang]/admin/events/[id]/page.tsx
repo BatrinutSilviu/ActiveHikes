@@ -100,7 +100,7 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
                 bankAccountIds: event.bankAccounts.map(a => a.id),
               }}
               bankAccounts={bankAccounts}
-              categories={await eventCategories()}
+              {...await eventCategories()}
               lang={lang}
               dict={de.form}
             />

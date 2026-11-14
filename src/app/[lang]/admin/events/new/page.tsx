@@ -25,7 +25,7 @@ export default async function NewGeneralEventPage({ params }: { params: Promise<
       </Link>
       <h1 className="text-3xl font-black tracking-tight text-stone-900">{da.createTitle}</h1>
       <p className="text-stone-500 mt-1 mb-6 text-sm">{da.createSubtitle}</p>
-      <EventForm bankAccounts={bankAccounts} categories={await eventCategories()} lang={lang} dict={da.form} />
+      <EventForm bankAccounts={bankAccounts} {...await eventCategories()} lang={lang} dict={da.form} />
     </div>
   )
 }

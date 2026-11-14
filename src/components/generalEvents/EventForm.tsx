@@ -35,7 +35,7 @@ export type GeneralEventData = {
 type BankAccountOption = { id: string; type: string; bankName: string | null; accountHolder: string }
 
 export type EventFormDict = Record<
-  | 'title' | 'titlePlaceholder' | 'category' | 'categoryPlaceholder' | 'place' | 'placePlaceholder' | 'address'
+  | 'title' | 'titlePlaceholder' | 'category' | 'categoryPlaceholder' | 'categoryPick' | 'categoryHint' | 'place' | 'placePlaceholder' | 'address'
   | 'addressPlaceholder' | 'description' | 'descriptionPlaceholder' | 'date' | 'endDate' | 'startTime' | 'endTime'
   | 'maxParticipants' | 'price' | 'pricePlaceholder' | 'advance' | 'advancePlaceholder' | 'advanceTooHigh'
   | 'endBeforeStart' | 'whatToBring' | 'whatToBringPlaceholder' | 'whatsappGroupUrl' | 'coverPhoto' | 'chooseCoverPhoto'
@@ -56,11 +56,13 @@ function durationHours(f: { startTime: string; endTime: string; date: string; en
   return minutes > 0 ? Math.round(minutes / 6) / 10 : null
 }
 
-export default function EventForm({ event, bankAccounts, categories = [], lang, dict }: {
+export default function EventForm({ event, bankAccounts, categories = [], fromManagement = false, lang, dict }: {
   event?: GeneralEventData
   bankAccounts: BankAccountOption[]
-  /** Kinds of event used before, suggested so the same one isn't typed several ways. */
+  /** The management app's event types (its list is the source of truth), or, when it can't be reached,
+   *  the kinds used here before. */
   categories?: string[]
+  fromManagement?: boolean
   lang: string
   dict: EventFormDict
 }) {
@@ -179,9 +181,21 @@ export default function EventForm({ event, bankAccounts, categories = [], lang, 
       </div>
       <div>
         <label className={label}>{dict.category}</label>
-        <input value={form.category} onChange={e => set('category', e.target.value)} required placeholder={dict.categoryPlaceholder}
-          list="event-categories" className={cls} />
-        <datalist id="event-categories">{categories.map(c => <option key={c} value={c} />)}</datalist>
+        {fromManagement ? (
+          <select value={form.category} onChange={e => set('category', e.target.value)} required className={cls}>
+            <option value="" disabled>{dict.categoryPick}</option>
+            {/* An event saved before its kind was renamed or removed there still shows what it has. */}
+            {[...categories, ...(form.category && !categories.includes(form.category) ? [form.category] : [])]
+              .map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ) : (
+          <>
+            <input value={form.category} onChange={e => set('category', e.target.value)} required placeholder={dict.categoryPlaceholder}
+              list="event-categories" className={cls} />
+            <datalist id="event-categories">{categories.map(c => <option key={c} value={c} />)}</datalist>
+          </>
+        )}
+        <p className="text-xs text-gray-500 mt-1">{dict.categoryHint}</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
