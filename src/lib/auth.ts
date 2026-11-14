@@ -27,6 +27,9 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            // Google vouches for the address (checked in the signIn callback), so a Google sign-in
+            // joins an existing account with the same email instead of being refused.
+            allowDangerousEmailAccountLinking: true,
           }),
         ]
       : []),
@@ -41,7 +44,7 @@ export const authOptions: NextAuthOptions = {
         if (!email || !credentials?.password) return null
         // Slow down password guessing: per account and per client.
         const ip = clientIp(req?.headers)
-        if (!allow(`login:email:${email}`, 10, 15 * 60_000) || !allow(`login:ip:${ip}`, 30, 15 * 60_000)) {
+        if (!await allow(`login:email:${email}`, 10, 15 * 60_000) || !await allow(`login:ip:${ip}`, 30, 15 * 60_000)) {
           throw new Error('TooManyAttempts')
         }
 
@@ -54,6 +57,8 @@ export const authOptions: NextAuthOptions = {
 
         const match = await bcrypt.compare(credentials.password, user.password)
         if (!match) return null
+        // Only after the password matched, so this doesn't reveal which addresses are registered.
+        if (!user.emailVerified) throw new Error('EmailNotVerified')
 
         return {
           id: user.id,
@@ -65,6 +70,11 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      // Only addresses Google has verified may sign in (and possibly join an existing account).
+      if (account?.provider === 'google') return (profile as { email_verified?: boolean } | undefined)?.email_verified === true
+      return true
+    },
     async jwt({ token, user, trigger }) {
       if (user) token.id = user.id
       // Role and phone always come from the database: on sign-in, when the client asks for an update
@@ -91,7 +101,8 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    // Populate name for Google OAuth users on first sign-in
+    // Populate name for Google OAuth users on first sign-in. (next-auth also calls this when Google
+    // joins an existing account, so it must not touch anything else.)
     async createUser({ user }) {
       if (user.name && user.id) {
         await prisma.user.update({
@@ -99,6 +110,23 @@ export const authOptions: NextAuthOptions = {
           data: { name: user.name },
         })
       }
+    },
+    // A Google login was just attached to an account with the same (Google-verified) email: a new
+    // account, or an existing one. If that email was never confirmed, whoever set the password never
+    // proved they own the address — possibly someone who signed up with another person's email
+    // first. The Google owner has proved it, so the password goes, the email counts as confirmed, and
+    // the phone typed at sign-up is dropped so onboarding asks the real owner for theirs.
+    async linkAccount({ user, profile }) {
+      if (!user.id || !user.email || profile.email?.toLowerCase() !== user.email.toLowerCase()) return
+      await prisma.user.updateMany({
+        where: { id: user.id, emailVerified: null },
+        data: {
+          password: null,
+          emailVerified: new Date(),
+          phone: null,
+          ...(profile.name ? { name: profile.name } : {}),
+        },
+      })
     },
   },
 }

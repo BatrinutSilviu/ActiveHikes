@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { allow, clientIp, isEmail, normalizeEmail } from '@/lib/rateLimit'
+import { sendVerificationLink } from '@/lib/emailVerification'
 
 const text = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 
 export async function POST(req: NextRequest) {
-  if (!allow(`register:ip:${clientIp(req.headers)}`, 5, 60 * 60_000)) {
+  if (!await allow(`register:ip:${clientIp(req.headers)}`, 5, 60 * 60_000)) {
     return NextResponse.json({ error: 'Too many sign-ups from here — try again later.' }, { status: 429 })
   }
   const body = await req.json().catch(() => ({}))
@@ -37,9 +38,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 })
   }
 
+  // The account starts unconfirmed: signing in with the password only works after the emailed link
+  // is opened, so nobody can claim an address they don't own.
   await prisma.user.create({
     data: { name, email, password: await bcrypt.hash(password, 12), phone, role: 'user' },
   })
+  await sendVerificationLink(email, body.lang)
 
   return NextResponse.json({ ok: true })
 }

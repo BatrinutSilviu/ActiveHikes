@@ -1,23 +1,41 @@
 import 'server-only'
 
-// Simple in-memory rate limits (one app instance): at most `limit` hits per key within `windowMs`.
-// Used for logging in, signing up and password resets, per client IP and per email.
+import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 
-const hits = new Map<string, number[]>()
-let lastSweep = Date.now()
+// Rate limits for logging in, signing up, password resets and confirmation emails, per client IP and
+// per email: at most `limit` hits per key in a fixed window of `windowMs`. The counters live in
+// Postgres (RateLimit table), so a restart or redeploy doesn't hand out a fresh allowance.
+
+let lastSweep = 0
 
 /** Records a hit for `key`; false when the key is over its limit (the hit is still counted). */
-export function allow(key: string, limit: number, windowMs: number): boolean {
-  const now = Date.now()
-  if (now - lastSweep > 10 * 60_000) {
-    // Forget keys that have been quiet, so the map doesn't grow forever.
-    for (const [k, times] of hits) if (times.every(t => now - t > 60 * 60_000)) hits.delete(k)
-    lastSweep = now
+export async function allow(key: string, limit: number, windowMs: number): Promise<boolean> {
+  const now = new Date()
+  try {
+    // One atomic statement: start a new window if there is none or it has run out, else count the hit.
+    const rows = await prisma.$queryRaw<{ count: number }[]>`
+      INSERT INTO "RateLimit" ("key", "count", "resetAt")
+      VALUES (${key}, 1, ${new Date(now.getTime() + windowMs)})
+      ON CONFLICT ("key") DO UPDATE SET
+        "count" = CASE WHEN "RateLimit"."resetAt" <= ${now} THEN 1 ELSE "RateLimit"."count" + 1 END,
+        "resetAt" = CASE WHEN "RateLimit"."resetAt" <= ${now} THEN EXCLUDED."resetAt" ELSE "RateLimit"."resetAt" END
+      RETURNING "count"`
+    sweep(now)
+    return Number(rows[0]?.count ?? 1) <= limit
+  } catch (err) {
+    // A limiter hiccup shouldn't lock everyone out; the database being down fails the request anyway.
+    logger.error('rate limit check failed', { key, err })
+    return true
   }
-  const recent = (hits.get(key) ?? []).filter(t => now - t < windowMs)
-  recent.push(now)
-  hits.set(key, recent)
-  return recent.length <= limit
+}
+
+// Forget finished windows now and then, so the table stays small. Not awaited: it's housekeeping.
+function sweep(now: Date) {
+  if (now.getTime() - lastSweep < 10 * 60_000) return
+  lastSweep = now.getTime()
+  prisma.rateLimit.deleteMany({ where: { resetAt: { lt: now } } })
+    .catch(err => logger.error('rate limit sweep failed', { err }))
 }
 
 type HeaderBag = Headers | Record<string, string | string[] | undefined> | undefined

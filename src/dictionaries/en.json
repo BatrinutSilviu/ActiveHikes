@@ -333,7 +333,13 @@
       "invalidCredentials": "Invalid email or password.",
       "oauthError": "This email is registered with a password. Please sign in with email instead.",
       "forgotPassword": "Forgot password?",
-      "resetSuccess": "Password updated. You can sign in now."
+      "resetSuccess": "Password updated. You can sign in now.",
+      "emailNotVerified": "Please confirm your email address first — open the link we sent you when you signed up.",
+      "resendConfirmation": "Send the confirmation email again",
+      "resendingConfirmation": "Sending…",
+      "confirmationResent": "If this account still needs confirming, we've sent a new link. Check your inbox (and spam folder).",
+      "verifiedSuccess": "Email confirmed. You can sign in now.",
+      "verifiedInvalid": "This confirmation link is invalid or has expired. Sign in to get a new one."
     },
     "forgotPassword": {
       "title": "Reset your password",
@@ -375,7 +381,10 @@
       "creating": "Creating account…",
       "alreadyAccount": "Already have an account?",
       "signIn": "Sign in",
-      "viewTerms": "Terms & Conditions"
+      "viewTerms": "Terms & Conditions",
+      "checkEmailTitle": "Check your inbox",
+      "checkEmailMessage": "We've sent a confirmation link to {email}. Open it to activate your account, then sign in. The link expires in 24 hours.",
+      "goToLogin": "Go to sign in"
     },
     "onboarding": {
       "title": "Just one more step",

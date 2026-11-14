@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { hashResetToken } from '@/lib/passwordReset'
+import { VERIFY_PREFIX } from '@/lib/emailVerification'
 
 export async function POST(req: NextRequest) {
   const { token, password } = await req.json()
@@ -17,7 +18,8 @@ export async function POST(req: NextRequest) {
   const hashedToken = hashResetToken(token)
   const verificationToken = await prisma.verificationToken.findUnique({ where: { token: hashedToken } })
 
-  if (!verificationToken || verificationToken.expires < new Date()) {
+  // Email confirmation links live in the same table; they can't be used to set a password.
+  if (!verificationToken || verificationToken.expires < new Date() || verificationToken.identifier.startsWith(VERIFY_PREFIX)) {
     return NextResponse.json({ error: 'This reset link is invalid or has expired.' }, { status: 400 })
   }
 
@@ -25,7 +27,8 @@ export async function POST(req: NextRequest) {
 
   await prisma.user.update({
     where: { email: verificationToken.identifier },
-    data: { password: hashed },
+    // The link arrived in this inbox, so the address is confirmed too.
+    data: { password: hashed, emailVerified: new Date() },
   })
   await prisma.verificationToken.delete({ where: { token: hashedToken } })
 

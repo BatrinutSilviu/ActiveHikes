@@ -99,6 +99,16 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// Rate-limit counters (src/lib/rateLimit.ts): one fixed window per key, kept in the database so a
+// restart or redeploy doesn't reset them. Expired rows are swept from time to time.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
+}
+
 // ─── App models ───────────────────────────────────────────────────────────────
 
 model User {

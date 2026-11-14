@@ -333,7 +333,13 @@
       "invalidCredentials": "Email sau parolă incorectă.",
       "oauthError": "Acest email este înregistrat cu parolă. Te rugăm să te autentifici cu email.",
       "forgotPassword": "Ai uitat parola?",
-      "resetSuccess": "Parolă actualizată. Te poți autentifica acum."
+      "resetSuccess": "Parolă actualizată. Te poți autentifica acum.",
+      "emailNotVerified": "Te rugăm să-ți confirmi mai întâi adresa de email — deschide linkul pe care ți l-am trimis la înregistrare.",
+      "resendConfirmation": "Retrimite emailul de confirmare",
+      "resendingConfirmation": "Se trimite…",
+      "confirmationResent": "Dacă acest cont încă nu e confirmat, ți-am trimis un link nou. Verifică-ți inboxul (și folderul de spam).",
+      "verifiedSuccess": "Email confirmat. Te poți autentifica acum.",
+      "verifiedInvalid": "Acest link de confirmare nu este valid sau a expirat. Autentifică-te pentru a primi unul nou."
     },
     "forgotPassword": {
       "title": "Resetează-ți parola",
@@ -375,7 +381,10 @@
       "creating": "Se creează contul…",
       "alreadyAccount": "Ai deja cont?",
       "signIn": "Autentifică-te",
-      "viewTerms": "Termeni și condiții"
+      "viewTerms": "Termeni și condiții",
+      "checkEmailTitle": "Verifică-ți emailul",
+      "checkEmailMessage": "Ți-am trimis un link de confirmare la {email}. Deschide-l pentru a-ți activa contul, apoi autentifică-te. Linkul expiră în 24 de ore.",
+      "goToLogin": "Mergi la autentificare"
     },
     "onboarding": {
       "title": "Încă un pas",

@@ -7,12 +7,12 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 ## What the app does
 
 - **Admin** creates hikes with: destination, date, entry fee, participant limit, starting point, duration, camping/accommodation info, cover photo, approximate GPX route, external photo album link
-- **Users** sign up (email+password or Google OAuth — full name mandatory), browse hikes, and click "Register"
+- **Users** sign up (email+password or Google OAuth — full name mandatory; password sign-ups must open an emailed confirmation link before they can log in), browse hikes, and click "Register"
 - **Join flow**: user registers → status `pending` → user pays the entry fee to one of the bank accounts shown on the hike page → admin confirms the payment manually → status `confirmed`
 - **Waitlist**: once the participant limit is hit, new registrations go to `waitlist` automatically; admin can promote them manually
 - **After the hike**: admin uploads featured photos (shown in a gallery on the hike page), pastes a Google Photos link for the full album, uploads the actual GPX track, and marks the hike as `completed`
 - **Users** see their registrations and status on their profile page
-- No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional email sent is the password reset link.
+- No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional emails are the sign-up confirmation link and the password reset link.
 
 ## Tech stack
 
@@ -21,7 +21,7 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **NextAuth v4** — JWT sessions, Credentials provider + Google OAuth (optional)
 - **File uploads** — saved to `public/uploads/{bucket}/` on disk (Docker volume in prod)
 - **Server Actions** for mutations (`src/app/actions/`), API route for file uploads (`/api/upload`)
-- **Resend** — sends password reset emails (`RESEND_API_KEY`, `EMAIL_FROM` env vars)
+- **Resend** — sends sign-up confirmation and password reset emails (`RESEND_API_KEY`, `EMAIL_FROM` env vars)
 
 ## Running locally
 
@@ -66,7 +66,10 @@ src/app/api/upload/route.ts   File upload endpoint (saves to public/uploads/)
 src/app/api/auth/register/    User signup endpoint (validates full name, hashes password)
 src/app/api/auth/forgot-password/  Requests a password reset email
 src/app/api/auth/reset-password/   Consumes a reset token and sets a new password
-src/lib/mailer.ts              Resend email wrapper (password reset)
+src/app/api/auth/verify-email/    Confirms an email from the sign-up link (resend-verification sends it again)
+src/lib/mailer.ts              Resend email wrapper (sign-up confirmation, password reset)
+src/lib/rateLimit.ts           Rate limits for auth endpoints, counted in Postgres (RateLimit table)
+src/proxy.ts                   Locale redirects, route protection, per-request CSP nonce
 .github/workflows/deploy.yml  Auto-deploy to VPS on push to main (see SETUP.md)
 ```
 

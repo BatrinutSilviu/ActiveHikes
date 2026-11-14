@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
   }
   // At most one email every 2 minutes (5 an hour) per address, and 10 an hour per client — so this
   // can't be used to flood someone's inbox. The answer is the same either way.
-  const sendAllowed = allow(`reset:ip:${clientIp(req.headers)}`, 10, 60 * 60_000)
-    && allow(`reset:email:${email}:2m`, 1, 2 * 60_000)
-    && allow(`reset:email:${email}:1h`, 5, 60 * 60_000)
+  const sendAllowed = await allow(`reset:ip:${clientIp(req.headers)}`, 10, 60 * 60_000)
+    && await allow(`reset:email:${email}:2m`, 1, 2 * 60_000)
+    && await allow(`reset:email:${email}:1h`, 5, 60 * 60_000)
   if (!sendAllowed) return NextResponse.json({ ok: true })
 
   const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } })

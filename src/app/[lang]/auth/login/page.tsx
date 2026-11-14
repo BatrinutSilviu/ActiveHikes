@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useDict } from '@/hooks/useDict'
-import { isNetworkError, withTimeout } from '@/lib/net'
+import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
 import AuthShell from '@/components/auth/AuthShell'
 import { resolveCallbackUrl } from '@/lib/callbackUrl'
 
@@ -14,6 +14,9 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  // Set when the password was right but the email isn't confirmed yet: offers to resend the link.
+  const [unverified, setUnverified] = useState(false)
+  const [resend, setResend] = useState<'idle' | 'sending' | 'sent'>('idle')
   const router = useRouter()
   const searchParams = useSearchParams()
   const params = useParams()
@@ -24,12 +27,14 @@ function LoginForm() {
   const callbackUrl = resolveCallbackUrl(searchParams.get('callbackUrl'), lang)
   const authError = searchParams.get('error')
   const resetSuccess = searchParams.get('reset') === 'success'
+  const verified = searchParams.get('verified')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
     setLoading(true)
     setError('')
+    setUnverified(false)
     let result
     try {
       result = await withTimeout(signIn('credentials', { email, password, redirect: false }))
@@ -38,12 +43,32 @@ function LoginForm() {
       setLoading(false)
       return
     }
-    if (result?.error) {
+    if (result?.error === 'EmailNotVerified') {
+      setUnverified(true)
+      setResend('idle')
+      setLoading(false)
+    } else if (result?.error) {
       setError(result.error === 'TooManyAttempts' ? d.tooManyAttempts : d.invalidCredentials)
       setLoading(false)
     } else {
       router.push(callbackUrl)
       router.refresh()
+    }
+  }
+
+  const resendConfirmation = async () => {
+    if (resend === 'sending') return
+    setResend('sending')
+    try {
+      await apiFetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, lang }),
+      })
+      setResend('sent')
+    } catch (err) {
+      setError(isNetworkError(err) ? dict.network.error : dict.network.failed)
+      setResend('idle')
     }
   }
 
@@ -54,6 +79,16 @@ function LoginForm() {
         {authError === 'OAuthAccountNotLinked' && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 mb-5 text-amber-800 text-sm">
             {d.oauthError}
+          </div>
+        )}
+        {verified === 'ok' && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 mb-5 text-emerald-800 text-sm">
+            {d.verifiedSuccess}
+          </div>
+        )}
+        {verified === 'invalid' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 mb-5 text-amber-800 text-sm">
+            {d.verifiedInvalid}
           </div>
         )}
         {resetSuccess && (
@@ -100,6 +135,19 @@ function LoginForm() {
               placeholder="••••••••" />
           </div>
           {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-xl">{error}</p>}
+          {unverified && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm space-y-2">
+              <p>{d.emailNotVerified}</p>
+              {resend === 'sent' ? (
+                <p className="text-emerald-700">{d.confirmationResent}</p>
+              ) : (
+                <button type="button" onClick={resendConfirmation} disabled={resend === 'sending'}
+                  className="font-semibold text-emerald-700 hover:underline disabled:opacity-60">
+                  {resend === 'sending' ? d.resendingConfirmation : d.resendConfirmation}
+                </button>
+              )}
+            </div>
+          )}
           <button type="submit" disabled={loading}
             className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm mt-1">
             {loading ? d.signingIn : d.signIn}

@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { useDict } from '@/hooks/useDict'
-import { apiFetch, isNetworkError, withTimeout } from '@/lib/net'
+import { apiFetch, isNetworkError } from '@/lib/net'
 import AuthShell from '@/components/auth/AuthShell'
 
 export default function SignupPage() {
@@ -15,7 +15,8 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  // After signing up, the account waits for the emailed confirmation link.
+  const [sent, setSent] = useState(false)
   const params = useParams()
   const lang = (params?.lang as string) ?? 'ro'
   const dict = useDict()
@@ -30,7 +31,7 @@ export default function SignupPage() {
       const res = await apiFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, phone }),
+        body: JSON.stringify({ name, email, password, phone, lang }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -43,10 +44,22 @@ export default function SignupPage() {
       setLoading(false)
       return
     }
-    // The account exists now; if signing in fails, the login page takes it from there.
-    const result = await withTimeout(signIn('credentials', { email, password, redirect: false })).catch(() => null)
-    if (!result || result.error) router.push(`/${lang}/auth/login`)
-    else { router.push(`/${lang}`); router.refresh() }
+    setSent(true)
+    setLoading(false)
+  }
+
+  if (sent) {
+    return (
+      <AuthShell lang={lang} title={d.checkEmailTitle} subtitle={d.subtitle}>
+        <div className="bg-white rounded-3xl shadow-xl shadow-stone-200/60 border border-stone-100 p-8 space-y-5">
+          <p className="text-stone-700 text-sm">{d.checkEmailMessage.replace('{email}', email.trim())}</p>
+          <Link href={`/${lang}/auth/login`}
+            className="block w-full text-center bg-emerald-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors shadow-sm">
+            {d.goToLogin}
+          </Link>
+        </div>
+      </AuthShell>
+    )
   }
 
   return (
