@@ -13,14 +13,47 @@ function detectLocale(req: NextRequest): Locale {
   return accept.toLowerCase().startsWith('ro') ? 'ro' : DEFAULT
 }
 
+// Content Security Policy with a fresh nonce per request: only scripts carrying the nonce (Next adds
+// it to its own scripts by reading this header during rendering) or loaded by them ('strict-dynamic')
+// may run, so injected inline scripts don't. Every page is rendered per request already (the root
+// layout reads headers()), so nonces cost no caching. Styles still allow inline: React style
+// attributes and Leaflet's positioning rely on them. Eval only in development (React's debugging).
+function contentSecurityPolicy(nonce: string) {
+  const isDev = process.env.NODE_ENV !== 'production'
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src 'self'${isDev ? ' ws: wss:' : ''}`,
+    "frame-src 'none'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ')
+}
+
 export async function proxy(request: NextRequest) {
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+  const csp = contentSecurityPolicy(nonce)
+  // Next reads the nonce from the request's CSP header; the browser enforces the response's.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('Content-Security-Policy', csp)
+  const next = () => {
+    const res = NextResponse.next({ request: { headers: requestHeaders } })
+    res.headers.set('Content-Security-Policy', csp)
+    return res
+  }
+
   const { pathname } = request.nextUrl
 
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/api/') ||
     pathname.includes('.')
-  ) return NextResponse.next()
+  ) return next()
 
   const hasLocale = LOCALES.some(l => pathname === `/${l}` || pathname.startsWith(`/${l}/`))
 
@@ -68,7 +101,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const res = NextResponse.next()
+  const res = next()
   res.headers.set('x-locale', locale)
   return res
 }
