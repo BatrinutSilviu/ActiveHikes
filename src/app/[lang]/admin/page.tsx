@@ -65,9 +65,9 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
           <h1 className="text-3xl font-black tracking-tight text-stone-900">{da.title}</h1>
           <p className="text-stone-500 mt-1 text-sm">{da.subtitle}</p>
         </div>
-        <Link href={`/${lang}/admin/hikes/new`}
+        <Link href={`/${lang}/admin/events/new`}
           className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-colors shadow-sm hover:shadow-emerald-200 hover:shadow-md">
-          <Plus size={17} /> {da.newHike}
+          <Plus size={17} /> {d.events.admin.newEvent}
         </Link>
       </div>
 
@@ -122,8 +122,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
       {/* Quick links */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
-        <QuickLink href={`/${lang}/admin/hikes/new`} icon={<Plus size={17} />} label={da.createHike} />
-        <QuickLink href={`/${lang}/admin/via-ferrata/new`} icon={<Plus size={17} />} label={da.newViaFerrata} />
         <QuickLink href={`/${lang}/admin/events/new`} icon={<Plus size={17} />} label={d.events.admin.newEvent} />
         <QuickLink href={`/${lang}/admin/bank-accounts`} icon={<CreditCard size={17} />} label={da.bankAccounts} />
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
@@ -181,7 +179,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
           <h2 className="font-bold text-stone-900">{da.upcomingHikes}</h2>
-          <Link href={`/${lang}/admin/hikes/new`} className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 transition-colors">{da.addNew}</Link>
         </div>
         {upcomingHikes.length === 0 ? (
           <div className="px-6 py-12 text-center text-stone-400">
@@ -211,7 +208,6 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
       <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mt-6">
         <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
           <h2 className="font-bold text-stone-900">{da.upcomingViaFerrata}</h2>
-          <Link href={`/${lang}/admin/via-ferrata/new`} className="text-emerald-600 text-sm font-semibold hover:text-emerald-700 transition-colors">{da.addNew}</Link>
         </div>
         {upcomingViaFerrata.length === 0 ? (
           <div className="px-6 py-12 text-center text-stone-400">

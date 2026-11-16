@@ -955,7 +955,7 @@
     "admin": {
       "newEvent": "Eveniment nou",
       "createTitle": "Eveniment nou",
-      "createSubtitle": "Orice eveniment al comunității care nu e drumeție sau via ferrata: o alergare, un atelier, o petrecere…",
+      "createSubtitle": "Alege întâi tipul: drumețiile și via ferrata au formularul lor; orice alt tip (o alergare, un atelier, o petrecere…) se completează aici.",
       "upcomingEvents": "Evenimente care urmează",
       "draftEvents": "Evenimente ciornă",
       "noUpcoming": "Niciun eveniment programat.",
@@ -990,6 +990,8 @@
         "whatsappGroupUrl": "Link grup WhatsApp (opțional)",
         "coverPhoto": "Poza de copertă",
         "chooseCoverPhoto": "Alege o poză de copertă",
+        "categoryOther": "Altul…",
+        "ownFormGroup": "Formular separat",
         "coverPhotoSet": "Poza de copertă e setată",
         "bankAccountsSection": "Metode de plată",
         "bankAccountsHint": "Le văd participanții după ce se înscriu.",

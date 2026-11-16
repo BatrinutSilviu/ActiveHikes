@@ -35,7 +35,7 @@ export type GeneralEventData = {
 type BankAccountOption = { id: string; type: string; bankName: string | null; accountHolder: string }
 
 export type EventFormDict = Record<
-  | 'title' | 'titlePlaceholder' | 'category' | 'categoryPlaceholder' | 'categoryPick' | 'categoryHint' | 'place' | 'placePlaceholder' | 'address'
+  | 'title' | 'titlePlaceholder' | 'category' | 'categoryPlaceholder' | 'categoryPick' | 'categoryHint' | 'categoryOther' | 'ownFormGroup' | 'place' | 'placePlaceholder' | 'address'
   | 'addressPlaceholder' | 'description' | 'descriptionPlaceholder' | 'date' | 'endDate' | 'startTime' | 'endTime'
   | 'maxParticipants' | 'price' | 'pricePlaceholder' | 'advance' | 'advancePlaceholder' | 'advanceTooHigh'
   | 'endBeforeStart' | 'whatToBring' | 'whatToBringPlaceholder' | 'whatsappGroupUrl' | 'coverPhoto' | 'chooseCoverPhoto'
@@ -56,13 +56,19 @@ function durationHours(f: { startTime: string; endTime: string; date: string; en
   return minutes > 0 ? Math.round(minutes / 6) / 10 : null
 }
 
-export default function EventForm({ event, bankAccounts, categories = [], fromManagement = false, lang, dict }: {
+// Values of the type picker that aren't a category: another form to open, or a kind typed in by hand.
+const OTHER_TYPE = 'open:'
+const NEW_CATEGORY = '__new__'
+
+export default function EventForm({ event, bankAccounts, categories = [], fromManagement = false, otherTypes = [], lang, dict }: {
   event?: GeneralEventData
   bankAccounts: BankAccountOption[]
   /** The management app's event types (its list is the source of truth), or, when it can't be reached,
    *  the kinds used here before. */
   categories?: string[]
   fromManagement?: boolean
+  /** Event types with a form of their own (hike, via ferrata), offered first when creating. */
+  otherTypes?: { label: string; href: string }[]
   lang: string
   dict: EventFormDict
 }) {
@@ -93,6 +99,14 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
     setBankAccountIds(saved.bankAccountIds)
   })
   const set = (field: keyof typeof form, value: string) => setForm(f => ({ ...f, [field]: value }))
+  // Without the management list, a kind not used before is typed in under "Other…".
+  const [typingNew, setTypingNew] = useState(false)
+  const typeChoice = typingNew ? NEW_CATEGORY : form.category
+  const pickType = (value: string) => {
+    if (value.startsWith(OTHER_TYPE)) { router.push(value.slice(OTHER_TYPE.length)); return }
+    setTypingNew(value === NEW_CATEGORY)
+    set('category', value === NEW_CATEGORY ? '' : value)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -176,26 +190,31 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
       )}
 
       <div>
-        <label className={label}>{dict.title}</label>
-        <input value={form.title} onChange={e => set('title', e.target.value)} required placeholder={dict.titlePlaceholder} className={cls} />
-      </div>
-      <div>
         <label className={label}>{dict.category}</label>
-        {fromManagement ? (
-          <select value={form.category} onChange={e => set('category', e.target.value)} required className={cls}>
+        {fromManagement || otherTypes.length > 0 ? (
+          <select value={typeChoice} onChange={e => pickType(e.target.value)} required className={cls}>
             <option value="" disabled>{dict.categoryPick}</option>
+            {/* Hikes and via ferratas have their own, longer form: picking one opens it. */}
+            {otherTypes.length > 0 && (
+              <optgroup label={dict.ownFormGroup}>
+                {otherTypes.map(t => <option key={t.href} value={`${OTHER_TYPE}${t.href}`}>{t.label}</option>)}
+              </optgroup>
+            )}
             {/* An event saved before its kind was renamed or removed there still shows what it has. */}
             {[...categories, ...(form.category && !categories.includes(form.category) ? [form.category] : [])]
               .map(c => <option key={c} value={c}>{c}</option>)}
+            {!fromManagement && <option value={NEW_CATEGORY}>{dict.categoryOther}</option>}
           </select>
-        ) : (
-          <>
-            <input value={form.category} onChange={e => set('category', e.target.value)} required placeholder={dict.categoryPlaceholder}
-              list="event-categories" className={cls} />
-            <datalist id="event-categories">{categories.map(c => <option key={c} value={c} />)}</datalist>
-          </>
+        ) : null}
+        {!fromManagement && (otherTypes.length === 0 || typeChoice === NEW_CATEGORY) && (
+          <input value={form.category} onChange={e => set('category', e.target.value)} required placeholder={dict.categoryPlaceholder}
+            className={`${cls} ${otherTypes.length > 0 ? 'mt-2' : ''}`} />
         )}
         <p className="text-xs text-gray-500 mt-1">{dict.categoryHint}</p>
+      </div>
+      <div>
+        <label className={label}>{dict.title}</label>
+        <input value={form.title} onChange={e => set('title', e.target.value)} required placeholder={dict.titlePlaceholder} className={cls} />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
