@@ -1,22 +1,23 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
-import HikeCard, { toHikeCardData } from '@/components/HikeCard'
+import AnyEventCard, { toAnyEventCardData } from '@/components/events/AnyEventCard'
 import { Mountain, ArrowRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { isPastEvent } from '@/lib/dates'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 
-async function getUpcomingHikes() {
-  const hikes = await prisma.hike.findMany({
-    where: { type: 'hike', status: { in: ['upcoming', 'ongoing'] } },
+// The next events of every kind: hikes, via ferratas, runs, workshops…
+async function getUpcomingEvents() {
+  const events = await prisma.hike.findMany({
+    where: { status: { in: ['upcoming', 'ongoing'] } },
     orderBy: { date: 'asc' },
     include: { participants: { select: { status: true } } },
   })
-  return hikes
-    .filter(h => !isPastEvent(h.status, h.date, h.endDate))
+  return events
+    .filter(e => !isPastEvent(e.status, e.date, e.endDate))
     .slice(0, 6)
-    .map(toHikeCardData)
+    .map(toAnyEventCardData)
 }
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {
@@ -24,7 +25,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   if (!hasLocale(lang)) notFound()
 
   await advanceEventStatuses()
-  const [d, upcomingHikes] = await Promise.all([getDictionary(lang), getUpcomingHikes()])
+  const [d, upcomingEvents] = await Promise.all([getDictionary(lang), getUpcomingEvents()])
 
   return (
     <div>
@@ -41,7 +42,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         <div className="relative max-w-4xl mx-auto text-center">
           {/* Label */}
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold px-4 py-2 rounded-full mb-8 tracking-widest uppercase">
-            <Mountain size={12} /> {lang === 'ro' ? 'Comunitate de drumeție' : 'Hiking community'}
+            <Mountain size={12} /> {d.home.heroLabel}
           </div>
 
           <h1 className="text-5xl sm:text-7xl font-black tracking-tight mb-6 leading-[1.05]">
@@ -53,9 +54,9 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href={`/${lang}/hikes`}
+            <Link href={`/${lang}/events`}
               className="bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-2xl font-bold text-base shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
-              {d.home.seeAllHikes} <ArrowRight size={18} />
+              {d.home.seeAllEvents} <ArrowRight size={18} />
             </Link>
             <Link href={`/${lang}/auth/signup`}
               className="bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-semibold text-base hover:bg-white/10 transition-all backdrop-blur-sm">
@@ -69,33 +70,33 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f7f6f3] to-transparent" />
       </section>
 
-      {/* Upcoming hikes */}
+      {/* Upcoming events */}
       <section className="max-w-6xl mx-auto px-4 py-20">
         <div className="flex items-end justify-between mb-10">
           <div>
             <p className="text-emerald-600 text-sm font-semibold uppercase tracking-widest mb-2">{lang === 'ro' ? 'Planificate' : 'Scheduled'}</p>
             <h2 className="text-4xl font-black tracking-tight text-stone-900">{d.home.upcomingTitle}</h2>
           </div>
-          <Link href={`/${lang}/hikes`}
+          <Link href={`/${lang}/events`}
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-stone-500 hover:text-emerald-600 transition-colors group">
             {d.home.viewAll}
             <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
 
-        {upcomingHikes.length === 0 ? (
+        {upcomingEvents.length === 0 ? (
           <div className="text-center py-24 text-stone-400">
             <Mountain size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-medium">{d.home.noHikes}</p>
+            <p className="text-lg font-medium">{d.home.noEvents}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingHikes.map(hike => <HikeCard key={hike.id} hike={hike} lang={lang} dict={d.hikeCard} />)}
+            {upcomingEvents.map(event => <AnyEventCard key={event.id} event={event} lang={lang} dict={d} />)}
           </div>
         )}
 
         <div className="sm:hidden mt-8 text-center">
-          <Link href={`/${lang}/hikes`}
+          <Link href={`/${lang}/events`}
             className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
             {d.home.viewAll} <ArrowRight size={15} />
           </Link>

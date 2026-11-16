@@ -18,11 +18,14 @@
     "failed": "Ceva n-a mers — te rugăm să încerci din nou."
   },
   "home": {
-    "heroTitle": "Fiecare vârf,\nîmpărtășit împreună.",
-    "heroSubtitle": "Alătură-te comunității noastre. Descoperă trasee, înscrie-te la ieșiri în grup și retrăiește amintirile.",
+    "heroTitle": "Fiecare aventură,\nîmpărtășită împreună.",
+    "heroSubtitle": "Alătură-te comunității noastre. Drumeții, via ferrata, alergări, ateliere și altele: vezi ce urmează, înscrie-te și retrăiește amintirile.",
+    "heroLabel": "Comunitate activă",
+    "seeAllEvents": "Vezi toate evenimentele",
+    "noEvents": "Nu e nimic programat încă. Revino curând!",
     "seeAllHikes": "Vezi toate drumețiile",
     "createAccount": "Creează cont",
-    "upcomingTitle": "Drumeții Viitoare",
+    "upcomingTitle": "Evenimente care urmează",
     "upcomingSubtitle": "Alege-ți următoarea aventură",
     "viewAll": "Vezi toate",
     "noHikes": "Nu există drumeții programate. Revino curând!"
@@ -298,10 +301,10 @@
   },
   "profile": {
     "adminBadge": "Admin",
-    "upcomingHikes": "Drumețiile Mele Viitoare",
-    "noUpcoming": "Nu te-ai înscris la nicio drumeție viitoare.",
-    "browseHikes": "Explorează drumețiile →",
-    "pastHikes": "Drumeții Trecute",
+    "upcomingHikes": "Evenimentele mele viitoare",
+    "noUpcoming": "Nu te-ai înscris la niciun eveniment viitor.",
+    "browseHikes": "Explorează evenimentele →",
+    "pastHikes": "Evenimente trecute",
     "participationStatus": {
       "confirmed": "Confirmat",
       "pending": "În așteptare",
@@ -403,7 +406,13 @@
   "admin": {
     "dashboard": {
       "title": "Panou de Administrare",
-      "subtitle": "Gestionează drumeții, participanți și plăți",
+      "subtitle": "Gestionează evenimente, participanți și plăți",
+      "upcomingCount": "Evenimente care urmează",
+      "totalEvents": "Evenimente publicate",
+      "needsAttention": "Necesită atenție",
+      "drafts": "Ciorne",
+      "upcomingEvents": "Evenimente care urmează",
+      "pastEvents": "Evenimente trecute",
       "newHike": "Drumeție nouă",
       "totalHikes": "Total drumeții",
       "totalViaFerrata": "Total Via Ferrata",
@@ -416,13 +425,13 @@
       "upcomingHikes": "Drumeții Viitoare",
       "upcomingViaFerrata": "Via Ferrata Viitoare",
       "addNew": "+ Adaugă",
-      "noUpcoming": "Nu există drumeții viitoare.",
+      "noUpcoming": "Niciun eveniment programat.",
       "noUpcomingViaFerrata": "Nu există evenimente Via Ferrata viitoare.",
       "spots": "locuri",
       "draftHikes": "Ciorne",
       "draftViaFerrata": "Via Ferrata (ciornă)",
       "pastHikes": "Drumeții Trecute",
-      "noPast": "Nu există drumeții trecute."
+      "noPast": "Niciun eveniment trecut."
     },
     "newHike": {
       "title": "Creare Drumeție Nouă",
@@ -896,9 +905,16 @@
     "refundNoWaitlist": "Dacă nu este nimeni pe lista de așteptare care să îți preia locul, taxa plătită nu va fi rambursată."
   },
   "events": {
+    "types": {
+      "hike": "Drumeție",
+      "via_ferrata": "Via Ferrata",
+      "event": "Eveniment",
+      "hikeDetails": "Detaliile drumeției",
+      "viaFerrataDetails": "Detaliile via ferrata"
+    },
     "list": {
       "title": "Evenimente",
-      "subtitle": "Alergări, ateliere, petreceri și tot ce mai facem împreună",
+      "subtitle": "Drumeții, via ferrata, alergări, ateliere și tot ce mai facem împreună",
       "upcoming": "Urmează",
       "history": "Istoric",
       "noUpcoming": "Încă nu sunt evenimente programate.",
@@ -955,7 +971,7 @@
     "admin": {
       "newEvent": "Eveniment nou",
       "createTitle": "Eveniment nou",
-      "createSubtitle": "Alege întâi tipul: drumețiile și via ferrata au formularul lor; orice alt tip (o alergare, un atelier, o petrecere…) se completează aici.",
+      "createSubtitle": "Alege tipul evenimentului: informațiile de bază sunt aceleași pentru orice eveniment; drumețiile și via ferrata au și secțiuni proprii.",
       "upcomingEvents": "Evenimente care urmează",
       "draftEvents": "Evenimente ciornă",
       "noUpcoming": "Niciun eveniment programat.",
@@ -991,7 +1007,6 @@
         "coverPhoto": "Poza de copertă",
         "chooseCoverPhoto": "Alege o poză de copertă",
         "categoryOther": "Altul…",
-        "ownFormGroup": "Formular separat",
         "coverPhotoSet": "Poza de copertă e setată",
         "bankAccountsSection": "Metode de plată",
         "bankAccountsHint": "Le văd participanții după ce se înscriu.",

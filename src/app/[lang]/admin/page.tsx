@@ -1,12 +1,25 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import AdminEventsSection from '@/components/generalEvents/AdminEventsSection'
-import { Plus, Users, Mountain, CreditCard, ChevronRight, TrendingUp } from 'lucide-react'
-import { getDictionary, hasLocale } from '@/lib/i18n'
+import type { HikeStatus, HikeType } from '@prisma/client'
+import { Plus, Users, CalendarDays, CreditCard, ChevronRight, TrendingUp } from 'lucide-react'
+import { getDictionary, hasLocale, type Dictionary } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
-import { formatHikeDate, isPastEvent } from '@/lib/dates'
+import { DATE_SHORT, formatHikeDate, isPastEvent } from '@/lib/dates'
+import { EVENT_PATH } from '@/lib/eventPaths'
+
+type EventRow = {
+  id: string
+  type: HikeType
+  category: string | null
+  title: string
+  date: Date
+  endDate: Date | null
+  meetingTime: string | null
+  maxParticipants: number
+  status: HikeStatus
+}
 
 export default async function AdminDashboard({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -14,44 +27,21 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
   await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
-  const [d, hikeCount, viaFerrataCount, pendingCount, userCount, draftHikes, allHikes, draftViaFerrata, allViaFerrata] = await Promise.all([
+  const [d, events, pendingCount, userCount] = await Promise.all([
     getDictionary(lang),
-    prisma.hike.count({ where: { type: 'hike' } }),
-    prisma.hike.count({ where: { type: 'via_ferrata' } }),
+    // Every kind of event (hikes, via ferratas, general events) in the same lists.
+    prisma.hike.findMany({
+      orderBy: { date: 'asc' },
+      select: { id: true, type: true, category: true, title: true, date: true, endDate: true, meetingTime: true, maxParticipants: true, status: true },
+    }),
     prisma.hikeParticipant.count({ where: { status: 'pending' } }),
     prisma.user.count({ where: { role: 'user' } }),
-    prisma.hike.findMany({
-      where: { type: 'hike', status: 'draft' },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true },
-    }),
-    prisma.hike.findMany({
-      where: { type: 'hike', status: { not: 'draft' } },
-      select: { id: true, title: true, date: true, endDate: true, maxParticipants: true, status: true },
-    }),
-    prisma.hike.findMany({
-      where: { type: 'via_ferrata', status: 'draft' },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, date: true, maxParticipants: true },
-    }),
-    prisma.hike.findMany({
-      where: { type: 'via_ferrata', status: { not: 'draft' } },
-      select: { id: true, title: true, date: true, maxParticipants: true, status: true },
-    }),
   ])
 
-  const upcomingHikes = allHikes
-    .filter(h => !isPastEvent(h.status, h.date, h.endDate))
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 5)
-  const pastHikes = allHikes
-    .filter(h => isPastEvent(h.status, h.date, h.endDate))
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .slice(0, 5)
-  const upcomingViaFerrata = allViaFerrata
-    .filter(e => !isPastEvent(e.status, e.date))
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 5)
+  const drafts = events.filter(e => e.status === 'draft')
+  const published = events.filter(e => e.status !== 'draft')
+  const upcoming = published.filter(e => !isPastEvent(e.status, e.date, e.endDate))
+  const past = published.filter(e => isPastEvent(e.status, e.date, e.endDate)).reverse().slice(0, 8)
 
   const da = d.admin.dashboard
 
@@ -76,22 +66,22 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-6 text-white shadow-lg shadow-emerald-200">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-              <Mountain size={20} className="text-white" />
+              <CalendarDays size={20} className="text-white" />
             </div>
             <TrendingUp size={16} className="text-emerald-200" />
           </div>
-          <div className="text-4xl font-black">{hikeCount}</div>
-          <div className="text-emerald-100 text-sm font-medium mt-1">{da.totalHikes}</div>
+          <div className="text-4xl font-black">{upcoming.length}</div>
+          <div className="text-emerald-100 text-sm font-medium mt-1">{da.upcomingCount}</div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
           <div className="flex items-center justify-between mb-4">
             <div className="w-10 h-10 rounded-xl bg-stone-100 flex items-center justify-center">
-              <Mountain size={20} className="text-stone-600" />
+              <CalendarDays size={20} className="text-stone-600" />
             </div>
           </div>
-          <div className="text-4xl font-black text-stone-900">{viaFerrataCount}</div>
-          <div className="text-stone-500 text-sm font-medium mt-1">{da.totalViaFerrata}</div>
+          <div className="text-4xl font-black text-stone-900">{published.length}</div>
+          <div className="text-stone-500 text-sm font-medium mt-1">{da.totalEvents}</div>
         </div>
 
         <div className={`rounded-2xl p-6 shadow-sm border ${pendingCount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-white border-stone-100'}`}>
@@ -101,7 +91,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
             </div>
             {pendingCount > 0 && (
               <span className="text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                {lang === 'ro' ? 'Necesită atenție' : 'Needs attention'}
+                {da.needsAttention}
               </span>
             )}
           </div>
@@ -127,146 +117,80 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
       </div>
 
-      {/* Draft hikes list */}
-      {draftHikes.length > 0 && (
+      {drafts.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm mb-6">
           <div className="px-6 py-4 border-b border-amber-100">
-            <h2 className="font-bold text-amber-800">{da.draftHikes}</h2>
+            <h2 className="font-bold text-amber-800">{da.drafts}</h2>
           </div>
           <div className="divide-y divide-amber-100">
-            {draftHikes.map(hike => (
-              <Link key={hike.id} href={`/${lang}/admin/hikes/${hike.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-amber-100/50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{hike.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-amber-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
+            {drafts.map(e => <EventRowLink key={e.id} event={e} lang={lang} d={d} tone="draft" />)}
           </div>
         </div>
       )}
 
-      {/* Draft Via Ferrata list */}
-      {draftViaFerrata.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl overflow-hidden shadow-sm mb-6">
-          <div className="px-6 py-4 border-b border-amber-100">
-            <h2 className="font-bold text-amber-800">{da.draftViaFerrata}</h2>
-          </div>
-          <div className="divide-y divide-amber-100">
-            {draftViaFerrata.map(event => (
-              <Link key={event.id} href={`/${lang}/admin/via-ferrata/${event.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-amber-100/50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{event.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {new Date(event.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{event.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-amber-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upcoming hikes list */}
-      <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm">
-        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-          <h2 className="font-bold text-stone-900">{da.upcomingHikes}</h2>
-        </div>
-        {upcomingHikes.length === 0 ? (
-          <div className="px-6 py-12 text-center text-stone-400">
-            <Mountain size={32} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm">{da.noUpcoming}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-50">
-            {upcomingHikes.map(hike => (
-              <Link key={hike.id} href={`/${lang}/admin/hikes/${hike.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{hike.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Upcoming Via Ferrata list */}
-      <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mt-6">
-        <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
-          <h2 className="font-bold text-stone-900">{da.upcomingViaFerrata}</h2>
-        </div>
-        {upcomingViaFerrata.length === 0 ? (
-          <div className="px-6 py-12 text-center text-stone-400">
-            <Mountain size={32} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm">{da.noUpcomingViaFerrata}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-50">
-            {upcomingViaFerrata.map(event => (
-              <Link key={event.id} href={`/${lang}/admin/via-ferrata/${event.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-800 group-hover:text-emerald-700 transition-colors">{event.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {new Date(event.date).toLocaleDateString(d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}{event.maxParticipants} {da.spots}
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <AdminEventsSection lang={lang} locale={d.locale} dict={d.events.admin} spotsLabel={da.spots} />
-
-      {/* Past hikes list */}
-      <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mt-6">
-        <div className="px-6 py-4 border-b border-stone-100">
-          <h2 className="font-bold text-stone-900">{da.pastHikes}</h2>
-        </div>
-        {pastHikes.length === 0 ? (
-          <div className="px-6 py-12 text-center text-stone-400">
-            <Mountain size={32} className="mx-auto mb-3 opacity-20" />
-            <p className="text-sm">{da.noPast}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-50">
-            {pastHikes.map(hike => (
-              <Link key={hike.id} href={`/${lang}/admin/hikes/${hike.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition-colors group">
-                <div>
-                  <div className="font-semibold text-stone-700 group-hover:text-emerald-700 transition-colors">{hike.title}</div>
-                  <div className="text-stone-400 text-xs mt-0.5">
-                    {formatHikeDate(hike.date, hike.endDate, d.locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    {' · '}
-                    <span className={hike.status === 'completed' ? 'text-emerald-600' : hike.status === 'cancelled' ? 'text-red-400' : 'text-amber-500'}>
-                      {hike.status}
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight size={17} className="text-stone-300 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all" />
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <EventList title={da.upcomingEvents} empty={da.noUpcoming} events={upcoming} lang={lang} d={d} />
+      <EventList title={da.pastEvents} empty={da.noPast} events={past} lang={lang} d={d} tone="past" />
     </div>
+  )
+}
+
+/** What kind of event it is, for the admin rows: Hike, Via Ferrata or the general event's kind. */
+function typeLabel(event: EventRow, d: Dictionary): string {
+  if (event.type === 'event') return event.category ?? d.events.types.event
+  return d.events.types[event.type]
+}
+
+function EventList({ title, empty, events, lang, d, tone }: {
+  title: string
+  empty: string
+  events: EventRow[]
+  lang: string
+  d: Dictionary
+  tone?: 'past'
+}) {
+  return (
+    <div className="bg-white border border-stone-100 rounded-2xl overflow-hidden shadow-sm mb-6">
+      <div className="px-6 py-4 border-b border-stone-100">
+        <h2 className="font-bold text-stone-900">{title}</h2>
+      </div>
+      {events.length === 0 ? (
+        <div className="px-6 py-12 text-center text-stone-400">
+          <CalendarDays size={32} className="mx-auto mb-3 opacity-20" />
+          <p className="text-sm">{empty}</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-stone-50">
+          {events.map(e => <EventRowLink key={e.id} event={e} lang={lang} d={d} tone={tone} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const STATUS_COLOR: Partial<Record<HikeStatus, string>> = {
+  completed: 'text-emerald-600',
+  cancelled: 'text-red-400',
+}
+
+function EventRowLink({ event, lang, d, tone }: { event: EventRow; lang: string; d: Dictionary; tone?: 'draft' | 'past' }) {
+  const da = d.admin.dashboard
+  return (
+    <Link href={`/${lang}/admin/${EVENT_PATH[event.type]}/${event.id}`}
+      className={`flex items-center justify-between gap-3 px-6 py-4 transition-colors group ${tone === 'draft' ? 'hover:bg-amber-100/50' : 'hover:bg-stone-50'}`}>
+      <div className="min-w-0">
+        <div className={`font-semibold group-hover:text-emerald-700 transition-colors truncate ${tone === 'past' ? 'text-stone-700' : 'text-stone-800'}`}>{event.title}</div>
+        <div className="text-stone-400 text-xs mt-0.5">
+          <span className="font-semibold text-emerald-700">{typeLabel(event, d)}</span>
+          {' · '}{formatHikeDate(event.date, event.endDate, d.locale, DATE_SHORT)}
+          {event.meetingTime ? ` · ${event.meetingTime}` : ''}
+          {' · '}
+          {tone === 'past'
+            ? <span className={STATUS_COLOR[event.status] ?? 'text-amber-500'}>{d.events.card.status[event.status as keyof typeof d.events.card.status] ?? event.status}</span>
+            : <>{event.maxParticipants} {da.spots}</>}
+        </div>
+      </div>
+      <ChevronRight size={17} className={`shrink-0 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all ${tone === 'draft' ? 'text-amber-400' : 'text-stone-300'}`} />
+    </Link>
   )
 }
 

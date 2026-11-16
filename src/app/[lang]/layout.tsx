@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 
 export const metadata: Metadata = {
   title: 'ActiveHikes',
-  description: 'Group hike management — explore, join, and remember every trail.',
+  description: 'Hikes, via ferratas and community events — explore, join, and remember every adventure.',
 }
 
 export default async function LocaleLayout({

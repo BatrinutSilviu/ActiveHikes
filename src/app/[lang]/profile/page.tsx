@@ -12,9 +12,10 @@ import { waitlistOverduePending } from '@/lib/expireParticipants'
 import { advanceEventStatuses } from '@/lib/autoAdvanceStatus'
 import { DATE_SHORT, formatHikeDate, isPastEvent } from '@/lib/dates'
 import UploadedImage from '@/components/UploadedImage'
+import { EVENT_PATH } from '@/lib/eventPaths'
 
 const participationInclude = {
-  hike: { select: { id: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } },
+  hike: { select: { id: true, type: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } },
 } satisfies Prisma.HikeParticipantInclude
 
 type Participation = Prisma.HikeParticipantGetPayload<{ include: typeof participationInclude }>
@@ -97,7 +98,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
           <div className="bg-white border border-stone-100 rounded-2xl p-10 text-center text-stone-400">
             <Mountain size={36} className="mx-auto mb-3 opacity-20" />
             <p className="font-medium">{dp.noUpcoming}</p>
-            <Link href={`/${lang}/hikes`} className="mt-3 inline-block text-emerald-600 font-semibold text-sm hover:underline">{dp.browseHikes}</Link>
+            <Link href={`/${lang}/events`} className="mt-3 inline-block text-emerald-600 font-semibold text-sm hover:underline">{dp.browseHikes}</Link>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -128,7 +129,7 @@ function ParticipationCard({ participation, lang, statusUI, dateLocale }: {
   const hike = participation.hike
   const ui = statusUI[participation.status]
   return (
-    <Link href={`/${lang}/hikes/${hike.id}`}
+    <Link href={`/${lang}/${EVENT_PATH[hike.type]}/${hike.id}`}
       className="flex items-center gap-4 bg-white border border-stone-100 rounded-2xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all group">
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gradient-to-br from-emerald-800 to-stone-700 shrink-0">
         {hike.coverImageUrl ? (

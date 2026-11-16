@@ -76,16 +76,16 @@ src/proxy.ts                   Locale redirects, route protection, per-request C
 ## Pages
 
 ```
-/                     Home — upcoming hikes
-/hikes                All hikes (upcoming + history)
-/hikes/[id]           Hike detail, join button, payment info, photos, GPX download
+/                     Home — upcoming events of every kind
+/events               All events (hikes, via ferratas, general events), filtered by ?type= (hike, via_ferrata or a kind such as Running); /hikes and /via-ferrata redirect here
+/hikes/[id]           Hike detail, join button, payment info, photos, GPX download (/via-ferrata/[id] and /events/[id] for the other kinds)
 /auth/login           Login (email or Google)
 /auth/signup          Sign up
 /auth/forgot-password Request a password reset email
 /auth/reset-password  Set a new password from the emailed link
 /profile              User's registrations and their status
-/admin                Dashboard — stats, upcoming hikes list
-/admin/hikes/new      Create a hike
+/admin                Dashboard — stats, drafts, upcoming and past events of every kind
+/admin/events/new     Create any event: basic info for all, plus the hike / via ferrata sections when that type is picked
 /admin/hikes/[id]     Manage participants (confirm/reject/waitlist), upload photos, edit hike
 /admin/bank-accounts  Manage IBANs shown to users for payment
 /admin/participants   All registrations across all hikes

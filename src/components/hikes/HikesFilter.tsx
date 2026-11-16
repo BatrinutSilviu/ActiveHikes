@@ -23,12 +23,14 @@ export default function HikesFilter({
   const availableMonths = selectedYear ? (dateMap[selectedYear] ?? []) : []
 
   const navigate = useCallback((year: number | null, month: number | null) => {
-    const params = new URLSearchParams()
+    // Keep the other filters (the event type) as they are.
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('year'); params.delete('month')
     if (year) params.set('year', String(year))
     if (month) params.set('month', String(month))
     const qs = params.toString()
     router.push(pathname + (qs ? `?${qs}` : ''))
-  }, [router, pathname])
+  }, [router, pathname, searchParams])
 
   if (availableYears.length === 0) return null
 

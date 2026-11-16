@@ -15,14 +15,15 @@ type EventListDict = {
 }
 
 /**
- * The /hikes and /via-ferrata listings: upcoming events, then past ones that can be
- * narrowed to a year/month (from the `year`/`month` query string).
+ * The /events listing: upcoming events, then past ones that can be narrowed to a year/month
+ * (from the `year`/`month` query string). `toolbar` sits above both (the event type filter).
  */
 export default function EventListPage<T extends ListedEvent>({
   upcoming,
   past,
   filter,
   renderCard,
+  toolbar,
   locale,
   dict,
 }: {
@@ -30,6 +31,7 @@ export default function EventListPage<T extends ListedEvent>({
   past: T[]
   filter: { year?: string; month?: string }
   renderCard: (event: T) => React.ReactNode
+  toolbar?: React.ReactNode
   locale: string
   dict: EventListDict
 }) {
@@ -55,6 +57,7 @@ export default function EventListPage<T extends ListedEvent>({
       </div>
 
     <div className="max-w-6xl mx-auto px-4 py-12">
+      {toolbar}
 
       <section className="mb-16">
         <h2 className="text-2xl font-bold text-stone-800 mb-6 flex items-center gap-2">

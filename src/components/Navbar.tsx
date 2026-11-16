@@ -37,14 +37,6 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden sm:flex items-center gap-1">
-            <Link href={`${pfx}/hikes`}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
-              {d.nav.hikes}
-            </Link>
-            <Link href={`${pfx}/via-ferrata`}
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
-              {d.nav.viaFerrata}
-            </Link>
             <Link href={`${pfx}/events`}
               className="px-3.5 py-2 rounded-xl text-sm font-medium text-stone-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
               {d.nav.events}
@@ -78,16 +70,6 @@ export default function Navbar() {
 
         {menuOpen && (
           <div className="sm:hidden border-t border-stone-100 py-2 pb-4 flex flex-col gap-0.5">
-            <Link href={`${pfx}/hikes`}
-              className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-              onClick={() => setMenuOpen(false)}>
-              {d.nav.hikes}
-            </Link>
-            <Link href={`${pfx}/via-ferrata`}
-              className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
-              onClick={() => setMenuOpen(false)}>
-              {d.nav.viaFerrata}
-            </Link>
             <Link href={`${pfx}/events`}
               className="px-3 py-3 rounded-xl text-stone-700 font-medium hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
               onClick={() => setMenuOpen(false)}>

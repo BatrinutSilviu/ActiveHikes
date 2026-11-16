@@ -18,11 +18,14 @@
     "failed": "Something went wrong — please try again."
   },
   "home": {
-    "heroTitle": "Every summit,\nshared together.",
-    "heroSubtitle": "Join our hiking community. Discover upcoming trails, register for group hikes, and relive the memories.",
+    "heroTitle": "Every adventure,\nshared together.",
+    "heroSubtitle": "Join our community. Hikes, via ferratas, runs, workshops and more: find what's coming up, sign up, and relive the memories.",
+    "heroLabel": "Active community",
+    "seeAllEvents": "See all events",
+    "noEvents": "Nothing scheduled yet. Check back soon!",
     "seeAllHikes": "See all hikes",
     "createAccount": "Create account",
-    "upcomingTitle": "Upcoming Hikes",
+    "upcomingTitle": "Upcoming events",
     "upcomingSubtitle": "Pick your next adventure",
     "viewAll": "View all",
     "noHikes": "No upcoming hikes yet. Check back soon!"
@@ -298,10 +301,10 @@
   },
   "profile": {
     "adminBadge": "Admin",
-    "upcomingHikes": "My Upcoming Hikes",
-    "noUpcoming": "You haven't joined any upcoming hikes yet.",
-    "browseHikes": "Browse hikes →",
-    "pastHikes": "Past Hikes",
+    "upcomingHikes": "My upcoming events",
+    "noUpcoming": "You haven't joined any upcoming events yet.",
+    "browseHikes": "Browse events →",
+    "pastHikes": "Past events",
     "participationStatus": {
       "confirmed": "Confirmed",
       "pending": "Pending",
@@ -403,7 +406,13 @@
   "admin": {
     "dashboard": {
       "title": "Admin Dashboard",
-      "subtitle": "Manage hikes, participants, and payments",
+      "subtitle": "Manage events, participants and payments",
+      "upcomingCount": "Upcoming events",
+      "totalEvents": "Events published",
+      "needsAttention": "Needs attention",
+      "drafts": "Drafts",
+      "upcomingEvents": "Upcoming events",
+      "pastEvents": "Past events",
       "newHike": "New hike",
       "totalHikes": "Total hikes",
       "totalViaFerrata": "Total Via Ferrata",
@@ -416,13 +425,13 @@
       "upcomingHikes": "Upcoming Hikes",
       "upcomingViaFerrata": "Upcoming Via Ferrata",
       "addNew": "+ Add new",
-      "noUpcoming": "No upcoming hikes yet.",
+      "noUpcoming": "No upcoming events yet.",
       "noUpcomingViaFerrata": "No upcoming Via Ferrata events yet.",
       "spots": "spots",
       "draftHikes": "Drafts",
       "draftViaFerrata": "Draft Via Ferrata",
       "pastHikes": "Past Hikes",
-      "noPast": "No past hikes yet."
+      "noPast": "No past events yet."
     },
     "newHike": {
       "title": "Create New Hike",
@@ -896,9 +905,16 @@
     "refundNoWaitlist": "If no one is on the waitlist to take your spot, your payment will not be refunded."
   },
   "events": {
+    "types": {
+      "hike": "Hike",
+      "via_ferrata": "Via Ferrata",
+      "event": "Event",
+      "hikeDetails": "Hike details",
+      "viaFerrataDetails": "Via ferrata details"
+    },
     "list": {
       "title": "Events",
-      "subtitle": "Runs, workshops, parties and everything else we do together",
+      "subtitle": "Hikes, via ferratas, runs, workshops and everything else we do together",
       "upcoming": "Upcoming",
       "history": "History",
       "noUpcoming": "No upcoming events yet.",
@@ -955,7 +971,7 @@
     "admin": {
       "newEvent": "New event",
       "createTitle": "New event",
-      "createSubtitle": "Pick the type first: hikes and via ferratas open their own form; any other kind (a run, a workshop, a party…) is filled in here.",
+      "createSubtitle": "Pick the event type: the basic info is the same for every event; hikes and via ferratas add their own sections.",
       "upcomingEvents": "Upcoming events",
       "draftEvents": "Draft events",
       "noUpcoming": "No upcoming events.",
@@ -991,7 +1007,6 @@
         "coverPhoto": "Cover photo",
         "chooseCoverPhoto": "Choose a cover photo",
         "categoryOther": "Other…",
-        "ownFormGroup": "Own form",
         "coverPhotoSet": "Cover photo set",
         "bankAccountsSection": "Payment methods",
         "bankAccountsHint": "Shown to participants after they sign up.",
