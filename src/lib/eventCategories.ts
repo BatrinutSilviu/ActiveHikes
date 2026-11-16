@@ -2,16 +2,18 @@ import 'server-only'
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 
-// The kinds of general event (Running, Social…) are the management app's event types: it's their source
-// of truth, so a new kind is added there (Sports page), never typed here. Read from its public list,
-// at the same host as MANAGEMENT_SYNC_URL. Padel and Hiking are left out: those events live in their own apps.
+// The kinds of general event (Football, Running, Social…) are the management app's event types: it's their
+// source of truth, so a new kind is added there (Sports page), never typed here. Read from its public list
+// (read-only, no token), at the host of MANAGEMENT_SYNC_URL when syncing is set up, else at the live
+// management app, so the list is the same everywhere (local dev included) without turning syncing on.
+// Padel events live in their own app; Hiking is this app's own Hike type, offered as such.
 const OWNED_ELSEWHERE = new Set(['padel', 'hiking'])
+const MANAGEMENT_APP_URL = 'https://management.activetimisoara.ro'
 
 async function managementEventTypes(): Promise<string[] | null> {
-  const syncUrl = process.env.MANAGEMENT_SYNC_URL
-  if (!syncUrl) return null
+  const base = process.env.MANAGEMENT_SYNC_URL || process.env.MANAGEMENT_APP_URL || MANAGEMENT_APP_URL
   try {
-    const res = await fetch(new URL('/api/public/event-types', syncUrl), {
+    const res = await fetch(new URL('/api/public/event-types', base), {
       next: { revalidate: 300 },
       signal: AbortSignal.timeout(3000),
     })
