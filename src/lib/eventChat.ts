@@ -4,7 +4,8 @@ import { prisma } from '@/lib/db'
 import { eventEndsAt } from '@/lib/dates'
 
 // The chat of a general event (see EventChatMessage): who may read and write it, and when it's open.
-// Open from when the event is published until a day after it ends; a draft's chat is the organisers' only.
+// Open from when the event is created (drafts included) until a day after it ends; a draft's chat is the
+// organisers' only, since nobody else can see the event yet.
 // Its participants (signed up, waiting or confirmed — not rejected) and the admins take part.
 
 export const CHAT_PAGE = 30
@@ -34,7 +35,7 @@ export function chatClosesAt(event: ChatEvent): Date {
 }
 
 export function isChatOpen(event: ChatEvent): boolean {
-  return event.status !== 'draft' && Date.now() < chatClosesAt(event).getTime()
+  return Date.now() < chatClosesAt(event).getTime()
 }
 
 /** Whether this viewer takes part in the chat: an admin, or someone on the event's list. */

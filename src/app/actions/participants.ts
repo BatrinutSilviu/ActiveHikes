@@ -7,23 +7,26 @@ import { resolvePair } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { confirmParticipant } from '@/lib/participantConfirm'
 import { requireAdmin } from '@/lib/session'
+import { adminActor, logged, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
 
 export async function updateParticipantStatus(
   participantId: string,
   newStatus: ParticipantStatus,
   hikeId: string
 ) {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   if (newStatus === 'confirmed') {
-    await confirmParticipant(participantId, hikeId)
+    await confirmParticipant(participantId, hikeId, { action: 'status', actor: adminActor(session) })
     return
   }
 
   const { hostId, friendId } = await resolvePair(prisma, participantId)
+  const ids = [hostId, friendId].filter((id): id is string => id !== null)
+  const before = await snapshotParticipants(ids)
 
   await prisma.hikeParticipant.updateMany({
-    where: { id: { in: [hostId, friendId].filter((id): id is string => id !== null) } },
+    where: { id: { in: ids } },
     data: {
       status: newStatus,
       paymentDeadline: newStatus === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
@@ -32,12 +35,13 @@ export async function updateParticipantStatus(
       carDriverParticipantId: null,
     },
   })
+  await writeParticipantLog(before, { action: 'status', actor: adminActor(session), toStatus: newStatus })
 
   revalidateParticipantCountPaths(hikeId)
 }
 
 export async function removeFriend(hikeId: string, hostParticipantId: string) {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const host = await prisma.hikeParticipant.findUnique({
     where: { id: hostParticipantId },
@@ -45,13 +49,15 @@ export async function removeFriend(hikeId: string, hostParticipantId: string) {
   })
   if (!host || host.hikeId !== hikeId) throw new Error('Invalid participant')
 
-  await prisma.hikeParticipant.delete({ where: { hostParticipantId } })
+  const friend = await prisma.hikeParticipant.findUnique({ where: { hostParticipantId }, select: { id: true } })
+  await logged([friend?.id], { action: 'removed', actor: adminActor(session) },
+    () => prisma.hikeParticipant.delete({ where: { hostParticipantId } }))
 
   revalidateParticipantCountPaths(hikeId)
 }
 
 export async function adminAddParticipant(hikeId: string, email: string): Promise<{ status: ParticipantStatus }> {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const user = await prisma.user.findFirst({ where: { email: { equals: email.trim(), mode: 'insensitive' } } })
   if (!user) throw new Error('No account found with that email')
@@ -67,7 +73,7 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
   const confirmedCount = await prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } })
   const status: ParticipantStatus = confirmedCount < hike.maxParticipants ? 'confirmed' : 'waitlist'
 
-  await prisma.hikeParticipant.create({
+  const created = await prisma.hikeParticipant.create({
     data: {
       hikeId,
       userId: user.id,
@@ -75,6 +81,7 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
       confirmedAt: status === 'confirmed' ? new Date() : undefined,
     },
   })
+  await writeParticipantLog(await snapshotParticipants([created.id]), { action: 'added', actor: adminActor(session), fresh: true })
 
   revalidateParticipantCountPaths(hikeId)
 
@@ -82,7 +89,7 @@ export async function adminAddParticipant(hikeId: string, email: string): Promis
 }
 
 export async function adminImportParticipant(hikeId: string, name: string): Promise<{ id: string }> {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const trimmedName = name.trim()
   if (!trimmedName) throw new Error('Name is required')
@@ -99,6 +106,7 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
       confirmedAt: new Date(),
     },
   })
+  await writeParticipantLog(await snapshotParticipants([participant.id]), { action: 'imported', actor: adminActor(session), fresh: true })
 
   revalidateParticipantCountPaths(hikeId)
 
@@ -106,7 +114,7 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
 }
 
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const [hike, alreadyConfirmed, pendingHosts] = await Promise.all([
     prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } }),
@@ -133,10 +141,11 @@ export async function confirmAllPending(hikeId: string): Promise<{ confirmed: nu
 
   if (idsToConfirm.length === 0) return { confirmed: 0 }
 
-  await prisma.hikeParticipant.updateMany({
-    where: { id: { in: idsToConfirm } },
-    data: { status: 'confirmed', confirmedAt: new Date() },
-  })
+  await logged(idsToConfirm, { action: 'status', actor: adminActor(session), toStatus: 'confirmed', details: { all: true } },
+    () => prisma.hikeParticipant.updateMany({
+      where: { id: { in: idsToConfirm } },
+      data: { status: 'confirmed', confirmedAt: new Date() },
+    }))
 
   revalidateParticipantCountPaths(hikeId)
   return { confirmed: idsToConfirm.length }

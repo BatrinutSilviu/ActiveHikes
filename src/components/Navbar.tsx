@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import Image from 'next/image'
-import { Menu, X, LogOut, User, Mountain } from 'lucide-react'
+import { Menu, X, LogOut, User } from 'lucide-react'
 import { useDict, useLocale } from '@/hooks/useDict'
 import LanguageSwitcher from './LanguageSwitcher'
+import BrandMark from './BrandMark'
 
 export default function Navbar() {
   const { data: session } = useSession()
@@ -22,18 +22,8 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
 
-          <Link href={pfx} className="flex items-center gap-0.5 group">
-            <Image src="/logo.png" alt="Active Hikes" width={120} height={40} className="h-9 w-auto" priority />
-            <span className="relative flex items-center leading-none translate-y-[4px]">
-              <Mountain
-                size={20}
-                strokeWidth={2.5}
-                className="text-emerald-600 -mr-1 -mt-3.5 group-hover:-translate-y-0.5 transition-transform"
-              />
-              <span className="text-3xl font-black tracking-tight bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-500 bg-clip-text text-transparent">
-                Hikes
-              </span>
-            </span>
+          <Link href={pfx} aria-label="act!ve Events" className="flex items-center">
+            <BrandMark />
           </Link>
 
           <div className="hidden sm:flex items-center gap-1">

@@ -1,3 +1,4 @@
+import ParticipantHistory from '@/components/admin/ParticipantHistory'
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import ParticipantManager from '@/components/admin/ParticipantManager'
@@ -154,6 +155,8 @@ export default async function AdminHikePage({ params }: { params: Promise<{ lang
           </div>
         </div>
       </div>
+
+      <ParticipantHistory hikeId={hike.id} dict={d} locale={d.locale} />
     </div>
   )
 }

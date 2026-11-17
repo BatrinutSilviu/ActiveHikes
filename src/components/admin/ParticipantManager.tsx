@@ -180,10 +180,10 @@ export default function ParticipantManager({
           value={newEmail}
           onChange={e => setNewEmail(e.target.value)}
           placeholder={dict.addParticipantPlaceholder}
-          className="flex-1 border border-stone-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 min-w-0 border border-stone-200 rounded-xl px-3.5 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <button type="submit" disabled={isAdding}
-          className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
+          className="shrink-0 flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-3.5 sm:px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
           <UserPlus size={14} /> {isAdding ? dict.adding : dict.add}
         </button>
       </div>
@@ -201,10 +201,10 @@ export default function ParticipantManager({
           value={newName}
           onChange={e => setNewName(e.target.value)}
           placeholder={dict.importParticipantPlaceholder}
-          className="flex-1 border border-stone-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 min-w-0 border border-stone-200 rounded-xl px-3.5 py-2 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
         <button type="submit" disabled={isImporting}
-          className="flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
+          className="shrink-0 flex items-center gap-1.5 bg-stone-800 hover:bg-stone-900 text-white text-sm font-semibold px-3.5 sm:px-4 py-2 rounded-xl disabled:opacity-60 transition-colors">
           <UserPlus size={14} /> {isImporting ? dict.importing : dict.import}
         </button>
       </div>

@@ -6,6 +6,7 @@ import { getAdminSession } from '@/lib/session'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import NewEventForm from '@/components/events/NewEventForm'
 import { eventCategories } from '@/lib/eventCategories'
+import { allCategoryCovers } from '@/lib/categoryCovers'
 
 // The one place every kind of event is created: hikes, via ferratas and general events.
 export default async function NewEventPage({ params, searchParams }: {
@@ -16,7 +17,7 @@ export default async function NewEventPage({ params, searchParams }: {
   if (!hasLocale(lang)) notFound()
   if (!(await getAdminSession())) redirect(`/${lang}/auth/login`)
 
-  const [d, paymentMethods, { categories, fromManagement }, { type }] = await Promise.all([
+  const [d, paymentMethods, { categories, fromManagement }, { type }, categoryCovers] = await Promise.all([
     getDictionary(lang),
     prisma.bankAccount.findMany({
       where: { isActive: true },
@@ -25,6 +26,7 @@ export default async function NewEventPage({ params, searchParams }: {
     }),
     eventCategories(),
     searchParams,
+    allCategoryCovers(),
   ])
   const da = d.events.admin
 
@@ -35,7 +37,8 @@ export default async function NewEventPage({ params, searchParams }: {
       </Link>
       <h1 className="text-3xl font-black tracking-tight text-stone-900">{da.createTitle}</h1>
       <p className="text-stone-500 mt-1 mb-6 text-sm">{da.createSubtitle}</p>
-      <NewEventForm categories={categories} fromManagement={fromManagement} paymentMethods={paymentMethods} initialType={type} />
+      <NewEventForm categories={categories} fromManagement={fromManagement} paymentMethods={paymentMethods} initialType={type}
+        categoryCovers={categoryCovers} />
     </div>
   )
 }

@@ -184,6 +184,7 @@ model Hike {
 
   createdBy    User?             @relation(fields: [createdById], references: [id])
   participants HikeParticipant[]
+  participantLogs ParticipantLog[]
   photos       HikePhoto[]
   rooms        HikeRoom[]
   documents    HikeDocument[]
@@ -339,4 +340,37 @@ model ProcessedBankTransaction {
   matchedAt         DateTime        @default(now())
 
   hikeParticipant HikeParticipant @relation(fields: [hikeParticipantId], references: [id], onDelete: Cascade)
+}
+
+
+// The cover photo a general event shows when it has none of its own, per kind of event (Football,
+// Running…). Keyed by the kind's name in lower case. Set on the admin "Activity photos" page.
+model EventCategoryCover {
+  category  String   @id
+  imageUrl  String
+  updatedAt DateTime @updatedAt
+}
+
+// Everything that happened to each sign-up for an event, for the admins: joining, status changes,
+// payments, dropping out, car and room changes, documents. Not linked to HikeParticipant on purpose:
+// the entries stay after a participation is deleted (someone drops out or is removed), so they keep
+// a copy of the person's name.
+model ParticipantLog {
+  id            String             @id @default(cuid())
+  hikeId        String
+  participantId String?
+  userId        String?
+  personName    String
+  friendOf      String?            // set for a friend someone signed up: the host's name
+  action        String             // see lib/participantLog.ts
+  fromStatus    ParticipantStatus?
+  toStatus      ParticipantStatus?
+  actor         String             // self | admin | system
+  actorName     String?
+  details       Json?
+  createdAt     DateTime           @default(now())
+
+  hike Hike @relation(fields: [hikeId], references: [id], onDelete: Cascade)
+
+  @@index([hikeId, createdAt])
 }

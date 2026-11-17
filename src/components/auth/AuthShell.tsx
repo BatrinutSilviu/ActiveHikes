@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import BrandMark from '@/components/BrandMark'
 
 /** Dark full-screen frame with the logo and a heading, shared by the login/sign-up/password pages. */
 export default function AuthShell({
@@ -20,9 +20,8 @@ export default function AuthShell({
 
         {/* Brand header */}
         <div className="text-center mb-8">
-          <Link href={`/${lang}`} className="inline-flex items-center justify-center mb-6">
-            {/* Served as-is (unoptimized): it's a small static PNG, and its intrinsic size reserves the space. */}
-            <Image src="/logo.png" alt="Active Hikes" width={512} height={118} className="h-10 w-auto" unoptimized priority />
+          <Link href={`/${lang}`} aria-label="act!ve Events" className="inline-flex items-center justify-center mb-6">
+            <BrandMark size="lg" />
           </Link>
           <h1 className="text-2xl font-black tracking-tight text-white">{title}</h1>
           <p className="text-stone-400 text-sm mt-1.5">{subtitle}</p>

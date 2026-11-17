@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { requireAdmin } from '@/lib/session'
 import { isSubmissionUrl, removeUpload } from '@/lib/uploadStorage'
+import { adminActor, logged, selfActor } from '@/lib/participantLog'
 
 // A document's display name, as the uploader called it (shown in lists, never used as a path).
 const cleanName = (name: string) => name.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 150) || 'document'
@@ -47,9 +48,10 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
   ])
   if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
-  await prisma.hikeDocumentSubmission.create({
-    data: { hikeId, participantId: participant.id, url, fileName: cleanName(fileName) },
-  })
+  await logged([participant.id], { action: 'document_uploaded', actor: selfActor, details: { file: cleanName(fileName) } },
+    () => prisma.hikeDocumentSubmission.create({
+      data: { hikeId, participantId: participant.id, url, fileName: cleanName(fileName) },
+    }))
 
   revalidateHikePaths(hikeId)
 }
@@ -58,7 +60,7 @@ export async function submitDocument(hikeId: string, url: string, fileName: stri
 // handed it in some other way (in person, by email, etc.) instead of using
 // the self-serve upload.
 export async function submitDocumentForParticipant(hikeId: string, participantId: string, url: string, fileName: string) {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId } })
   if (!participant || participant.hikeId !== hikeId) throw new Error('Participant not found')
@@ -70,9 +72,10 @@ export async function submitDocumentForParticipant(hikeId: string, participantId
   ])
   if (existingCount >= requiredCount) throw new Error('Upload limit reached')
 
-  await prisma.hikeDocumentSubmission.create({
-    data: { hikeId, participantId, url, fileName: cleanName(fileName) },
-  })
+  await logged([participantId], { action: 'document_uploaded', actor: adminActor(session), details: { file: cleanName(fileName) } },
+    () => prisma.hikeDocumentSubmission.create({
+      data: { hikeId, participantId, url, fileName: cleanName(fileName) },
+    }))
 
   revalidateHikePaths(hikeId)
 }
@@ -112,7 +115,12 @@ export async function deleteSubmission(submissionId: string, hikeId: string) {
   if (!isOwner && !isAdmin) throw new Error('Unauthorized')
 
   await removeUpload(submission.url)
-  await prisma.hikeDocumentSubmission.delete({ where: { id: submissionId } })
+  // Admins' dry-run uploads (no participant) aren't part of anyone's history.
+  await logged([submission.participantId], {
+    action: 'document_deleted',
+    actor: submission.participant?.userId === session.user.id ? selfActor : adminActor(session),
+    details: { file: submission.fileName },
+  }, () => prisma.hikeDocumentSubmission.delete({ where: { id: submissionId } }))
 
   revalidateHikePaths(hikeId)
 }

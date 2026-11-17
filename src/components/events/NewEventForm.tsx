@@ -9,6 +9,8 @@ import { useDict, useLocale } from '@/hooks/useDict'
 import { uploadFile } from '@/lib/upload'
 import PaymentMethodsDropdown, { type PaymentMethodOption } from '@/components/admin/PaymentMethodsDropdown'
 import { EVENT_PATH } from '@/lib/eventPaths'
+import { isSportCategory } from '@/lib/sportCategories'
+import EventTypePicker from '@/components/events/EventTypePicker'
 
 // Creating any event. The basic info is the same for every kind; picking Hike or Via Ferrata as the
 // type adds their own sections (logistics, accommodation, routes…). Every kind is saved in the Hike
@@ -21,12 +23,14 @@ const NEW_CATEGORY = 'new-category'
 
 const toMinutes = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
 
-export default function NewEventForm({ categories, fromManagement, paymentMethods, initialType }: {
+export default function NewEventForm({ categories, fromManagement, paymentMethods, initialType, categoryCovers = {} }: {
   /** The management app's event types, or, when it can't be reached, the kinds used here before. */
   categories: string[]
   fromManagement: boolean
   paymentMethods: PaymentMethodOption[]
   initialType?: string
+  /** Default cover photo per kind of general event (by name in lower case), used when none is chosen. */
+  categoryCovers?: Record<string, string>
 }) {
   const router = useRouter()
   const lang = useLocale()
@@ -35,6 +39,7 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
   const dv = dict.admin.viaFerrataEdit
   const de = dict.events.admin.form
   const types = dict.events.types
+  const dp = dict.admin.eventPhotos
   const timeLocale = lang === 'en' ? 'en-GB' : 'ro-RO'
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -64,6 +69,9 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
     check_in_time: '', check_out_time: '', double_room_count: '0', triple_room_count: '0', quadruple_room_count: '0',
     difficulty: '', external_photos_url: '', whatsapp_group_url: '', essentials: '',
   })
+  // Sports sessions (football, running…) have no address, "what to bring" list or WhatsApp group.
+  const isSport = isEvent && isSportCategory(form.category)
+  const defaultCover = isEvent ? categoryCovers[form.category.trim().toLowerCase()] : undefined
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [coverFile2, setCoverFile2] = useState<File | null>(null)
   const [gpxApproxFile, setGpxApproxFile] = useState<File | null>(null)
@@ -110,15 +118,15 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
           bankAccountIds,
           title: form.title.trim(),
           destination: form.destination.trim(),
-          meetingPoint: form.meeting_point.trim() || undefined,
+          meetingPoint: isSport ? undefined : form.meeting_point.trim() || undefined,
           description: form.description.trim() || undefined,
           date: form.date,
           endDate: !isViaFerrata ? form.end_date || undefined : undefined,
           meetingTime: form.meeting_time || undefined,
           maxParticipants: parseInt(form.max_participants) || 1,
           entryFee: isViaFerrata ? 0 : num(form.entry_fee) ?? 0,
-          essentials: form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
-          whatsappGroupUrl: form.whatsapp_group_url.trim() || undefined,
+          essentials: isSport ? [] : form.essentials.split('\n').map(s => s.trim()).filter(Boolean),
+          whatsappGroupUrl: isSport ? undefined : form.whatsapp_group_url.trim() || undefined,
           coverImageUrl, coverImageUrl2, gpxApproximateUrl,
           hasCamping: isHike && form.has_camping,
           hasAccommodation: isHike && form.has_accommodation,
@@ -169,14 +177,17 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
     <form onSubmit={handleSubmit} className="space-y-6">
       <Section title={d.basicInfo}>
         <Field label={de.category} required>
-          <select value={typeChoice.startsWith(CATEGORY) ? `${CATEGORY}${form.category}` : typeChoice}
-            onChange={e => pickType(e.target.value)} required className={input}>
-            <option value="" disabled>{de.categoryPick}</option>
-            <option value="hike">{types.hike}</option>
-            <option value="via_ferrata">{types.via_ferrata}</option>
-            {[...categories, ...otherCategory].map(c => <option key={c} value={`${CATEGORY}${c}`}>{c}</option>)}
-            {!fromManagement && <option value={NEW_CATEGORY}>{de.categoryOther}</option>}
-          </select>
+          <EventTypePicker
+            value={typeChoice.startsWith(CATEGORY) ? `${CATEGORY}${form.category}` : typeChoice}
+            onChange={pickType}
+            placeholder={de.categoryPick}
+            main={[
+              { value: 'hike', label: types.hike, icon: 'hike' },
+              { value: 'via_ferrata', label: types.via_ferrata, icon: 'via_ferrata' },
+            ]}
+            others={[...categories, ...otherCategory].map(c => ({ value: `${CATEGORY}${c}`, label: c }))}
+            newOption={fromManagement ? undefined : { value: NEW_CATEGORY, label: de.categoryOther }}
+          />
           {typeChoice === NEW_CATEGORY && (
             <input value={form.category} onChange={e => set('category', e.target.value)} required
               placeholder={de.categoryPlaceholder} className={`${input} mt-2`} />
@@ -190,15 +201,17 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
               <input value={form.title} onChange={e => set('title', e.target.value)} required
                 placeholder={isEvent ? de.titlePlaceholder : d.titlePlaceholder} className={input} />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className={`grid grid-cols-1 gap-4 ${isSport ? '' : 'sm:grid-cols-2'}`}>
               <Field label={isEvent ? de.place : d.destination} required>
                 <input value={form.destination} onChange={e => set('destination', e.target.value)} required
                   placeholder={isEvent ? de.placePlaceholder : d.destinationPlaceholder} className={input} />
               </Field>
-              <Field label={isEvent ? de.address : d.meetingPoint}>
-                <input value={form.meeting_point} onChange={e => set('meeting_point', e.target.value)}
-                  placeholder={isEvent ? de.addressPlaceholder : d.meetingPointPlaceholder} className={input} />
-              </Field>
+              {!isSport && (
+                <Field label={isEvent ? de.address : d.meetingPoint}>
+                  <input value={form.meeting_point} onChange={e => set('meeting_point', e.target.value)}
+                    placeholder={isEvent ? de.addressPlaceholder : d.meetingPointPlaceholder} className={input} />
+                </Field>
+              )}
             </div>
             <Field label={d.description}>
               <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4}
@@ -310,26 +323,35 @@ export default function NewEventForm({ categories, fromManagement, paymentMethod
             </Section>
           )}
 
-          <Section title={isHike ? d.essentials : isViaFerrata ? dv.routes : de.whatToBring}>
+          {!isSport && <Section title={isHike ? d.essentials : isViaFerrata ? dv.routes : de.whatToBring}>
             <Field label={isHike ? d.essentialsLabel : isViaFerrata ? dv.routes : de.whatToBring}>
               <textarea value={form.essentials} onChange={e => set('essentials', e.target.value)} rows={isEvent ? 3 : 5}
                 placeholder={isHike ? d.essentialsPlaceholder : isViaFerrata ? dv.routesPlaceholder : de.whatToBringPlaceholder} className={input} />
               {!isEvent && <p className="text-xs text-stone-400 mt-1.5">{isHike ? d.essentialsHint : dv.routesHint}</p>}
             </Field>
-          </Section>
+          </Section>}
 
           <Section title={d.mediaRoutes}>
             <Field label={d.coverPhoto}>
               <FileInput accept="image/*" file={coverFile} onFile={setCoverFile} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
+              {defaultCover && !coverFile && (
+                <div className="mt-2 flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-100 p-2 pr-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={defaultCover} alt="" className="h-12 w-20 rounded-lg object-cover shrink-0" />
+                  <p className="text-xs text-emerald-800">{dp.willUse.replace('{category}', form.category)}</p>
+                </div>
+              )}
             </Field>
             {!isEvent && (
               <Field label={d.coverPhoto2}>
                 <FileInput accept="image/*" file={coverFile2} onFile={setCoverFile2} hint={d.coverPhotoHint} uploadLabel={d.clickToUpload} />
               </Field>
             )}
-            <Field label={d.whatsappGroupUrl}>
-              <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
-            </Field>
+            {!isSport && (
+              <Field label={d.whatsappGroupUrl}>
+                <input type="url" value={form.whatsapp_group_url} onChange={e => set('whatsapp_group_url', e.target.value)} placeholder={d.whatsappGroupUrlPlaceholder} className={input} />
+              </Field>
+            )}
             {isHike && (
               <Field label={d.externalAlbum}>
                 <input type="url" value={form.external_photos_url} onChange={e => set('external_photos_url', e.target.value)} placeholder={d.externalAlbumPlaceholder} className={input} />
@@ -449,11 +471,12 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <div>
+    // A label that wraps onto two lines (in a grid row) keeps its input level with its neighbours'.
+    <div className="flex flex-col">
       <label className="block text-sm font-medium text-stone-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      {children}
+      <div className="mt-auto">{children}</div>
     </div>
   )
 }

@@ -21,7 +21,7 @@ type ChatData = { canRead: boolean; open: boolean; closesAt: string; messages: M
 
 export type EventChatDict = {
   title: string; closedOn: string; openUntil: string; empty: string; emptyClosed: string; earlier: string; loading: string
-  placeholder: string; placeholderAdmin: string; send: string; delete: string; confirmDelete: string; organisers: string
+  placeholder: string; placeholderAdmin: string; send: string; delete: string; confirmDelete: string; organisers: string; organiser: string; you: string
   closedNote: string; forParticipants: string; loginToJoin: string; loginLink: string; today: string; yesterday: string; error: string
 }
 
@@ -196,9 +196,11 @@ export default function EventChat({ eventId, userId, isAdmin, lang, locale, dict
                   : m.fromAdmin ? 'bg-stone-800 text-white rounded-bl-md'
                   : 'bg-white border border-stone-200 text-stone-800 rounded-bl-md'
                 }`}>
-                  {!mine && !sameAuthor && (
-                    <p className={`text-[11px] font-bold truncate ${m.fromAdmin ? 'text-emerald-300' : 'text-emerald-700'}`}>
-                      {m.fromAdmin ? dict.organisers : m.user?.name ?? '—'}
+                  {/* Who wrote it, at the top of each run of messages from the same person. */}
+                  {!sameAuthor && (
+                    <p className={`text-[11px] font-bold truncate ${mine ? 'text-white/80 text-right' : m.fromAdmin ? 'text-emerald-300' : 'text-emerald-700'}`}>
+                      {mine ? dict.you : m.fromAdmin ? (m.user?.name ?? dict.organisers) : m.user?.name ?? '—'}
+                      {m.fromAdmin && (mine || m.user?.name) && <span className="font-medium opacity-80"> · {dict.organiser}</span>}
                     </p>
                   )}
                   <p className="text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">{m.body}</p>

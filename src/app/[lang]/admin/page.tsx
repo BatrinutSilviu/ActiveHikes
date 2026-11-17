@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import type { HikeStatus, HikeType } from '@prisma/client'
-import { Plus, Users, CalendarDays, CreditCard, ChevronRight, TrendingUp } from 'lucide-react'
+import { Plus, Users, CalendarDays, CreditCard, ChevronRight, TrendingUp, Image as ImageIcon } from 'lucide-react'
 import { getDictionary, hasLocale, type Dictionary } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import { waitlistOverduePending } from '@/lib/expireParticipants'
@@ -115,6 +115,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
         <QuickLink href={`/${lang}/admin/events/new`} icon={<Plus size={17} />} label={d.events.admin.newEvent} />
         <QuickLink href={`/${lang}/admin/bank-accounts`} icon={<CreditCard size={17} />} label={da.bankAccounts} />
         <QuickLink href={`/${lang}/admin/participants`} icon={<Users size={17} />} label={da.allParticipants} />
+        <QuickLink href={`/${lang}/admin/event-photos`} icon={<ImageIcon size={17} />} label={da.eventPhotos} />
       </div>
 
       {drafts.length > 0 && (

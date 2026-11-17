@@ -14,9 +14,9 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const { data, error } = await getResendClient().emails.send({
     from: process.env.EMAIL_FROM!,
     to,
-    subject: 'Reset your ActiveHikes password',
+    subject: 'Reset your Active Events password',
     html: `
-      <p>Someone requested a password reset for this email address on ActiveHikes.</p>
+      <p>Someone requested a password reset for this email address on Active Events.</p>
       <p><a href="${resetUrl}">Click here to set a new password</a>. This link expires in 1 hour.</p>
       <p>If you didn't request this, you can ignore this email.</p>
     `,
@@ -30,15 +30,15 @@ export async function sendEmailConfirmation(to: string, confirmUrl: string, lang
   const { data, error } = await getResendClient().emails.send({
     from: process.env.EMAIL_FROM!,
     to,
-    subject: ro ? 'Confirmă-ți adresa de email pentru ActiveHikes' : 'Confirm your ActiveHikes email address',
+    subject: ro ? 'Confirmă-ți adresa de email pentru Active Events' : 'Confirm your Active Events email address',
     html: ro
       ? `
-      <p>Cineva și-a creat un cont ActiveHikes cu această adresă de email.</p>
+      <p>Cineva și-a creat un cont Active Events cu această adresă de email.</p>
       <p><a href="${confirmUrl}">Apasă aici pentru a confirma adresa</a>. Linkul expiră în 24 de ore.</p>
       <p>Dacă nu ai fost tu, poți ignora acest email.</p>
     `
       : `
-      <p>Someone created an ActiveHikes account with this email address.</p>
+      <p>Someone created an Active Events account with this email address.</p>
       <p><a href="${confirmUrl}">Click here to confirm your address</a>. This link expires in 24 hours.</p>
       <p>If it wasn't you, you can ignore this email.</p>
     `,

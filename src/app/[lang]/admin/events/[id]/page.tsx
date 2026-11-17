@@ -1,9 +1,11 @@
+import ParticipantHistory from '@/components/admin/ParticipantHistory'
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import ParticipantManager from '@/components/admin/ParticipantManager'
 import WhatsAppGroupCompare from '@/components/admin/WhatsAppGroupCompare'
+import { isSportCategory } from '@/lib/sportCategories'
 import EventForm from '@/components/generalEvents/EventForm'
 import { eventCategories } from '@/lib/eventCategories'
 import EventChat from '@/components/generalEvents/EventChat'
@@ -63,13 +65,16 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
             <h2 className="text-xl font-bold text-stone-800 mb-4">{da.participantsTitle}</h2>
             <ParticipantManager participants={participants} hikeId={event.id} maxParticipants={event.maxParticipants} dict={da} />
           </div>
-          <WhatsAppGroupCompare
-            eventId={event.id}
-            participants={participants}
-            adminUserId={session?.user?.id ?? null}
-            statusLabels={da.status as Record<string, string>}
-            dict={{ ...d.admin.whatsappCompare, copyPhone: da.copyPhone, phoneCopied: da.phoneCopied, openWhatsApp: da.openWhatsApp }}
-          />
+          {/* Sports sessions have no WhatsApp group to compare against. */}
+          {!isSportCategory(event.category) && (
+            <WhatsAppGroupCompare
+              eventId={event.id}
+              participants={participants}
+              adminUserId={session?.user?.id ?? null}
+              statusLabels={da.status as Record<string, string>}
+              dict={{ ...d.admin.whatsappCompare, copyPhone: da.copyPhone, phoneCopied: da.phoneCopied, openWhatsApp: da.openWhatsApp }}
+            />
+          )}
           <div>
             <h2 className="text-xl font-bold text-stone-800 mb-4">{de.chatTitle}</h2>
             <EventChat eventId={event.id} userId={session?.user?.id ?? null} isAdmin lang={lang} locale={d.locale} dict={d.events.chat} />
@@ -121,6 +126,8 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
           />
         </div>
       </div>
+
+      <ParticipantHistory hikeId={event.id} dict={d} locale={d.locale} />
     </div>
   )
 }

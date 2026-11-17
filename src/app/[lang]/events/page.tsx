@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import AnyEventCard, { toAnyEventCardData } from '@/components/events/AnyEventCard'
+import { withDefaultCovers } from '@/lib/categoryCovers'
 import EventListPage from '@/components/events/EventListPage'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
@@ -29,7 +30,7 @@ export default async function EventsPage({
 
   await advanceEventStatuses()
   const filter = await searchParams
-  const [d, rows, categories] = await Promise.all([
+  const [d, ownRows, categories] = await Promise.all([
     getDictionary(lang),
     prisma.hike.findMany({
       where: { status: { not: 'draft' }, ...typeWhere(filter.type) },
@@ -45,6 +46,7 @@ export default async function EventsPage({
     }),
   ])
 
+  const rows = await withDefaultCovers(ownRows)
   const isPast = (r: (typeof rows)[number]) => isPastEvent(r.status, r.date, r.endDate)
   // Soonest first for what's coming, most recent first for the history.
   const upcoming = rows.filter(r => !isPast(r)).reverse().map(toAnyEventCardData)

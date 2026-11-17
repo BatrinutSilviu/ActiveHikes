@@ -52,7 +52,16 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const isAdmin = session.user.role === 'admin'
 
-  const formData = await req.formData()
+  const tooBig = () => NextResponse.json(
+    { error: `The file is too big (at most ${(isAdmin ? MAX_BYTES_ADMIN : MAX_BYTES_PARTICIPANT) / 1024 / 1024} MB)` }, { status: 413 })
+  // Over the limit before even reading it (the body could be cut off and unreadable past that).
+  if (Number(req.headers.get('content-length')) > MAX_BYTES_ADMIN + 1024 * 1024) return tooBig()
+  let formData: FormData
+  try {
+    formData = await req.formData()
+  } catch {
+    return NextResponse.json({ error: 'The upload could not be read; try again' }, { status: 400 })
+  }
   const bucketName = String(formData.get('bucket') ?? '')
   const bucket = BUCKETS[bucketName]
   if (!bucket) return NextResponse.json({ error: 'Unknown upload type' }, { status: 400 })
@@ -61,9 +70,7 @@ export async function POST(req: NextRequest) {
   const file = formData.get('file')
   if (!(file instanceof File)) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   const maxBytes = isAdmin ? MAX_BYTES_ADMIN : MAX_BYTES_PARTICIPANT
-  if (file.size > maxBytes) {
-    return NextResponse.json({ error: `The file is too big (at most ${maxBytes / 1024 / 1024} MB)` }, { status: 413 })
-  }
+  if (file.size > maxBytes) return tooBig()
 
   const ext = path.extname(file.name).slice(1).toLowerCase()
   const kind = KIND_BY_EXT[ext]

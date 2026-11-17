@@ -1,3 +1,4 @@
+import { withDefaultCovers } from '@/lib/categoryCovers'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
@@ -15,7 +16,7 @@ import UploadedImage from '@/components/UploadedImage'
 import { EVENT_PATH } from '@/lib/eventPaths'
 
 const participationInclude = {
-  hike: { select: { id: true, type: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true } },
+  hike: { select: { id: true, type: true, title: true, destination: true, date: true, endDate: true, status: true, coverImageUrl: true, category: true } },
 } satisfies Prisma.HikeParticipantInclude
 
 type Participation = Prisma.HikeParticipantGetPayload<{ include: typeof participationInclude }>
@@ -40,6 +41,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
     }),
   ])
 
+  // General events without their own cover photo show their kind's default one.
+  const covered = await withDefaultCovers(participations.filter(p => p.hike).map(p => p.hike))
+  for (const [i, p] of participations.filter(p => p.hike).entries()) p.hike = covered[i]
   const upcoming = participations.filter(p => p.hike && p.hike.status !== 'draft' && !isPastEvent(p.hike.status, p.hike.date, p.hike.endDate) && p.status !== 'rejected')
   const past = participations.filter(p => p.hike && p.hike.status !== 'draft' && isPastEvent(p.hike.status, p.hike.date, p.hike.endDate) && p.status === 'confirmed')
 

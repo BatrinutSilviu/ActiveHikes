@@ -6,6 +6,7 @@ import { Upload, X } from 'lucide-react'
 import { createHike, updateHike } from '@/app/actions/hikes'
 import { useFormDraft, uploadFile } from '@/hooks/useFormDraft'
 import PaymentMethodsDropdown from '@/components/admin/PaymentMethodsDropdown'
+import { isSportCategory } from '@/lib/sportCategories'
 
 // Creating and editing a general event (Hike rows of type 'event'). New events start as drafts.
 // The place is kept in `destination`, the address in `meetingPoint`, the start time in `meetingTime`
@@ -93,6 +94,8 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
     setBankAccountIds(saved.bankAccountIds)
   })
   const set = (field: keyof typeof form, value: string) => setForm(f => ({ ...f, [field]: value }))
+  // Sports sessions (football, running…) have no address, "what to bring" list or WhatsApp group.
+  const isSport = isSportCategory(form.category)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,12 +115,12 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
           title: form.title.trim(),
           destination: form.place.trim(),
           description: form.description.trim() || undefined,
-          meetingPoint: form.address.trim() || undefined,
+          meetingPoint: isSport ? undefined : form.address.trim() || undefined,
           meetingTime: form.startTime || undefined,
           maxParticipants: parseInt(form.maxParticipants) || 1,
           entryFee: price,
-          essentials: form.whatToBring.split('\n').map(s => s.trim()).filter(Boolean),
-          whatsappGroupUrl: form.whatsappGroupUrl.trim() || undefined,
+          essentials: isSport ? [] : form.whatToBring.split('\n').map(s => s.trim()).filter(Boolean),
+          whatsappGroupUrl: isSport ? undefined : form.whatsappGroupUrl.trim() || undefined,
           bankAccountIds,
           category: form.category.trim() || undefined,
           endTime: form.endTime || undefined,
@@ -197,15 +200,17 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
         )}
         <p className="text-xs text-gray-500 mt-1">{dict.categoryHint}</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className={`grid grid-cols-1 gap-3 ${isSport ? '' : 'sm:grid-cols-2'}`}>
         <div>
           <label className={label}>{dict.place}</label>
           <input value={form.place} onChange={e => set('place', e.target.value)} required placeholder={dict.placePlaceholder} className={cls} />
         </div>
-        <div>
-          <label className={label}>{dict.address}</label>
-          <input value={form.address} onChange={e => set('address', e.target.value)} placeholder={dict.addressPlaceholder} className={cls} />
-        </div>
+        {!isSport && (
+          <div>
+            <label className={label}>{dict.address}</label>
+            <input value={form.address} onChange={e => set('address', e.target.value)} placeholder={dict.addressPlaceholder} className={cls} />
+          </div>
+        )}
       </div>
       <div>
         <label className={label}>{dict.description}</label>
@@ -248,14 +253,18 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
         </div>
       </div>
 
-      <div>
-        <label className={label}>{dict.whatToBring}</label>
-        <textarea value={form.whatToBring} onChange={e => set('whatToBring', e.target.value)} rows={3} placeholder={dict.whatToBringPlaceholder} className={cls} />
-      </div>
-      <div>
-        <label className={label}>{dict.whatsappGroupUrl}</label>
-        <input type="url" value={form.whatsappGroupUrl} onChange={e => set('whatsappGroupUrl', e.target.value)} placeholder="https://chat.whatsapp.com/…" className={cls} />
-      </div>
+      {!isSport && (
+        <>
+          <div>
+            <label className={label}>{dict.whatToBring}</label>
+            <textarea value={form.whatToBring} onChange={e => set('whatToBring', e.target.value)} rows={3} placeholder={dict.whatToBringPlaceholder} className={cls} />
+          </div>
+          <div>
+            <label className={label}>{dict.whatsappGroupUrl}</label>
+            <input type="url" value={form.whatsappGroupUrl} onChange={e => set('whatsappGroupUrl', e.target.value)} placeholder="https://chat.whatsapp.com/…" className={cls} />
+          </div>
+        </>
+      )}
 
       <PaymentMethodsDropdown
         accounts={bankAccounts}

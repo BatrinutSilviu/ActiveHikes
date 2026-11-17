@@ -1,3 +1,4 @@
+import ParticipantHistory from '@/components/admin/ParticipantHistory'
 import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import ParticipantManager from '@/components/admin/ParticipantManager'
@@ -152,6 +153,8 @@ export default async function AdminViaFerrataPage({ params }: { params: Promise<
           <AdminActionLink color="sky" href={`/${lang}/admin/hikes/${viaFerrata.id}/cars`} icon={<Car size={20} />} label={da.manageCars} />
         </div>
       </div>
+
+      <ParticipantHistory hikeId={viaFerrata.id} dict={d} locale={d.locale} />
     </div>
   )
 }

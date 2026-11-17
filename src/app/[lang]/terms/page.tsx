@@ -13,7 +13,7 @@ export default async function TermsPage({ params }: { params: Promise<{ lang: st
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <Link href={`/${lang}`} className="flex items-center gap-2 text-stone-500 hover:text-stone-700 mb-6">
-        <ArrowLeft size={16} /> ActiveHikes
+        <ArrowLeft size={16} /> Active Events
       </Link>
 
       <h1 className="text-3xl font-bold text-stone-900 mb-2">{t.title}</h1>

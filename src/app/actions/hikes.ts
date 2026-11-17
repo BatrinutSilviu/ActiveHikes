@@ -10,6 +10,7 @@ import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { notifyManagement } from '@/lib/managementSync'
+import { adminActor, logged, selfActor, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
 import { canonicalCategory } from '@/lib/eventCategories'
 import { isPastEvent } from '@/lib/dates'
 import { type CarTrip, isCarTrip, tripCompatible, fitsInCar, goesThere, goesBack } from '@/lib/carTrip'
@@ -34,6 +35,16 @@ function sanitizeSeats(seats: number | undefined): number | undefined {
 function sanitizePickup(lat: number | null | undefined, lng: number | null | undefined): [number | undefined, number | undefined] {
   const ok = typeof lat === 'number' && typeof lng === 'number' && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
   return ok ? [lat, lng] : [undefined, undefined]
+}
+
+// Names for the participant history: who's driving the car someone rides in, and which room they got.
+async function driverName(driverParticipantId: string | null) {
+  if (!driverParticipantId) return null
+  return (await snapshotParticipants([driverParticipantId]))[0]?.personName ?? null
+}
+async function roomLabel(roomId: string | null) {
+  if (!roomId) return null
+  return (await prisma.hikeRoom.findUnique({ where: { id: roomId }, select: { label: true } }))?.label ?? null
 }
 
 async function checkDriverCanTake(
@@ -108,8 +119,9 @@ export async function joinHike(
       },
     })
 
+    let friendId: string | null = null
     if (trimmedFriendName) {
-      await tx.hikeParticipant.create({
+      friendId = (await tx.hikeParticipant.create({
         data: {
           hikeId,
           userId: null,
@@ -122,8 +134,13 @@ export async function joinHike(
           carTrip: trip,
           carDriverParticipantId: bringsCar ? host.id : null,
         },
-      })
+      })).id
     }
+
+    await writeParticipantLog(await snapshotParticipants([host.id, friendId], tx), {
+      action: 'joined', actor: selfActor, fresh: true,
+      details: p => p.id === host.id && bringsCar ? { bringsCar: true, carSeats: carSeats ?? null } : undefined,
+    }, tx)
   })
 
   revalidateParticipantCountPaths(hikeId)
@@ -135,13 +152,15 @@ export async function cancelRegistration(hikeId: string) {
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, status: true },
+    select: { id: true, status: true, friend: { select: { id: true } } },
   })
 
   if (!participation) throw new Error('Registration not found')
   if (participation.status === 'confirmed') throw new Error('Confirmed registrations cannot be cancelled')
 
-  await prisma.hikeParticipant.delete({ where: { id: participation.id } })
+  // Their friend goes with them (deleted along with the sign-up).
+  await logged([participation.id, participation.friend?.id], { action: 'cancelled', actor: selfActor },
+    () => prisma.hikeParticipant.delete({ where: { id: participation.id } }))
 
   revalidateParticipantCountPaths(hikeId)
 }
@@ -168,6 +187,7 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
   const wasLinked = participation.friend
     ? participation.friend.carDriverParticipantId === participation.carDriverParticipantId
     : false
+  const before = await snapshotParticipants([participation.id])
 
   await prisma.$transaction(async (tx) => {
     await tx.hikeParticipant.update({
@@ -236,6 +256,11 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
     }
   })
 
+  await writeParticipantLog(before, {
+    action: 'car', actor: selfActor,
+    details: { bringsCar, carSeats: bringsCar && carSeats ? carSeats : null, ...(trip ? { carTrip: trip } : {}) },
+  })
+
   revalidateParticipantCountPaths(hikeId)
 }
 
@@ -263,9 +288,10 @@ export async function assignCarDriver(hikeId: string, driverParticipantId: strin
     if (error) throw new Error(error)
   }
 
-  await prisma.$transaction(
-    movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { carDriverParticipantId: driverParticipantId } }))
-  )
+  await logged(movingIds, { action: 'ride', actor: selfActor, details: { driver: await driverName(driverParticipantId) } }, () =>
+    prisma.$transaction(
+      movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { carDriverParticipantId: driverParticipantId } }))
+    ))
 
   revalidateParticipantCountPaths(hikeId)
 }
@@ -286,7 +312,8 @@ export async function assignFriendCarDriver(hikeId: string, driverParticipantId:
     if (error) throw new Error(error)
   }
 
-  await prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverParticipantId } })
+  await logged([friendId], { action: 'ride', actor: selfActor, details: { driver: await driverName(driverParticipantId) } },
+    () => prisma.hikeParticipant.update({ where: { id: friendId }, data: { carDriverParticipantId: driverParticipantId } }))
 
   revalidateParticipantCountPaths(hikeId)
 }
@@ -307,7 +334,8 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
     if (error) return { error }
   }
 
-  await prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } })
+  await logged([participantId], { action: 'ride', actor: adminActor(session), details: { driver: await driverName(driverParticipantId) } },
+    () => prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } }))
 
   revalidateParticipantCountPaths(hikeId)
   return { success: true }
@@ -339,9 +367,10 @@ export async function assignRoom(hikeId: string, roomId: string | null) {
     if (taken + neededSeats > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.$transaction(
-    movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { roomId } }))
-  )
+  await logged(movingIds, { action: 'room', actor: selfActor, details: { room: await roomLabel(roomId) } }, () =>
+    prisma.$transaction(
+      movingIds.map(id => prisma.hikeParticipant.update({ where: { id }, data: { roomId } }))
+    ))
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
@@ -367,7 +396,8 @@ export async function assignFriendRoom(hikeId: string, roomId: string | null) {
     if (taken + 1 > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } })
+  await logged([friendId], { action: 'room', actor: selfActor, details: { room: await roomLabel(roomId) } },
+    () => prisma.hikeParticipant.update({ where: { id: friendId }, data: { roomId } }))
 
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
 }
@@ -392,7 +422,8 @@ export async function adminAssignRoom(hikeId: string, participantId: string, roo
     if (taken + 1 > room.capacity) throw new Error('Room is full')
   }
 
-  await prisma.hikeParticipant.update({ where: { id: participantId }, data: { roomId } })
+  await logged([participantId], { action: 'room', actor: adminActor(session), details: { room: await roomLabel(roomId) } },
+    () => prisma.hikeParticipant.update({ where: { id: participantId }, data: { roomId } }))
 
   revalidateLocalePaths(`/admin/hikes/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/hikes/${hikeId}`, revalidatePath)
@@ -520,6 +551,7 @@ export async function createHike(data: {
       checkInTime: isHike ? (data.checkInTime || null) : null,
       checkOutTime: isHike ? (data.checkOutTime || null) : null,
       difficulty: isHike ? ((data.difficulty as Difficulty) || null) : null,
+      // Left empty, a general event shows its kind's default photo (lib/categoryCovers).
       coverImageUrl: data.coverImageUrl || null,
       coverImageUrl2: data.coverImageUrl2 || null,
       gpxApproximateUrl: isHike ? (data.gpxApproximateUrl || null) : null,
@@ -843,6 +875,15 @@ export async function applyCarAllocation(
     select: { id: true, friend: { select: { id: true } } },
   })
   const friendByHost = new Map(passengers.map(p => [p.id, p.friend?.id ?? null]))
+  // Who ends up in whose car, for the history.
+  const driverOf = new Map<string, string>()
+  for (const { passengerId, driverId } of assignments) {
+    driverOf.set(passengerId, driverId)
+    const friendId = friendByHost.get(passengerId)
+    if (friendId) driverOf.set(friendId, driverId)
+  }
+  const drivers = new Map((await snapshotParticipants([...new Set(driverOf.values())])).map(d => [d.id, d.personName]))
+  const before = await snapshotParticipants([...driverOf.keys()])
 
   await prisma.$transaction(
     assignments.flatMap(({ passengerId, driverId }) => {
@@ -856,6 +897,11 @@ export async function applyCarAllocation(
       return updates
     })
   )
+
+  await writeParticipantLog(before, {
+    action: 'ride', actor: adminActor(session),
+    details: p => ({ driver: drivers.get(driverOf.get(p.id) ?? '') ?? null, automatic: true }),
+  })
 
   revalidateParticipantCountPaths(hikeId)
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import AnyEventCard, { toAnyEventCardData } from '@/components/events/AnyEventCard'
+import { withDefaultCovers } from '@/lib/categoryCovers'
 import { Mountain, ArrowRight } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
@@ -14,10 +15,8 @@ async function getUpcomingEvents() {
     orderBy: { date: 'asc' },
     include: { participants: { select: { status: true } } },
   })
-  return events
-    .filter(e => !isPastEvent(e.status, e.date, e.endDate))
-    .slice(0, 6)
-    .map(toAnyEventCardData)
+  const next = events.filter(e => !isPastEvent(e.status, e.date, e.endDate)).slice(0, 6)
+  return (await withDefaultCovers(next)).map(toAnyEventCardData)
 }
 
 export default async function HomePage({ params }: { params: Promise<{ lang: string }> }) {

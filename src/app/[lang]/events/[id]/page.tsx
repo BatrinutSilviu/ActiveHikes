@@ -1,3 +1,4 @@
+import { withDefaultCovers } from '@/lib/categoryCovers'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -33,7 +34,7 @@ export default async function GeneralEventPage({ params, searchParams }: {
   await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
   const [d, session] = await Promise.all([getDictionary(lang), getServerSession(authOptions)])
 
-  const event = await prisma.hike.findFirst({
+  const found = await prisma.hike.findFirst({
     where: { id, type: 'event' },
     include: {
       participants: {
@@ -43,7 +44,8 @@ export default async function GeneralEventPage({ params, searchParams }: {
       bankAccounts: { where: { isActive: true } },
     },
   })
-  if (!event) notFound()
+  if (!found) notFound()
+  const [event] = await withDefaultCovers([found])
 
   const isAdmin = session?.user?.role === 'admin'
   if (event.status === 'draft' && !isAdmin) notFound()

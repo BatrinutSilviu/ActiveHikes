@@ -12,6 +12,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  experimental: {
+    // src/proxy.ts runs on every request, so Next.js buffers request bodies there — 10 MB by default,
+    // which cut off admin uploads (api/upload allows admins 20 MB). A bit over 20 MB leaves room for
+    // the form around the file; api/upload still enforces its own limits.
+    proxyClientMaxBodySize: '21mb',
+  },
   // Old address of the via ferrata participants list, now part of the combined list.
   // (Paths without a language are redirected to /ro or /en by src/proxy.ts.)
   async redirects() {

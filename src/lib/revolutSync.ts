@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { getConfirmationPrice } from '@/lib/pricing'
 import { confirmParticipant } from '@/lib/participantConfirm'
+import { systemActor } from '@/lib/participantLog'
 
 const BASE_URL = 'https://api.enablebanking.com'
 const CONSENT_VALID_DAYS = 90
@@ -161,7 +162,7 @@ export async function runPaymentSync(): Promise<{ confirmed: number; unmatched: 
 
     if (candidates.length === 1) {
       const match = candidates[0]
-      await confirmParticipant(match.id, match.hikeId)
+      await confirmParticipant(match.id, match.hikeId, { action: 'payment', actor: systemActor, amount })
       await prisma.processedBankTransaction.create({
         data: { transactionId: id, hikeParticipantId: match.id, amount },
       })
