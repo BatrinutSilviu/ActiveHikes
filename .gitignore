@@ -42,3 +42,6 @@ next-env.d.ts
 
 # IDE settings
 .idea/
+
+# user uploads (stored on a Docker volume in production, never in git)
+/public/uploads/
