@@ -185,6 +185,10 @@ model Hike {
   category             String?
   endTime              String?
   advanceFee           Decimal?    @db.Decimal(10, 2)
+  // Created by a community member (not an admin): always a free general event, live as soon as it's
+  // made, and its creator (createdById) manages it from /events/[id]/manage. Sign-ups are confirmed
+  // straight away while there are spots.
+  byMember             Boolean     @default(false)
   createdById          String?
   createdAt            DateTime    @default(now())
 
@@ -197,6 +201,8 @@ model Hike {
   documentSubmissions HikeDocumentSubmission[]
   bankAccounts BankAccount[]     @relation("HikeBankAccounts")
   chatMessages EventChatMessage[]
+
+  @@index([createdById])
 }
 
 enum CarTrip {

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { CHAT_MAX_LENGTH, canUseChat, chatClosesAt, chatPage, findChatEvent, isChatOpen, sentInLastMinute } from '@/lib/eventChat'
+import { CHAT_MAX_LENGTH, canUseChat, chatClosesAt, chatPage, findChatEvent, isChatOpen, isChatOrganiser, sentInLastMinute } from '@/lib/eventChat'
 
 // A general event's chat (see lib/eventChat.ts).
 // GET ?before=<message id>: a page of messages (the newest without `before`), for those taking part.
-// POST { body }: write a message while the chat is open; admins write as the organisers.
+// POST { body }: write a message while the chat is open; admins and the event's member organiser write as the organisers.
 
 const noStore = { 'Cache-Control': 'no-store' }
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const message = await prisma.eventChatMessage.create({
-    data: { hikeId: id, userId: session.user.id, fromAdmin: session.user.role === 'admin', body: text },
+    data: { hikeId: id, userId: session.user.id, fromAdmin: isChatOrganiser(event, session), body: text },
     select: { id: true },
   })
   return NextResponse.json(message, { status: 201 })

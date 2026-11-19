@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { findChatEvent, isChatOpen } from '@/lib/eventChat'
+import { findChatEvent, isChatOpen, isChatOrganiser } from '@/lib/eventChat'
 
-// Deleting a chat message: admins any time, anyone else their own while the chat is open.
+// Deleting a chat message: the organisers any time, anyone else their own while the chat is open.
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string; messageId: string }> }) {
   const { id, messageId } = await params
   const session = await getServerSession(authOptions)
@@ -15,9 +15,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   ])
   if (!event || !message) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const isAdmin = session.user.role === 'admin'
+  const organiser = isChatOrganiser(event, session)
   const ownWhileOpen = message.userId === session.user.id && !message.fromAdmin && isChatOpen(event)
-  if (!isAdmin && !ownWhileOpen) return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
+  if (!organiser && !ownWhileOpen) return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
 
   await prisma.eventChatMessage.delete({ where: { id: messageId } })
   return NextResponse.json({ ok: true })

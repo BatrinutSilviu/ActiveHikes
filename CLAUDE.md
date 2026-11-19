@@ -12,6 +12,7 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **Waitlist**: once the participant limit is hit, new registrations go to `waitlist` automatically; admin can promote them manually
 - **After the hike**: admin uploads featured photos (shown in a gallery on the hike page), pastes a Google Photos link for the full album, uploads the actual GPX track, and marks the hike as `completed`
 - **Users** see their registrations and status on their profile page
+- **Member events**: any signed-in member can create their own general event (a kind such as Running or Football) at `/events/new`. It's always free, goes live immediately (`Hike.byMember = true`), and sign-ups are confirmed straight away while there are spots (then waitlist; the waitlist moves up when someone drops out, and anyone can drop out). The creator manages it at `/events/[id]/manage` (participants, details, cancel/reopen, chat as organiser — no emails/phones shown); admins keep full control
 - No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional emails are the sign-up confirmation link and the password reset link.
 
 ## Tech stack
@@ -61,7 +62,7 @@ prisma/schema.prisma          Database schema (User, Hike, HikeParticipant, Hike
 src/lib/auth.ts               NextAuth config (providers, JWT callbacks)
 src/lib/db.ts                 Prisma client singleton
 src/middleware.ts             Route protection (admin + profile routes)
-src/app/actions/              Server Actions — hikes.ts, participants.ts, photos.ts, bank-accounts.ts
+src/app/actions/              Server Actions — hikes.ts, participants.ts, photos.ts, bank-accounts.ts, memberEvents.ts (events members create)
 src/app/api/upload/route.ts   File upload endpoint (saves to public/uploads/)
 src/app/api/auth/register/    User signup endpoint (validates full name, hashes password)
 src/app/api/auth/forgot-password/  Requests a password reset email
@@ -79,6 +80,8 @@ src/proxy.ts                   Locale redirects, route protection, per-request C
 /                     Home — upcoming events of every kind
 /events               All events (hikes, via ferratas, general events), filtered by ?type= (hike, via_ferrata or a kind such as Running); /hikes and /via-ferrata redirect here
 /hikes/[id]           Hike detail, join button, payment info, photos, GPX download (/via-ferrata/[id] and /events/[id] for the other kinds)
+/events/new           Any member creates their own free event (live immediately)
+/events/[id]/manage   The member who created an event manages it (admins can open it too)
 /auth/login           Login (email or Google)
 /auth/signup          Sign up
 /auth/forgot-password Request a password reset email

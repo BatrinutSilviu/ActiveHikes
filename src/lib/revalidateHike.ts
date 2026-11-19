@@ -14,6 +14,7 @@ export function revalidateParticipantCountPaths(hikeId: string) {
   revalidateLocalePaths(`/via-ferrata/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/admin/events/${hikeId}`, revalidatePath)
   revalidateLocalePaths(`/events/${hikeId}`, revalidatePath)
+  revalidateLocalePaths(`/events/${hikeId}/manage`, revalidatePath)
   revalidateLocalePaths('/events', revalidatePath)
   revalidateLocalePaths('/hikes', revalidatePath)
   revalidateLocalePaths('/via-ferrata', revalidatePath)

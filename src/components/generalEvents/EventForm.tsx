@@ -4,11 +4,14 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Upload, X } from 'lucide-react'
 import { createHike, updateHike } from '@/app/actions/hikes'
+import { createMemberEvent, updateMemberEvent } from '@/app/actions/memberEvents'
 import { useFormDraft, uploadFile } from '@/hooks/useFormDraft'
 import PaymentMethodsDropdown from '@/components/admin/PaymentMethodsDropdown'
 import { isSportCategory } from '@/lib/sportCategories'
 
 // Creating and editing a general event (Hike rows of type 'event'). New events start as drafts.
+// `member`: an event a community member makes (Hike.byMember) — free, so no price, advance or payment
+// methods, and live as soon as it's created; its organiser then manages it at /events/[id]/manage.
 // The place is kept in `destination`, the address in `meetingPoint`, the start time in `meetingTime`
 // and the price per person in `entryFee`; a single-day event's duration comes from its start and end
 // times, so it moves to "completed" when it ends.
@@ -57,9 +60,10 @@ function durationHours(f: { startTime: string; endTime: string; date: string; en
   return minutes > 0 ? Math.round(minutes / 6) / 10 : null
 }
 
-export default function EventForm({ event, bankAccounts, categories = [], fromManagement = false, lang, dict }: {
+export default function EventForm({ event, bankAccounts = [], categories = [], fromManagement = false, member = false, lang, dict }: {
   event?: GeneralEventData
-  bankAccounts: BankAccountOption[]
+  bankAccounts?: BankAccountOption[]
+  member?: boolean
   /** The management app's event types (its list is the source of truth), or, when it can't be reached,
    *  the kinds used here before. */
   categories?: string[]
@@ -89,7 +93,7 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
-  const draft = useFormDraft(`event:${event?.id ?? 'new'}`, { form, bankAccountIds }, saved => {
+  const draft = useFormDraft(`${member ? 'member-' : ''}event:${event?.id ?? 'new'}`, { form, bankAccountIds }, saved => {
     setForm(saved.form)
     setBankAccountIds(saved.bankAccountIds)
   })
@@ -111,6 +115,36 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
     startTransition(async () => {
       try {
         const coverImageUrl = coverFile ? await uploadFile(coverFile, 'hike-covers') : event?.coverImageUrl ?? null
+        if (member) {
+          const data = {
+            title: form.title,
+            category: form.category,
+            destination: form.place,
+            meetingPoint: isSport ? null : form.address,
+            description: form.description,
+            date: form.date,
+            endDate: form.endDate || null,
+            meetingTime: form.startTime || null,
+            endTime: form.endTime || null,
+            maxParticipants: parseInt(form.maxParticipants) || 1,
+            essentials: isSport ? [] : form.whatToBring.split('\n'),
+            whatsappGroupUrl: isSport ? null : form.whatsappGroupUrl,
+            coverImageUrl,
+          }
+          if (event) {
+            await updateMemberEvent(event.id, data)
+            draft.clearDraft({ form, bankAccountIds })
+            setCoverFile(null)
+            setSuccess(true)
+            setTimeout(() => setSuccess(false), 3000)
+            router.refresh()
+          } else {
+            const id = await createMemberEvent(data)
+            draft.clearDraft({ form, bankAccountIds })
+            router.push(`/${lang}/events/${id}/manage`)
+          }
+          return
+        }
         const fields = {
           title: form.title.trim(),
           destination: form.place.trim(),
@@ -238,11 +272,12 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className={`grid grid-cols-1 gap-3 ${member ? '' : 'sm:grid-cols-3'}`}>
         <div>
           <label className={label}>{dict.maxParticipants}</label>
-          <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} required min="1" step="1" className={cls} />
+          <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} required min="1" max={member ? 500 : undefined} step="1" className={cls} />
         </div>
+        {!member && <>
         <div>
           <label className={label}>{dict.price}</label>
           <input type="number" value={form.price} onChange={e => set('price', e.target.value)} min="0" step="1" placeholder={dict.pricePlaceholder} className={cls} />
@@ -251,6 +286,7 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
           <label className={label}>{dict.advance}</label>
           <input type="number" value={form.advanceFee} onChange={e => set('advanceFee', e.target.value)} min="0" step="1" placeholder={dict.advancePlaceholder} className={cls} />
         </div>
+        </>}
       </div>
 
       {!isSport && (
@@ -266,14 +302,16 @@ export default function EventForm({ event, bankAccounts, categories = [], fromMa
         </>
       )}
 
-      <PaymentMethodsDropdown
-        accounts={bankAccounts}
-        selected={bankAccountIds}
-        onChange={setBankAccountIds}
-        label={dict.bankAccountsSection}
-        hint={dict.bankAccountsHint}
-        empty={dict.noBankAccounts}
-      />
+      {!member && (
+        <PaymentMethodsDropdown
+          accounts={bankAccounts}
+          selected={bankAccountIds}
+          onChange={setBankAccountIds}
+          label={dict.bankAccountsSection}
+          hint={dict.bankAccountsHint}
+          empty={dict.noBankAccounts}
+        />
+      )}
 
       <div>
         <label className={label}>{dict.coverPhoto}</label>

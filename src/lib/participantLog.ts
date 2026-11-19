@@ -23,11 +23,14 @@ export type LogAction =
   | 'document_uploaded'
   | 'document_deleted'
 
-export type LogActor = { kind: 'self' | 'admin' | 'system'; name?: string | null }
+export type LogActor = { kind: 'self' | 'admin' | 'organizer' | 'system'; name?: string | null }
 
 export const selfActor: LogActor = { kind: 'self' }
 export const systemActor: LogActor = { kind: 'system' }
 export const adminActor = (session: Session | null): LogActor => ({ kind: 'admin', name: session?.user?.name ?? null })
+/** An admin, or the community member who organises the event (see getEventManagerSession). */
+export const managerActor = (session: Session | null): LogActor =>
+  session?.user?.role === 'admin' ? adminActor(session) : { kind: 'organizer', name: session?.user?.name ?? null }
 
 type Db = PrismaClient | Prisma.TransactionClient
 

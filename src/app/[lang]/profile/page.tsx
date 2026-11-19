@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Mountain, Calendar, CheckCircle, Clock, List, ShieldCheck, Phone, Mail } from 'lucide-react'
+import { Mountain, Calendar, CheckCircle, Clock, List, ShieldCheck, Phone, Mail, Plus, Users } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { notFound } from 'next/navigation'
 import NameEditor from '@/components/profile/NameEditor'
@@ -32,14 +32,28 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
 
   await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
-  const [user, participations] = await Promise.all([
+  const [user, participations, organised] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.user.id } }),
     prisma.hikeParticipant.findMany({
       where: { userId: session.user.id },
       orderBy: { joinedAt: 'desc' },
       include: participationInclude,
     }),
+    // The events they made themselves (see actions/memberEvents.ts).
+    prisma.hike.findMany({
+      where: { createdById: session.user.id, byMember: true },
+      orderBy: { date: 'desc' },
+      take: 50,
+      select: {
+        id: true, title: true, date: true, endDate: true, status: true, maxParticipants: true, meetingTime: true, durationHours: true,
+        participants: { where: { status: 'confirmed' }, select: { id: true } },
+      },
+    }),
   ])
+  // What's coming first (soonest first), then the rest (most recent first).
+  const organisedUpcoming = organised.filter(e => !isPastEvent(e.status, e.date, e.endDate, e)).reverse()
+  const organisedPast = organised.filter(e => isPastEvent(e.status, e.date, e.endDate, e))
+  const dm = d.events.member
 
   // General events without their own cover photo show their kind's default one.
   const covered = await withDefaultCovers(participations.filter(p => p.hike).map(p => p.hike))
@@ -94,6 +108,39 @@ export default async function ProfilePage({ params }: { params: Promise<{ lang: 
       </div>
 
     <div className="max-w-3xl mx-auto px-4 py-10">
+
+      {/* Events they organise */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="text-xl font-black tracking-tight text-stone-900">{dm.myEvents}</h2>
+          <Link href={`/${lang}/events/new`}
+            className="shrink-0 inline-flex items-center gap-1.5 bg-emerald-600 text-white text-sm font-semibold px-3.5 py-2 rounded-xl hover:bg-emerald-700 transition-colors">
+            <Plus size={15} /> {dm.createButton}
+          </Link>
+        </div>
+        {organised.length === 0 ? (
+          <p className="text-stone-400 text-sm">{dm.noMyEvents}</p>
+        ) : (
+          <div className="space-y-2.5">
+            {[...organisedUpcoming, ...organisedPast].map(e => (
+              <Link key={e.id} href={`/${lang}/events/${e.id}/manage`}
+                className="flex items-center gap-4 bg-white border border-stone-100 rounded-2xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all group">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-stone-800 truncate group-hover:text-emerald-700 transition-colors">{e.title}</div>
+                  <div className="text-stone-400 text-sm flex items-center gap-1 mt-0.5">
+                    <Calendar size={12} />
+                    {formatHikeDate(e.date, e.endDate, d.locale, DATE_SHORT)}
+                    {e.status === 'cancelled' && <span className="ml-1.5 text-red-600 font-medium">· {dm.cancelled}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full text-stone-600 bg-stone-100 shrink-0">
+                  <Users size={13} /> {e.participants.length}/{e.maxParticipants}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Upcoming hikes */}
       <section className="mb-8">

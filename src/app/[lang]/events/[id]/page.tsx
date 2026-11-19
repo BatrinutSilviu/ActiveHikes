@@ -3,7 +3,8 @@ import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { notFound } from 'next/navigation'
-import { Calendar, Clock, DollarSign, MapPin, Tag, Users } from 'lucide-react'
+import Link from 'next/link'
+import { Calendar, Clock, DollarSign, MapPin, Settings, Tag, UserRound, Users } from 'lucide-react'
 import JoinButton from '@/components/events/join/JoinButton'
 import { toRegistration } from '@/components/events/join/registration'
 import SpotsCounter from '@/components/events/SpotsCounter'
@@ -42,6 +43,7 @@ export default async function GeneralEventPage({ params, searchParams }: {
         orderBy: { joinedAt: 'asc' },
       },
       bankAccounts: { where: { isActive: true } },
+      createdBy: { select: { name: true } },
     },
   })
   if (!found) notFound()
@@ -50,6 +52,8 @@ export default async function GeneralEventPage({ params, searchParams }: {
   const isAdmin = session?.user?.role === 'admin'
   if (event.status === 'draft' && !isAdmin) notFound()
   const isPreviewMode = isAdmin && preview === '1'
+  // An event a member made: free, and that member organises it (manages it, writes in the chat as organiser).
+  const isOrganizer = event.byMember && !!session?.user?.id && event.createdById === session.user.id
 
   const userParticipation = session?.user?.id
     ? await prisma.hikeParticipant.findUnique({
@@ -77,6 +81,14 @@ export default async function GeneralEventPage({ params, searchParams }: {
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
       <AdminPreviewBar isAdmin={isAdmin} isPreviewMode={isPreviewMode} eventUrl={`/${lang}/events/${event.id}`} dict={dd} />
+      {event.byMember && (isOrganizer || isAdmin) && !isPreviewMode && (
+        <div className="flex justify-end mb-4">
+          <Link href={`/${lang}/events/${event.id}/manage`}
+            className="inline-flex items-center gap-2 bg-stone-900 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-stone-800 transition-colors">
+            <Settings size={15} /> {d.events.member.manage}
+          </Link>
+        </div>
+      )}
       <EventHero title={event.title} destination={event.destination} coverImageUrl={event.coverImageUrl} coverImageUrl2={event.coverImageUrl2} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -97,6 +109,12 @@ export default async function GeneralEventPage({ params, searchParams }: {
             </InfoCard>
             {event.category && (
               <InfoCard icon={<Tag size={18} />} label={de.kindLabel}>{event.category}</InfoCard>
+            )}
+            {event.byMember && event.createdBy?.name && (
+              <InfoCard icon={<UserRound size={18} />} label={d.events.member.organizedBy}>
+                {event.createdBy.name}
+                <span className="block text-sm text-stone-500 font-normal">{d.events.member.communityBadge}</span>
+              </InfoCard>
             )}
             <InfoCard icon={<Users size={18} />} label={dd.participantsLabel}>
               {isUpcoming
@@ -135,6 +153,7 @@ export default async function GeneralEventPage({ params, searchParams }: {
               tripDict={d.carTrip}
               lang={lang}
               withCar={false}
+              canLeaveConfirmed={event.byMember}
             />
           </div>
         )}
@@ -146,7 +165,7 @@ export default async function GeneralEventPage({ params, searchParams }: {
             key={userParticipation?.status ?? 'none'}
             eventId={event.id}
             userId={session?.user?.id ?? null}
-            isAdmin={isAdmin}
+            isAdmin={isAdmin || isOrganizer}
             lang={lang}
             locale={d.locale}
             dict={d.events.chat}

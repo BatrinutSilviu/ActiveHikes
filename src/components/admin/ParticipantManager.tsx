@@ -66,12 +66,15 @@ export default function ParticipantManager({
   maxParticipants,
   dict,
   tripDict,
+  organizer = false,
 }: {
   participants: Participant[]
   hikeId: string
   maxParticipants: number
   dict: ParticipantManagerDict
   tripDict?: { both: string; there: string; back: string }
+  /** The member who organises the event (not an admin): no adding people by email or name. */
+  organizer?: boolean
 }) {
   const router = useRouter()
   const [items, setItems] = useState(participants)
@@ -215,8 +218,8 @@ export default function ParticipantManager({
   if (items.length === 0) {
     return (
       <div className="space-y-3">
-        {addForm}
-        {importForm}
+        {!organizer && addForm}
+        {!organizer && importForm}
         <div className="bg-white border border-stone-100 rounded-2xl p-8 text-center text-stone-400">{dict.noRegistrations}</div>
       </div>
     )
@@ -224,8 +227,8 @@ export default function ParticipantManager({
 
   return (
     <div className="space-y-3">
-      {addForm}
-      {importForm}
+      {!organizer && addForm}
+      {!organizer && importForm}
       {pendingCount > 0 && (
         <button onClick={handleConfirmAll} disabled={bulkLoading}
           className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors text-sm">
@@ -259,7 +262,7 @@ export default function ParticipantManager({
                   <div className="text-stone-400 text-sm truncate">{dict.friendOf} {p.hostName ?? '?'}</div>
                 ) : p.user ? (
                   <>
-                    <div className="text-stone-400 text-sm truncate">{p.user?.email}</div>
+                    {p.user?.email && <div className="text-stone-400 text-sm truncate">{p.user.email}</div>}
                     {p.user?.phone && <PhoneContact phone={p.user.phone} dict={dict} />}
                   </>
                 ) : (

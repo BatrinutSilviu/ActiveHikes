@@ -26,6 +26,7 @@ export default function MyRegistration({
   dict,
   tripDict,
   withCar = true,
+  canLeaveConfirmed = false,
 }: {
   hikeId: string
   registration: Registration
@@ -34,6 +35,7 @@ export default function MyRegistration({
   dict: JoinButtonDict
   tripDict: CarTripDict
   withCar?: boolean
+  canLeaveConfirmed?: boolean
 }) {
   const { status, paymentDeadline } = registration
   const saved = initialCarPreference(registration)
@@ -144,7 +146,7 @@ export default function MyRegistration({
           {carSaveError && <p className="text-red-600 text-xs text-center">{carSaveError}</p>}
         </div>}
 
-        {(status === 'pending' || status === 'waitlist') && (
+        {(status === 'pending' || status === 'waitlist' || (canLeaveConfirmed && status === 'confirmed')) && (
           <button onClick={handleCancel} disabled={cancelling}
             className="w-full flex items-center justify-center gap-2 border-2 border-red-200 text-red-600 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-50 hover:border-red-400 active:bg-red-100 transition-colors disabled:opacity-50">
             <X size={15} strokeWidth={2.5} />

@@ -11,6 +11,7 @@ import { syncHikeRooms } from '@/lib/rooms'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { notifyManagement } from '@/lib/managementSync'
 import { adminActor, logged, selfActor, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
+import { promoteFromWaitlist } from '@/lib/memberWaitlist'
 import { canonicalCategory } from '@/lib/eventCategories'
 import { isPastEvent } from '@/lib/dates'
 import { type CarTrip, isCarTrip, tripCompatible, fitsInCar, goesThere, goesBack } from '@/lib/carTrip'
@@ -83,8 +84,8 @@ export async function joinHike(
 
   await prisma.$transaction(async (tx) => {
     // Lock the hike row so concurrent joins are serialized
-    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string; date: Date; endDate: Date | null; meetingTime: string | null; durationHours: string | null }[]>`
-      SELECT "maxParticipants", "status", "date", "endDate", "meetingTime", "durationHours"::text AS "durationHours" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
+    const hikes = await tx.$queryRaw<{ maxParticipants: number; status: string; date: Date; endDate: Date | null; meetingTime: string | null; durationHours: string | null; byMember: boolean }[]>`
+      SELECT "maxParticipants", "status", "date", "endDate", "meetingTime", "durationHours"::text AS "durationHours", "byMember" FROM "Hike" WHERE id = ${hikeId} FOR UPDATE
     `
     if (!hikes.length) throw new Error('Hike not found')
     if (hikes[0].status === 'draft' && !isAdmin) throw new Error('Hike not found')
@@ -99,8 +100,9 @@ export async function joinHike(
 
     const neededSpots = trimmedFriendName ? 2 : 1
     const isFull = confirmed + neededSpots > hikes[0].maxParticipants
-    const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : 'pending'
-    const confirmedAt = isAdmin ? new Date() : undefined
+    // A member's event is free: a spot is yours as soon as you sign up, no payment to wait for.
+    const status = isAdmin ? 'confirmed' : isFull ? 'waitlist' : hikes[0].byMember ? 'confirmed' : 'pending'
+    const confirmedAt = status === 'confirmed' ? new Date() : undefined
     const paymentDeadline = status === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null
 
     const host = await tx.hikeParticipant.create({
@@ -152,15 +154,18 @@ export async function cancelRegistration(hikeId: string) {
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, status: true, friend: { select: { id: true } } },
+    select: { id: true, status: true, friend: { select: { id: true } }, hike: { select: { byMember: true } } },
   })
 
   if (!participation) throw new Error('Registration not found')
-  if (participation.status === 'confirmed') throw new Error('Confirmed registrations cannot be cancelled')
+  // A paid spot can't just be dropped; a member's event is free, so anyone can drop out of it.
+  const byMember = participation.hike.byMember
+  if (participation.status === 'confirmed' && !byMember) throw new Error('Confirmed registrations cannot be cancelled')
 
   // Their friend goes with them (deleted along with the sign-up).
   await logged([participation.id, participation.friend?.id], { action: 'cancelled', actor: selfActor },
     () => prisma.hikeParticipant.delete({ where: { id: participation.id } }))
+  if (byMember && participation.status === 'confirmed') await promoteFromWaitlist(hikeId)
 
   revalidateParticipantCountPaths(hikeId)
 }

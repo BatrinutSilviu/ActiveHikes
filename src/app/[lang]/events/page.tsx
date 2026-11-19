@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import AnyEventCard, { toAnyEventCardData } from '@/components/events/AnyEventCard'
@@ -79,6 +80,12 @@ export default async function EventsPage({
             )
           })}
         </div>
+      }
+      action={
+        <Link href={`/${lang}/events/new`}
+          className="self-start sm:self-auto shrink-0 inline-flex items-center gap-2 bg-emerald-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-emerald-500 shadow-sm transition-colors">
+          <Plus size={16} /> {d.events.member.createButton}
+        </Link>
       }
       renderCard={event => <AnyEventCard key={event.id} event={event} lang={lang} dict={d} />}
       locale={d.locale}

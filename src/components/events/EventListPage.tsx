@@ -24,6 +24,7 @@ export default function EventListPage<T extends ListedEvent>({
   filter,
   renderCard,
   toolbar,
+  action,
   locale,
   dict,
 }: {
@@ -32,6 +33,8 @@ export default function EventListPage<T extends ListedEvent>({
   filter: { year?: string; month?: string }
   renderCard: (event: T) => React.ReactNode
   toolbar?: React.ReactNode
+  /** Shown in the header next to the title (e.g. "Create an event"). */
+  action?: React.ReactNode
   locale: string
   dict: EventListDict
 }) {
@@ -50,9 +53,12 @@ export default function EventListPage<T extends ListedEvent>({
       {/* Dark hero band */}
       <div className="relative bg-stone-950 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_80%_at_50%_-20%,rgba(16,185,129,0.12),transparent)]" />
-        <div className="relative max-w-6xl mx-auto px-4 py-12">
-          <h1 className="text-4xl font-black tracking-tight text-white mb-2">{dict.title}</h1>
-          <p className="text-stone-400">{dict.subtitle}</p>
+        <div className="relative max-w-6xl mx-auto px-4 py-12 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight text-white mb-2">{dict.title}</h1>
+            <p className="text-stone-400">{dict.subtitle}</p>
+          </div>
+          {action}
         </div>
       </div>
 

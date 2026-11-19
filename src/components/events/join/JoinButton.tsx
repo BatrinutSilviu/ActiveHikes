@@ -22,6 +22,7 @@ export default function JoinButton({
   tripDict,
   lang,
   withCar = true,
+  canLeaveConfirmed = false,
 }: {
   hikeId: string
   userId: string | null
@@ -33,6 +34,8 @@ export default function JoinButton({
   tripDict: CarTripDict
   lang: string
   withCar?: boolean
+  /** A free event (one a member made): even a confirmed spot can be given up. */
+  canLeaveConfirmed?: boolean
 }) {
   if (!userId) {
     return (
@@ -52,6 +55,7 @@ export default function JoinButton({
         dict={dict}
         tripDict={tripDict}
         withCar={withCar}
+        canLeaveConfirmed={canLeaveConfirmed}
       />
     )
   }

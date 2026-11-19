@@ -6,7 +6,8 @@ import { eventEndsAt } from '@/lib/dates'
 // The chat of a general event (see EventChatMessage): who may read and write it, and when it's open.
 // Open from when the event is created (drafts included) until a day after it ends; a draft's chat is the
 // organisers' only, since nobody else can see the event yet.
-// Its participants (signed up, waiting or confirmed — not rejected) and the admins take part.
+// Its participants (signed up, waiting or confirmed — not rejected) and the organisers take part: the
+// admins, and for an event a member made, that member.
 
 export const CHAT_PAGE = 30
 export const CHAT_MAX_LENGTH = 1000
@@ -21,12 +22,14 @@ type ChatEvent = {
   endDate: Date | null
   meetingTime: string | null
   durationHours: { toString(): string } | null
+  byMember: boolean
+  createdById: string | null
 }
 
 export async function findChatEvent(id: string): Promise<ChatEvent | null> {
   return prisma.hike.findFirst({
     where: { id, type: 'event' },
-    select: { id: true, type: true, status: true, date: true, endDate: true, meetingTime: true, durationHours: true },
+    select: { id: true, type: true, status: true, date: true, endDate: true, meetingTime: true, durationHours: true, byMember: true, createdById: true },
   })
 }
 
@@ -38,10 +41,16 @@ export function isChatOpen(event: ChatEvent): boolean {
   return Date.now() < chatClosesAt(event).getTime()
 }
 
-/** Whether this viewer takes part in the chat: an admin, or someone on the event's list. */
+/** Whether this viewer writes as the organisers (and may delete any message): an admin, or the member who made it. */
+export function isChatOrganiser(event: ChatEvent, session: Session | null): boolean {
+  if (!session?.user?.id) return false
+  return session.user.role === 'admin' || (event.byMember && event.createdById === session.user.id)
+}
+
+/** Whether this viewer takes part in the chat: an organiser, or someone on the event's list. */
 export async function canUseChat(event: ChatEvent, session: Session | null): Promise<boolean> {
   if (!session?.user?.id) return false
-  if (session.user.role === 'admin') return true
+  if (isChatOrganiser(event, session)) return true
   if (event.status === 'draft') return false
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId: event.id, userId: session.user.id } },

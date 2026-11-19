@@ -160,7 +160,7 @@ export default function ParticipantHistoryList({ people, dict, statusLabels, loc
                         </span>
                         <p className="text-sm text-stone-700">{describe(e, dict, statusLabels)}</p>
                         <p className="text-xs text-stone-400">
-                          {fmt.format(new Date(e.at))} · {e.actor === 'admin' ? `${dict.byAdmin}${e.actorName ? ` · ${e.actorName}` : ''}` : e.actor === 'system' ? dict.bySystem : dict.bySelf}
+                          {fmt.format(new Date(e.at))} · {e.actor === 'admin' ? `${dict.byAdmin}${e.actorName ? ` · ${e.actorName}` : ''}` : e.actor === 'organizer' ? `${dict.byOrganizer}${e.actorName ? ` · ${e.actorName}` : ''}` : e.actor === 'system' ? dict.bySystem : dict.bySelf}
                           {e.details?.backfilled ? ` · ${dict.backfilled}` : ''}
                         </p>
                       </li>

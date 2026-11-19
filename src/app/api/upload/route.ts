@@ -6,10 +6,11 @@ import path from 'path'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { UPLOAD_ROOT } from '@/lib/uploadStorage'
+import { allow } from '@/lib/rateLimit'
 
 // File uploads. Participants upload their filled-in documents to one bucket (in a folder per event
-// they're signed up for); every other bucket — cover photos, GPX tracks, document templates — is for
-// admins. Each bucket takes only its kinds of file, checked by extension AND by the file's first bytes,
+// they're signed up for); members may upload cover photos (for the events they make themselves); every
+// other bucket — photos, GPX tracks, document templates — is for admins. Each bucket takes only its kinds of file, checked by extension AND by the file's first bytes,
 // so nothing that a browser would run (HTML, SVG, scripts) can be uploaded and served from this site.
 
 type Kind = 'pdf' | 'jpg' | 'png' | 'webp' | 'gif' | 'docx' | 'doc' | 'xml'
@@ -17,8 +18,8 @@ const KIND_BY_EXT: Record<string, Kind> = {
   pdf: 'pdf', jpg: 'jpg', jpeg: 'jpg', png: 'png', webp: 'webp', gif: 'gif', docx: 'docx', doc: 'doc', gpx: 'xml', kml: 'xml',
 }
 const IMAGES: Kind[] = ['jpg', 'png', 'webp', 'gif']
-const BUCKETS: Record<string, { kinds: Kind[]; participants?: boolean }> = {
-  'hike-covers': { kinds: IMAGES },
+const BUCKETS: Record<string, { kinds: Kind[]; participants?: boolean; members?: boolean }> = {
+  'hike-covers': { kinds: IMAGES, members: true },
   'hike-photos': { kinds: IMAGES },
   'hike-gpx': { kinds: ['xml'] },
   'via-ferrata-documents': { kinds: ['pdf', 'docx', 'doc', 'jpg', 'png'] },
@@ -26,6 +27,8 @@ const BUCKETS: Record<string, { kinds: Kind[]; participants?: boolean }> = {
 }
 const MAX_BYTES_PARTICIPANT = 10 * 1024 * 1024
 const MAX_BYTES_ADMIN = 20 * 1024 * 1024
+// Cover photos a member may upload in an hour (for the events they make).
+const MEMBER_UPLOADS_PER_HOUR = 20
 
 const startsWith = (buf: Buffer, bytes: number[], at = 0) => bytes.every((b, i) => buf[at + i] === b)
 
@@ -65,7 +68,10 @@ export async function POST(req: NextRequest) {
   const bucketName = String(formData.get('bucket') ?? '')
   const bucket = BUCKETS[bucketName]
   if (!bucket) return NextResponse.json({ error: 'Unknown upload type' }, { status: 400 })
-  if (!isAdmin && !bucket.participants) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin && !bucket.participants && !bucket.members) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isAdmin && bucket.members && !(await allow(`upload:${session.user.id}`, MEMBER_UPLOADS_PER_HOUR, 3600_000))) {
+    return NextResponse.json({ error: 'Too many uploads — try again in an hour' }, { status: 429 })
+  }
 
   const file = formData.get('file')
   if (!(file instanceof File)) return NextResponse.json({ error: 'No file provided' }, { status: 400 })

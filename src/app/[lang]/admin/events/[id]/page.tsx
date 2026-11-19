@@ -33,6 +33,7 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
       include: {
         participants: { include: managedParticipantInclude, orderBy: { joinedAt: 'asc' } },
         bankAccounts: { where: { isActive: true }, select: { id: true } },
+        createdBy: { select: { name: true } },
       },
     }),
     prisma.bankAccount.findMany({ where: { isActive: true }, select: { id: true, type: true, bankName: true, accountHolder: true } }),
@@ -56,6 +57,12 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
         statusControl={{ hikeId: event.id, status: event.status, isPast: isEventPast(event.date, event.endDate, event), dict: d.admin.hikeStatus }}
         dict={da}
       />
+
+      {event.byMember && (
+        <div className="mb-6 rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+          {d.events.member.adminNote.replace('{name}', event.createdBy?.name ?? '?')}
+        </div>
+      )}
 
       <StatusCountsGrid participants={event.participants} labels={da.status as Record<string, string>} />
 
@@ -105,6 +112,8 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
                 bankAccountIds: event.bankAccounts.map(a => a.id),
               }}
               bankAccounts={bankAccounts}
+              // A member's event stays free (no price or payment methods): edited like its organiser does.
+              member={event.byMember}
               {...await eventCategories()}
               lang={lang}
               dict={de.form}

@@ -6,18 +6,21 @@ import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
 import { resolvePair } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { confirmParticipant } from '@/lib/participantConfirm'
-import { requireAdmin } from '@/lib/session'
-import { adminActor, logged, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
+import { requireAdmin, requireEventManager } from '@/lib/session'
+import { adminActor, logged, managerActor, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
 
 export async function updateParticipantStatus(
   participantId: string,
   newStatus: ParticipantStatus,
   hikeId: string
 ) {
-  const session = await requireAdmin()
+  const session = await requireEventManager(hikeId)
+  // An event's organiser only manages that event's sign-ups.
+  await assertParticipantOf(participantId, hikeId)
+  const byMember = await isMemberEvent(hikeId)
 
   if (newStatus === 'confirmed') {
-    await confirmParticipant(participantId, hikeId, { action: 'status', actor: adminActor(session) })
+    await confirmParticipant(participantId, hikeId, { action: 'status', actor: managerActor(session) })
     return
   }
 
@@ -29,19 +32,20 @@ export async function updateParticipantStatus(
     where: { id: { in: ids } },
     data: {
       status: newStatus,
-      paymentDeadline: newStatus === 'pending' ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
+      // Free member events have nothing to pay, so nothing to expire.
+      paymentDeadline: newStatus === 'pending' && !byMember ? new Date(Date.now() + PAYMENT_WINDOW_MS) : null,
       // No longer confirmed → free up the car seat they were occupying, so it
       // doesn't keep counting against the driver's capacity.
       carDriverParticipantId: null,
     },
   })
-  await writeParticipantLog(before, { action: 'status', actor: adminActor(session), toStatus: newStatus })
+  await writeParticipantLog(before, { action: 'status', actor: managerActor(session), toStatus: newStatus })
 
   revalidateParticipantCountPaths(hikeId)
 }
 
 export async function removeFriend(hikeId: string, hostParticipantId: string) {
-  const session = await requireAdmin()
+  const session = await requireEventManager(hikeId)
 
   const host = await prisma.hikeParticipant.findUnique({
     where: { id: hostParticipantId },
@@ -50,7 +54,7 @@ export async function removeFriend(hikeId: string, hostParticipantId: string) {
   if (!host || host.hikeId !== hikeId) throw new Error('Invalid participant')
 
   const friend = await prisma.hikeParticipant.findUnique({ where: { hostParticipantId }, select: { id: true } })
-  await logged([friend?.id], { action: 'removed', actor: adminActor(session) },
+  await logged([friend?.id], { action: 'removed', actor: managerActor(session) },
     () => prisma.hikeParticipant.delete({ where: { hostParticipantId } }))
 
   revalidateParticipantCountPaths(hikeId)
@@ -114,7 +118,7 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
 }
 
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
-  const session = await requireAdmin()
+  const session = await requireEventManager(hikeId)
 
   const [hike, alreadyConfirmed, pendingHosts] = await Promise.all([
     prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } }),
@@ -141,7 +145,7 @@ export async function confirmAllPending(hikeId: string): Promise<{ confirmed: nu
 
   if (idsToConfirm.length === 0) return { confirmed: 0 }
 
-  await logged(idsToConfirm, { action: 'status', actor: adminActor(session), toStatus: 'confirmed', details: { all: true } },
+  await logged(idsToConfirm, { action: 'status', actor: managerActor(session), toStatus: 'confirmed', details: { all: true } },
     () => prisma.hikeParticipant.updateMany({
       where: { id: { in: idsToConfirm } },
       data: { status: 'confirmed', confirmedAt: new Date() },
@@ -149,4 +153,13 @@ export async function confirmAllPending(hikeId: string): Promise<{ confirmed: nu
 
   revalidateParticipantCountPaths(hikeId)
   return { confirmed: idsToConfirm.length }
+}
+
+async function assertParticipantOf(participantId: string, hikeId: string) {
+  const p = await prisma.hikeParticipant.findUnique({ where: { id: participantId }, select: { hikeId: true } })
+  if (!p || p.hikeId !== hikeId) throw new Error('Invalid participant')
+}
+
+async function isMemberEvent(hikeId: string) {
+  return !!(await prisma.hike.findUnique({ where: { id: hikeId }, select: { byMember: true } }))?.byMember
 }
