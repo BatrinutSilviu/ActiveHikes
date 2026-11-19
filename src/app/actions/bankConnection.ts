@@ -7,12 +7,15 @@ import { revalidatePath } from 'next/cache'
 import { revalidateLocalePaths } from '@/lib/i18n'
 import { randomBytes } from 'crypto'
 import { listInstitutions, startAuthorization, runPaymentSync, type Institution } from '@/lib/revolutSync'
+import { confirmParticipant } from '@/lib/participantConfirm'
+import { adminActor } from '@/lib/participantLog'
 
 const COUNTRY = 'RO'
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
   if (!session || session.user.role !== 'admin') throw new Error('Unauthorized')
+  return session
 }
 
 export async function listRevolutInstitutions(): Promise<Institution[]> {
@@ -49,4 +52,44 @@ export async function syncRevolutNow() {
   const result = await runPaymentSync()
   revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
   return result
+}
+
+// Admin picked which registration an unclear payment belongs to: confirm them
+// and remember the payment so the sync never looks at it again.
+export async function assignBankTransaction(reviewId: string, participantId: string) {
+  const session = await requireAdmin()
+
+  const review = await prisma.bankTransactionReview.findUnique({ where: { id: reviewId } })
+  if (!review || review.status !== 'open') throw new Error('Payment already handled')
+
+  const participant = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: { id: true, hikeId: true, matchedTransaction: { select: { id: true } } },
+  })
+  if (!participant) throw new Error('Participant not found')
+
+  await confirmParticipant(participant.id, participant.hikeId, { action: 'payment', actor: adminActor(session), amount: Number(review.amount) })
+  if (!participant.matchedTransaction) {
+    await prisma.processedBankTransaction.create({
+      data: { transactionId: review.transactionId, hikeParticipantId: participant.id, amount: review.amount },
+    })
+  }
+  await prisma.bankTransactionReview.update({
+    where: { id: reviewId },
+    data: { status: 'resolved', hikeParticipantId: participant.id, resolvedAt: new Date() },
+  })
+
+  revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
+  revalidateLocalePaths('/admin', revalidatePath)
+}
+
+// Not a hike payment (or already handled by hand) — hide it for good.
+export async function dismissBankTransaction(reviewId: string) {
+  await requireAdmin()
+  await prisma.bankTransactionReview.update({
+    where: { id: reviewId },
+    data: { status: 'dismissed', resolvedAt: new Date() },
+  })
+  revalidateLocalePaths('/admin/bank-accounts', revalidatePath)
+  revalidateLocalePaths('/admin', revalidatePath)
 }

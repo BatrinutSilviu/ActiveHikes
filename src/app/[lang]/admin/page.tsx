@@ -27,7 +27,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
 
   await Promise.all([waitlistOverduePending(), advanceEventStatuses()])
 
-  const [d, events, pendingCount, userCount] = await Promise.all([
+  const [d, events, pendingCount, userCount, paymentsToReview] = await Promise.all([
     getDictionary(lang),
     // Every kind of event (hikes, via ferratas, general events) in the same lists.
     prisma.hike.findMany({
@@ -36,6 +36,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
     }),
     prisma.hikeParticipant.count({ where: { status: 'pending' } }),
     prisma.user.count({ where: { role: 'user' } }),
+    prisma.bankTransactionReview.count({ where: { status: 'open' } }),
   ])
 
   const drafts = events.filter(e => e.status === 'draft')
@@ -60,6 +61,14 @@ export default async function AdminDashboard({ params }: { params: Promise<{ lan
           <Plus size={17} /> {d.events.admin.newEvent}
         </Link>
       </div>
+
+      {paymentsToReview > 0 && (
+        <Link href={`/${lang}/admin/bank-accounts`}
+          className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 mb-8 hover:bg-amber-100 transition-colors">
+          <span className="text-amber-800 text-sm font-semibold">{da.paymentsToReview}: {paymentsToReview}</span>
+          <ChevronRight size={18} className="text-amber-600" />
+        </Link>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

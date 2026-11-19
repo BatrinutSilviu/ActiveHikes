@@ -406,6 +406,7 @@
   "admin": {
     "dashboard": {
       "title": "Admin Dashboard",
+      "paymentsToReview": "Payments waiting for your review",
       "subtitle": "Manage events, participants and payments",
       "upcomingCount": "Upcoming events",
       "totalEvents": "Events published",
@@ -768,6 +769,27 @@
       "disconnectConfirm": "Disconnect your Revolut account? Auto-confirmation will stop until you reconnect.",
       "expiredNotice": "Your Revolut connection has expired — reconnect to keep auto-confirming payments.",
       "connectError": "Could not connect your Revolut account. Please try again."
+    },
+    "paymentReview": {
+      "title": "Payments to review",
+      "hint": "These payments arrived, but the app couldn't tell for sure who sent them. Confirm the right person, or dismiss the payment if it isn't for a hike.",
+      "from": "From",
+      "note": "Payment note",
+      "noNote": "(no payment note)",
+      "received": "Received",
+      "suggestions": "Possible matches",
+      "noSuggestions": "No likely matches — pick someone below if you know who it was.",
+      "amountMatches": "amount matches",
+      "nameMatches": "name matches",
+      "namePartlyMatches": "name partly matches",
+      "owes": "owes",
+      "withFriend": "+ friend",
+      "statusPending": "pending",
+      "statusWaitlist": "waitlist",
+      "confirm": "Confirm",
+      "someoneElse": "Someone else…",
+      "dismiss": "Not a hike payment",
+      "error": "Something went wrong — please try again."
     },
     "hikeEdit": {
       "title": "Hike title",

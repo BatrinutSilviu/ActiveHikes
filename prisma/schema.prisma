@@ -62,6 +62,12 @@ enum BankConnectionStatus {
   expired
 }
 
+enum BankTransactionReviewStatus {
+  open
+  resolved
+  dismissed
+}
+
 // ─── NextAuth required models ─────────────────────────────────────────────────
 
 model Account {
@@ -342,6 +348,20 @@ model ProcessedBankTransaction {
   hikeParticipant HikeParticipant @relation(fields: [hikeParticipantId], references: [id], onDelete: Cascade)
 }
 
+// Incoming payments the sync couldn't confidently match to one registration.
+// Shown to the admin, who picks the right participant or dismisses the payment.
+model BankTransactionReview {
+  id                String                      @id @default(cuid())
+  transactionId     String                      @unique
+  amount            Decimal                     @db.Decimal(10, 2)
+  description       String
+  senderName        String?
+  bookedAt          DateTime?
+  status            BankTransactionReviewStatus @default(open)
+  hikeParticipantId String?
+  createdAt         DateTime                    @default(now())
+  resolvedAt        DateTime?
+}
 
 // The cover photo a general event shows when it has none of its own, per kind of event (Football,
 // Running…). Keyed by the kind's name in lower case. Set on the admin "Activity photos" page.

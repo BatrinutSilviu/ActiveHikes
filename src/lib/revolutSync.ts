@@ -89,6 +89,8 @@ type EbTransaction = {
   transaction_amount: { amount: string; currency: string }
   credit_debit_indicator: 'CRDT' | 'DBIT'
   remittance_information?: string[]
+  debtor?: { name?: string }
+  booking_date?: string
   status?: string
 }
 
@@ -104,19 +106,85 @@ function describeTransaction(tx: EbTransaction): string {
 function normalizeText(s: string): string {
   return s
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // strip diacritics (Romanian ă/â/î/ș/ț etc.)
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics (Romanian ă/â/î/ș/ț etc.)
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim()
 }
 
+function nameParts(name: string): string[] {
+  return normalizeText(name).split(/[\s-]+/).filter(p => p.length >= 2)
+}
+
 // Lenient: every "real" word (2+ letters) of the person's name must appear
-// somewhere in the description, not necessarily contiguous — handles
+// somewhere in the text, not necessarily contiguous — handles
 // "Popescu Ana", "Ana Popescu plata", initials, etc.
-function nameMatchesDescription(name: string, normalizedDescription: string): boolean {
-  const parts = normalizeText(name).split(' ').filter(p => p.length >= 2)
+function nameMatchesText(name: string, normalizedText: string): boolean {
+  const parts = nameParts(name)
   if (parts.length === 0) return false
-  return parts.every(part => normalizedDescription.includes(part))
+  return parts.every(part => normalizedText.includes(part))
+}
+
+// Looser check used only for suggestions: any name word of 3+ letters appears.
+function namePartlyMatchesText(name: string, normalizedText: string): boolean {
+  return nameParts(name).some(part => part.length >= 3 && normalizedText.includes(part))
+}
+
+// Registrations a payment could belong to: hosts (friends pay through their
+// host) of events that are still open. Waitlisted ones are only
+// ever suggested for manual review — a late sync can waitlist someone who paid
+// in time, and promoting from the waitlist is the admin's call.
+export async function getPaymentCandidatePool() {
+  return prisma.hikeParticipant.findMany({
+    where: {
+      status: { in: ['pending', 'waitlist'] },
+      userId: { not: null },
+      hostParticipantId: null,
+      hike: { status: { notIn: ['completed', 'cancelled', 'draft'] } },
+    },
+    include: {
+      hike: true,
+      user: { select: { name: true } },
+      friend: { select: { id: true } },
+      matchedTransaction: { select: { id: true } },
+    },
+    orderBy: { joinedAt: 'desc' },
+  })
+}
+
+type CandidatePool = Awaited<ReturnType<typeof getPaymentCandidatePool>>
+
+export type PaymentCandidate = {
+  participant: CandidatePool[number]
+  expectedAmount: number
+  amountMatches: boolean
+  nameMatches: boolean
+  namePartlyMatches: boolean
+}
+
+export function findPaymentCandidates(
+  payment: { amount: number; description: string; senderName: string | null },
+  pool: CandidatePool,
+): PaymentCandidate[] {
+  const text = normalizeText(`${payment.description} ${payment.senderName ?? ''}`)
+  return pool
+    .map(p => {
+      const name = p.user?.name ?? ''
+      const expectedAmount = getConfirmationPrice(p.hike) * (p.friend ? 2 : 1)
+      return {
+        participant: p,
+        expectedAmount,
+        amountMatches: Math.abs(expectedAmount - payment.amount) <= 0.001,
+        nameMatches: !!name && nameMatchesText(name, text),
+        namePartlyMatches: !!name && namePartlyMatchesText(name, text),
+      }
+    })
+    .filter(c => c.amountMatches || c.namePartlyMatches)
+    .sort((a, b) =>
+      Number(b.amountMatches && b.nameMatches) - Number(a.amountMatches && a.nameMatches) ||
+      Number(b.nameMatches) - Number(a.nameMatches) ||
+      Number(b.namePartlyMatches) - Number(a.namePartlyMatches) ||
+      Number(b.amountMatches) - Number(a.amountMatches))
 }
 
 export async function runPaymentSync(): Promise<{ confirmed: number; unmatched: number } | null> {
@@ -127,8 +195,12 @@ export async function runPaymentSync(): Promise<{ confirmed: number; unmatched: 
 
   const transactions = await fetchTransactions(connection.accountId)
 
-  const alreadyProcessed = await prisma.processedBankTransaction.findMany({ select: { transactionId: true } })
-  const processedIds = new Set(alreadyProcessed.map(p => p.transactionId))
+  // Skip payments already matched, and ones the admin already assigned or dismissed.
+  const [alreadyProcessed, closedReviews] = await Promise.all([
+    prisma.processedBankTransaction.findMany({ select: { transactionId: true } }),
+    prisma.bankTransactionReview.findMany({ where: { status: { not: 'open' } }, select: { transactionId: true } }),
+  ])
+  const processedIds = new Set([...alreadyProcessed, ...closedReviews].map(p => p.transactionId))
 
   const incoming = transactions.filter(tx => {
     const id = tx.entry_reference
@@ -138,10 +210,7 @@ export async function runPaymentSync(): Promise<{ confirmed: number; unmatched: 
     return tx.transaction_amount.currency === 'RON'
   })
 
-  const pendingHosts = await prisma.hikeParticipant.findMany({
-    where: { status: 'pending', userId: { not: null } },
-    include: { hike: true, user: { select: { name: true } }, friend: { select: { id: true } } },
-  })
+  const pool = await getPaymentCandidatePool()
 
   let confirmed = 0
   let unmatched = 0
@@ -150,24 +219,42 @@ export async function runPaymentSync(): Promise<{ confirmed: number; unmatched: 
     const id = tx.entry_reference
     if (!id) continue
 
-    const amount = Number(tx.transaction_amount.amount)
-    const description = normalizeText(describeTransaction(tx))
+    const payment = {
+      amount: Number(tx.transaction_amount.amount),
+      description: describeTransaction(tx),
+      senderName: tx.debtor?.name ?? null,
+    }
+    const candidates = findPaymentCandidates(payment, pool)
+    const certain = candidates.filter(c => c.amountMatches && c.nameMatches)
 
-    const candidates = pendingHosts.filter(p => {
-      if (!p.user?.name) return false
-      const expected = getConfirmationPrice(p.hike) * (p.friend ? 2 : 1)
-      if (Math.abs(expected - amount) > 0.001) return false
-      return nameMatchesDescription(p.user.name, description)
-    })
-
-    if (candidates.length === 1) {
-      const match = candidates[0]
-      await confirmParticipant(match.id, match.hikeId, { action: 'payment', actor: systemActor, amount })
+    // Auto-confirm only when exactly one registration fits both the amount and
+    // the name, and it's still pending — everything else goes to the admin.
+    if (certain.length === 1 && certain[0].participant.status === 'pending' && !certain[0].participant.matchedTransaction) {
+      const match = certain[0].participant
+      await confirmParticipant(match.id, match.hikeId, { action: 'payment', actor: systemActor, amount: payment.amount })
       await prisma.processedBankTransaction.create({
-        data: { transactionId: id, hikeParticipantId: match.id, amount },
+        data: { transactionId: id, hikeParticipantId: match.id, amount: payment.amount },
       })
+      await prisma.bankTransactionReview.updateMany({
+        where: { transactionId: id, status: 'open' },
+        data: { status: 'resolved', hikeParticipantId: match.id, resolvedAt: new Date() },
+      })
+      // Drop them from the pool so a second payment can't match them again.
+      pool.splice(pool.indexOf(match), 1)
       confirmed++
-    } else {
+    } else if (candidates.length > 0) {
+      // Unrelated income (no plausible participant at all) is ignored.
+      await prisma.bankTransactionReview.upsert({
+        where: { transactionId: id },
+        create: {
+          transactionId: id,
+          amount: payment.amount,
+          description: payment.description,
+          senderName: payment.senderName,
+          bookedAt: tx.booking_date ? new Date(tx.booking_date) : null,
+        },
+        update: {},
+      })
       unmatched++
     }
   }

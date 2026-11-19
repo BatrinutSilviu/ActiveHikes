@@ -406,6 +406,7 @@
   "admin": {
     "dashboard": {
       "title": "Panou de Administrare",
+      "paymentsToReview": "Plăți care așteaptă verificarea ta",
       "subtitle": "Gestionează evenimente, participanți și plăți",
       "upcomingCount": "Evenimente care urmează",
       "totalEvents": "Evenimente publicate",
@@ -768,6 +769,27 @@
       "disconnectConfirm": "Deconectezi contul Revolut? Confirmarea automată se va opri până te reconectezi.",
       "expiredNotice": "Conexiunea cu Revolut a expirat — reconectează-te pentru a continua confirmarea automată a plăților.",
       "connectError": "Nu s-a putut conecta contul Revolut. Încearcă din nou."
+    },
+    "paymentReview": {
+      "title": "Plăți de verificat",
+      "hint": "Aceste plăți au intrat, dar aplicația nu știe sigur cine le-a trimis. Confirmă persoana potrivită sau ignoră plata dacă nu e pentru o drumeție.",
+      "from": "De la",
+      "note": "Mențiune plată",
+      "noNote": "(fără mențiune)",
+      "received": "Primită",
+      "suggestions": "Posibile potriviri",
+      "noSuggestions": "Nicio potrivire probabilă — alege pe cineva mai jos dacă știi cine a plătit.",
+      "amountMatches": "suma se potrivește",
+      "nameMatches": "numele se potrivește",
+      "namePartlyMatches": "numele se potrivește parțial",
+      "owes": "are de plată",
+      "withFriend": "+ prieten",
+      "statusPending": "în așteptare",
+      "statusWaitlist": "listă de așteptare",
+      "confirm": "Confirmă",
+      "someoneElse": "Altcineva…",
+      "dismiss": "Nu e plată pentru drumeție",
+      "error": "Ceva nu a mers — încearcă din nou."
     },
     "hikeEdit": {
       "title": "Titlul drumeției",
