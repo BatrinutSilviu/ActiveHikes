@@ -29,7 +29,8 @@ export default async function NewMemberEventPage({ params }: { params: Promise<{
         member
         {...categories}
         lang={lang}
-        dict={{ ...d.events.admin.form, categoryHint: dm.categoryHint, create: dm.create, createdHint: dm.createdHint }}
+        dict={{ ...d.events.admin.form, categoryHint: dm.categoryHint, create: dm.create, createdHint: dm.createdHint,
+          peopleNeeded: dm.peopleNeeded, peopleNeededHint: dm.peopleNeededHint }}
       />
     </div>
   )

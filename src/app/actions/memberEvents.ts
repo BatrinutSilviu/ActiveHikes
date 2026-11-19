@@ -9,15 +9,20 @@ import { isEventPast } from '@/lib/dates'
 import { requireEventManager } from '@/lib/session'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { promoteFromWaitlist } from '@/lib/memberWaitlist'
+import { selfActor, snapshotParticipants, writeParticipantLog } from '@/lib/participantLog'
 
-// Events community members make themselves (Hike.byMember): always a general event (a kind such as
-// Running or Football), always free (no price, advance or payment methods), and live straight away.
-// Their creator — and the admins — edit them, cancel or reopen them and manage their sign-ups.
+// Events community members make themselves (Hike.byMember), like the padel app's open matches: always
+// a general event (a kind such as Running or Football), always free (no price, advance or payment
+// methods), and live straight away. The member says how many people they need; they're signed up
+// themselves (confirmed, taking one spot) and others join until it's full. Their creator — and the
+// admins — edit them, cancel or reopen them and manage their sign-ups.
 
-// At most this many new events a day per member, and this many of theirs still to come at once.
+// At most this many new events a day per member, this many of theirs still to come at once, and this
+// far ahead (the same limits as padel open matches).
 const CREATE_PER_DAY = 5
-const MAX_UPCOMING = 10
-const MAX_SPOTS = 500
+const MAX_UPCOMING = 3
+const MAX_DAYS_AHEAD = 60
+const MAX_NEEDED = 499
 
 export type MemberEventInput = {
   title: string
@@ -29,7 +34,8 @@ export type MemberEventInput = {
   endDate?: string | null
   meetingTime?: string | null
   endTime?: string | null
-  maxParticipants: number
+  /** How many people they need besides themselves (people they bring along aren't counted). */
+  peopleNeeded: number
   essentials?: string[]
   whatsappGroupUrl?: string | null
   coverImageUrl?: string | null
@@ -72,8 +78,10 @@ async function clean(data: MemberEventInput, currentCategory?: string | null) {
   const durationHours = singleDay && meetingTime && endTime
     ? Math.round((toMinutes(endTime) - toMinutes(meetingTime)) / 6) / 10 : null
 
-  const maxParticipants = Math.floor(Number(data.maxParticipants))
-  if (!(maxParticipants >= 1 && maxParticipants <= MAX_SPOTS)) throw new Error(`Spots must be between 1 and ${MAX_SPOTS}`)
+  const peopleNeeded = Math.floor(Number(data.peopleNeeded))
+  if (!(peopleNeeded >= 1 && peopleNeeded <= MAX_NEEDED)) throw new Error(`You can ask for 1 to ${MAX_NEEDED} people`)
+  // The organiser holds one of the spots.
+  const maxParticipants = peopleNeeded + 1
 
   const whatsappGroupUrl = text(data.whatsappGroupUrl, 200, 'The WhatsApp link')
   if (whatsappGroupUrl && !whatsappGroupUrl.startsWith('https://chat.whatsapp.com/')) {
@@ -112,11 +120,14 @@ export async function createMemberEvent(data: MemberEventInput): Promise<string>
 
   const fields = await clean(data)
   if (isEventPast(fields.date, fields.endDate, fields)) throw new Error('The event can\'t be in the past')
+  if (fields.date.getTime() > Date.now() + MAX_DAYS_AHEAD * 86_400_000) {
+    throw new Error(`Events can be set up at most ${MAX_DAYS_AHEAD} days ahead`)
+  }
 
   const upcoming = await prisma.hike.count({
     where: { createdById: session.user.id, byMember: true, status: { in: ['upcoming', 'ongoing'] }, date: { gte: new Date(Date.now() - 86_400_000) } },
   })
-  if (upcoming >= MAX_UPCOMING) throw new Error(`You already have ${MAX_UPCOMING} upcoming events`)
+  if (upcoming >= MAX_UPCOMING) throw new Error(`You already have ${upcoming} upcoming events — cancel one or wait until one is over`)
   if (!(await allow(`member-event:${session.user.id}`, CREATE_PER_DAY, 86_400_000))) {
     throw new Error('Too many new events today — try again tomorrow')
   }
@@ -130,9 +141,12 @@ export async function createMemberEvent(data: MemberEventInput): Promise<string>
       entryFee: 0,
       advanceFee: null,
       createdById: session.user.id,
+      // The organiser is in from the start.
+      participants: { create: { userId: session.user.id, status: 'confirmed', confirmedAt: new Date() } },
     },
-    select: { id: true },
+    select: { id: true, participants: { select: { id: true } } },
   })
+  await writeParticipantLog(await snapshotParticipants(event.participants.map(p => p.id)), { action: 'joined', actor: selfActor, fresh: true })
   revalidateParticipantCountPaths(event.id)
   return event.id
 }

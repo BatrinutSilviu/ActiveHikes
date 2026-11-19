@@ -69,7 +69,8 @@ export default function EventForm({ event, bankAccounts = [], categories = [], f
   categories?: string[]
   fromManagement?: boolean
   lang: string
-  dict: EventFormDict
+  /** Member mode also labels "how many people do you need" (peopleNeeded, peopleNeededHint). */
+  dict: EventFormDict & Partial<Record<'peopleNeeded' | 'peopleNeededHint', string>>
 }) {
   const router = useRouter()
   const [form, setForm] = useState({
@@ -82,7 +83,10 @@ export default function EventForm({ event, bankAccounts = [], categories = [], f
     endDate: event?.endDate?.slice(0, 10) ?? '',
     startTime: event?.startTime ?? '',
     endTime: event?.endTime ?? '',
-    maxParticipants: String(event?.maxParticipants ?? 20),
+    // A member says how many people they need: the spots minus their own (they're signed up themselves).
+    maxParticipants: member
+      ? String(event ? Math.max(1, event.maxParticipants - 1) : 10)
+      : String(event?.maxParticipants ?? 20),
     price: String(event?.price ?? 0),
     advanceFee: event?.advanceFee != null ? String(event.advanceFee) : '',
     whatToBring: event?.whatToBring.join('\n') ?? '',
@@ -126,7 +130,7 @@ export default function EventForm({ event, bankAccounts = [], categories = [], f
             endDate: form.endDate || null,
             meetingTime: form.startTime || null,
             endTime: form.endTime || null,
-            maxParticipants: parseInt(form.maxParticipants) || 1,
+            peopleNeeded: parseInt(form.maxParticipants) || 1,
             essentials: isSport ? [] : form.whatToBring.split('\n'),
             whatsappGroupUrl: isSport ? null : form.whatsappGroupUrl,
             coverImageUrl,
@@ -274,8 +278,9 @@ export default function EventForm({ event, bankAccounts = [], categories = [], f
 
       <div className={`grid grid-cols-1 gap-3 ${member ? '' : 'sm:grid-cols-3'}`}>
         <div>
-          <label className={label}>{dict.maxParticipants}</label>
-          <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} required min="1" max={member ? 500 : undefined} step="1" className={cls} />
+          <label className={label}>{member ? dict.peopleNeeded ?? dict.maxParticipants : dict.maxParticipants}</label>
+          <input type="number" value={form.maxParticipants} onChange={e => set('maxParticipants', e.target.value)} required min="1" max={member ? 499 : undefined} step="1" className={cls} />
+          {member && dict.peopleNeededHint && <p className="text-xs text-stone-500 mt-1">{dict.peopleNeededHint}</p>}
         </div>
         {!member && <>
         <div>

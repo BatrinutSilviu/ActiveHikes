@@ -990,12 +990,14 @@
   },
   "events": {
     "member": {
+      "peopleNeeded": "How many people do you need?",
+      "peopleNeededHint": "Not counting you (you're in automatically) or anyone you're bringing yourself.",
       "createButton": "Create an event",
       "createTitle": "Create an event",
-      "createSubtitle": "Organise a game, a run or a workout for the community. It's free to join and goes live as soon as you create it.",
+      "createSubtitle": "Need people for a game, a run or a workout? Say when, where and how many people you need: it goes live straight away, others join until it's full, and you talk it through in the event's chat. It's free to join.",
       "categoryHint": "What kind of event it is.",
       "create": "Publish event",
-      "createdHint": "It goes live right away. You'll manage who's coming from the event's Manage page.",
+      "createdHint": "It goes live right away and you're signed up yourself. You'll see who's coming on the event's Manage page.",
       "organizedBy": "Organised by",
       "communityBadge": "Community event",
       "manage": "Manage event",

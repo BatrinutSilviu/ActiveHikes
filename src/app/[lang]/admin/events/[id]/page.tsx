@@ -116,7 +116,7 @@ export default async function AdminGeneralEventPage({ params }: { params: Promis
               member={event.byMember}
               {...await eventCategories()}
               lang={lang}
-              dict={de.form}
+              dict={{ ...de.form, peopleNeeded: d.events.member.peopleNeeded, peopleNeededHint: d.events.member.peopleNeededHint }}
             />
           </div>
 

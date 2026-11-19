@@ -153,7 +153,8 @@ export default async function GeneralEventPage({ params, searchParams }: {
               tripDict={d.carTrip}
               lang={lang}
               withCar={false}
-              canLeaveConfirmed={event.byMember}
+              // The organiser can't drop out of their own event, only cancel it.
+              canLeaveConfirmed={event.byMember && !isOrganizer}
             />
           </div>
         )}

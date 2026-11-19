@@ -154,10 +154,13 @@ export async function cancelRegistration(hikeId: string) {
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, status: true, friend: { select: { id: true } }, hike: { select: { byMember: true } } },
+    select: { id: true, status: true, friend: { select: { id: true } }, hike: { select: { byMember: true, createdById: true } } },
   })
 
   if (!participation) throw new Error('Registration not found')
+  if (participation.hike.byMember && participation.hike.createdById === session.user.id) {
+    throw new Error('You organise this event — cancel it instead')
+  }
   // A paid spot can't just be dropped; a member's event is free, so anyone can drop out of it.
   const byMember = participation.hike.byMember
   if (participation.status === 'confirmed' && !byMember) throw new Error('Confirmed registrations cannot be cancelled')

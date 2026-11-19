@@ -990,12 +990,14 @@
   },
   "events": {
     "member": {
+      "peopleNeeded": "De câte persoane ai nevoie?",
+      "peopleNeededHint": "Fără tine (ești înscris automat) și fără cei pe care îi aduci tu.",
       "createButton": "Creează un eveniment",
       "createTitle": "Creează un eveniment",
-      "createSubtitle": "Organizează un meci, o alergare sau un antrenament pentru comunitate. Participarea e gratuită, iar evenimentul apare imediat ce îl creezi.",
+      "createSubtitle": "Ai nevoie de oameni pentru un meci, o alergare sau un antrenament? Spune când, unde și de câte persoane ai nevoie: apare imediat, ceilalți se înscriu până se umple, iar voi vorbiți în chatul evenimentului. Participarea e gratuită.",
       "categoryHint": "Ce fel de eveniment este.",
       "create": "Publică evenimentul",
-      "createdHint": "Apare imediat pe site. Vei vedea cine vine din pagina Administrează a evenimentului.",
+      "createdHint": "Apare imediat pe site, iar tu ești deja înscris. Vezi cine vine în pagina Administrează a evenimentului.",
       "organizedBy": "Organizat de",
       "communityBadge": "Eveniment al comunității",
       "manage": "Administrează evenimentul",

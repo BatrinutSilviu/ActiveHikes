@@ -113,7 +113,7 @@ export default async function ManageMemberEventPage({ params }: { params: Promis
             }}
             {...await eventCategories()}
             lang={lang}
-            dict={{ ...d.events.admin.form, categoryHint: dm.categoryHint }}
+            dict={{ ...d.events.admin.form, categoryHint: dm.categoryHint, peopleNeeded: dm.peopleNeeded, peopleNeededHint: dm.peopleNeededHint }}
           />
         </div>
       </div>
