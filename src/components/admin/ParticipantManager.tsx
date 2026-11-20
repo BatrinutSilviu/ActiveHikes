@@ -133,12 +133,8 @@ export default function ParticipantManager({
   const confirmedCount = items.filter(p => p.status === 'confirmed').length
 
   const updateStatus = (p: Participant, newStatus: ParticipantStatus) => {
-    const siblingId = p.hostParticipantId ?? p.linkedFriend?.id ?? null
-    const sibling = siblingId ? items.find(i => i.id === siblingId) ?? null : null
-
     if (newStatus === 'confirmed') {
-      const additional = [p, sibling].filter((x): x is Participant => !!x && x.status !== 'confirmed').length
-      if (confirmedCount + additional > maxParticipants) {
+      if (confirmedCount + 1 > maxParticipants) {
         if (!confirm(dict.overLimitConfirm)) return
       }
     }
@@ -146,7 +142,7 @@ export default function ParticipantManager({
     setLoadingId(p.id)
     startTransition(async () => {
       await updateParticipantStatus(p.id, newStatus, hikeId)
-      setItems(prev => prev.map(item => (item.id === p.id || item.id === siblingId) ? { ...item, status: newStatus } : item))
+      setItems(prev => prev.map(item => item.id === p.id ? { ...item, status: newStatus } : item))
       setLoadingId(null)
     })
   }

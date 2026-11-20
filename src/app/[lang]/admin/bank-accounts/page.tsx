@@ -5,6 +5,7 @@ import BankAccountsClient from './client'
 import RevolutConnection from '@/components/admin/RevolutConnection'
 import PaymentReviewList from '@/components/admin/PaymentReviewList'
 import { findPaymentCandidates, getPaymentCandidatePool } from '@/lib/revolutSync'
+import { friendCoveredByPayment } from '@/lib/participantPairs'
 
 export default async function BankAccountsPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params
@@ -32,7 +33,7 @@ export default async function BankAccountsPage({ params }: { params: Promise<{ l
         hikeDate: c.participant.hike.date.toISOString(),
         status: c.participant.status as 'pending' | 'waitlist',
         expectedAmount: c.expectedAmount,
-        withFriend: !!c.participant.friend,
+        withFriend: friendCoveredByPayment(c.participant.friend),
         amountMatches: c.amountMatches,
         nameMatches: c.nameMatches,
         namePartlyMatches: c.namePartlyMatches,

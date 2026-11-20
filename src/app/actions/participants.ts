@@ -3,7 +3,7 @@
 import { prisma } from '@/lib/db'
 import { ParticipantStatus } from '@prisma/client'
 import { PAYMENT_WINDOW_MS } from '@/lib/expireParticipants'
-import { resolvePair } from '@/lib/participantPairs'
+import { groupIntoUnits } from '@/lib/participantPairs'
 import { revalidateParticipantCountPaths } from '@/lib/revalidateHike'
 import { confirmParticipant } from '@/lib/participantConfirm'
 import { requireAdmin, requireEventManager } from '@/lib/session'
@@ -24,8 +24,8 @@ export async function updateParticipantStatus(
     return
   }
 
-  const { hostId, friendId } = await resolvePair(prisma, participantId)
-  const ids = [hostId, friendId].filter((id): id is string => id !== null)
+  // Just this person: a friend someone brought is confirmed, waitlisted or rejected on their own.
+  const ids = [participantId]
   const before = await snapshotParticipants(ids)
 
   await prisma.hikeParticipant.updateMany({
@@ -120,27 +120,24 @@ export async function adminImportParticipant(hikeId: string, name: string): Prom
 export async function confirmAllPending(hikeId: string): Promise<{ confirmed: number }> {
   const session = await requireEventManager(hikeId)
 
-  const [hike, alreadyConfirmed, pendingHosts] = await Promise.all([
+  const [hike, alreadyConfirmed, pending] = await Promise.all([
     prisma.hike.findUnique({ where: { id: hikeId }, select: { maxParticipants: true } }),
     prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } }),
     prisma.hikeParticipant.findMany({
-      where: { hikeId, status: 'pending', hostParticipantId: null },
+      where: { hikeId, status: 'pending' },
       orderBy: { joinedAt: 'asc' },
-      select: { id: true, friend: { select: { id: true } } },
+      select: { id: true, hostParticipantId: true },
     }),
   ])
 
   if (!hike) throw new Error('Hike not found')
 
+  // A host and their friend who are both pending go in together; anyone else on their own.
   const spotsLeft = hike.maxParticipants - alreadyConfirmed
   const idsToConfirm: string[] = []
-  let spotsUsed = 0
-  for (const host of pendingHosts) {
-    const unitSize = host.friend ? 2 : 1
-    if (spotsUsed + unitSize > spotsLeft) break
-    idsToConfirm.push(host.id)
-    if (host.friend) idsToConfirm.push(host.friend.id)
-    spotsUsed += unitSize
+  for (const unit of groupIntoUnits(pending)) {
+    if (idsToConfirm.length + unit.length > spotsLeft) break
+    idsToConfirm.push(...unit)
   }
 
   if (idsToConfirm.length === 0) return { confirmed: 0 }

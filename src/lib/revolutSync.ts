@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { getConfirmationPrice } from '@/lib/pricing'
 import { confirmParticipant } from '@/lib/participantConfirm'
+import { friendCoveredByPayment } from '@/lib/participantPairs'
 import { systemActor } from '@/lib/participantLog'
 
 const BASE_URL = 'https://api.enablebanking.com'
@@ -145,7 +146,7 @@ export async function getPaymentCandidatePool() {
     include: {
       hike: true,
       user: { select: { name: true } },
-      friend: { select: { id: true } },
+      friend: { select: { id: true, status: true } },
       matchedTransaction: { select: { id: true } },
     },
     orderBy: { joinedAt: 'desc' },
@@ -170,7 +171,7 @@ export function findPaymentCandidates(
   return pool
     .map(p => {
       const name = p.user?.name ?? ''
-      const expectedAmount = getConfirmationPrice(p.hike) * (p.friend ? 2 : 1)
+      const expectedAmount = getConfirmationPrice(p.hike) * (friendCoveredByPayment(p.friend) ? 2 : 1)
       return {
         participant: p,
         expectedAmount,
