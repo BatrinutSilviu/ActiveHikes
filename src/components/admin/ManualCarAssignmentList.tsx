@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { adminAssignCarDriver } from '@/app/actions/hikes'
+import Dropdown from '@/components/Dropdown'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg } from '@/lib/carTrip'
 
 type TripDict = { both: string; there: string; back: string; seatsThere: string; seatsBack: string }
@@ -78,36 +79,46 @@ export default function ManualCarAssignmentList({
       {error && <p className="text-red-600 text-sm">{error}</p>}
       {participants.filter(p => !p.bringsCar).map(p => (
         <div key={p.id} className="bg-white border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
-          <span className="text-sm font-medium text-stone-800 truncate">
+          <span className="text-sm font-medium text-stone-800 min-w-0 [overflow-wrap:anywhere]">
             {p.user?.name ?? p.friendName ?? '?'}
             {p.linkedFriend && <span className="text-stone-400 font-normal"> +{p.linkedFriend.name}</span>}
             {p.hostParticipantId && <span className="text-stone-400 font-normal text-xs"> ({dict.friendOf} {p.hostName ?? '?'})</span>}
             <TripTag trip={p.carTrip} dict={tripDict} />
           </span>
-          <select
+          <Dropdown
+            size="sm"
+            align="right"
+            className="w-44 sm:w-60 shrink-0"
             value={p.carDriverParticipantId ?? ''}
             disabled={savingId === p.id}
-            onChange={e => handleChange(p, e.target.value || null)}
-            className="border border-stone-200 rounded-lg px-2.5 py-1.5 text-sm shrink-0 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50"
-          >
-            <option value="">{dict.noCar}</option>
-            {drivers.map(driver => {
-              const riders = ridersOf(driver.id)
-              const others = riders.filter(x => x.id !== p.id).map(x => x.carTrip)
-              const compatible = tripCompatible(driver.carTrip, p.carTrip)
-              const isFull = !fitsInCar(driver.seats, others, [p.carTrip])
-              const left = seatsLeftByLeg(driver.seats, riders.map(x => x.carTrip))
-              const used = driver.carTrip === 'both' && left.there !== left.back
-                ? `${driver.seats - left.there}/${driver.seats} ${tripDict.seatsThere} · ${driver.seats - left.back}/${driver.seats} ${tripDict.seatsBack}`
-                : `${driver.carTrip === 'back' ? driver.seats - left.back : driver.seats - left.there}/${driver.seats}`
-              const tripNote = driver.carTrip !== 'both' ? ` · ${tripDict[driver.carTrip]}` : ''
-              return (
-                <option key={driver.id} value={driver.id} disabled={!compatible || isFull}>
-                  {driver.name}{tripNote} — {used}{compatible && isFull ? ` (${dict.full})` : ''}
-                </option>
-              )
-            })}
-          </select>
+            onChange={v => handleChange(p, v || null)}
+            options={[
+              { value: '', label: dict.noCar },
+              ...drivers.map(driver => {
+                const riders = ridersOf(driver.id)
+                const others = riders.filter(x => x.id !== p.id).map(x => x.carTrip)
+                const compatible = tripCompatible(driver.carTrip, p.carTrip)
+                const isFull = !fitsInCar(driver.seats, others, [p.carTrip])
+                const left = seatsLeftByLeg(driver.seats, riders.map(x => x.carTrip))
+                const split = driver.carTrip === 'both' && left.there !== left.back
+                const used = split
+                  ? `${driver.seats - left.there}/${driver.seats} ${tripDict.seatsThere} · ${driver.seats - left.back}/${driver.seats} ${tripDict.seatsBack}`
+                  : `${driver.carTrip === 'back' ? driver.seats - left.back : driver.seats - left.there}/${driver.seats}`
+                const tone = !compatible ? 'bg-stone-100 text-stone-400' : isFull ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'
+                return {
+                  value: driver.id,
+                  label: driver.name,
+                  disabled: !compatible || isFull,
+                  hint: [driver.carTrip !== 'both' ? tripDict[driver.carTrip] : null, split ? used : null].filter(Boolean).join(' · ') || undefined,
+                  badge: split && !(compatible && isFull) ? undefined : (
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums ${tone}`}>
+                      {compatible && isFull ? dict.full : used}
+                    </span>
+                  ),
+                }
+              }),
+            ]}
+          />
         </div>
       ))}
       {participants.filter(p => p.bringsCar).map(p => (

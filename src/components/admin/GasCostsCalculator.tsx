@@ -5,6 +5,7 @@
 import { useState, useTransition } from 'react'
 import { Fuel, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { saveGasCosts } from '@/app/actions/gasCosts'
+import Dropdown from '@/components/Dropdown'
 import { splitGas, type GasCosts } from '@/lib/gasCosts'
 
 export type GasCostsDict = {
@@ -131,11 +132,16 @@ export default function GasCostsCalculator({
 
       {/* Add a driver: someone from the hike, or anyone by name */}
       <div className="flex flex-wrap items-center gap-2">
-        <select value={adding} onChange={e => setAdding(e.target.value)} className={`${cls} flex-1 min-w-[12rem] sm:w-auto`}>
-          <option value="">{d.addDriver}…</option>
-          {available.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          <option value="_other">{d.someoneElse}</option>
-        </select>
+        <Dropdown
+          className="flex-1 min-w-[12rem]"
+          value={adding}
+          onChange={setAdding}
+          placeholder={`${d.addDriver}…`}
+          options={[
+            ...available.map(p => ({ value: p.id, label: p.name })),
+            { value: '_other', label: d.someoneElse },
+          ]}
+        />
         {adding === '_other' && (
           <input value={otherName} onChange={e => setOtherName(e.target.value)} placeholder={d.name}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addDriver() } }}
