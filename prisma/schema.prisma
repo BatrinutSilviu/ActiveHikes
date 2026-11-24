@@ -158,6 +158,9 @@ model Hike {
   hasAccommodation     Boolean     @default(false)
   peoplePerCar         Int         @default(5)
   carsNeeded           Int?
+  // Gas costs calculator (admin, Cars page): { drivers: [{ participantId, name, cost }], participants }
+  // — participants null means the confirmed participants' count.
+  gasCosts             Json?
   accommodationDetails  String?
   accommodationUrl      String?
   accommodationPrice    Decimal?    @db.Decimal(10, 2)

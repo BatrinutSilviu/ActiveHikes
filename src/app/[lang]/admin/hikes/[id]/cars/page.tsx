@@ -4,6 +4,8 @@ import Link from 'next/link'
 import CarConfigForm from '@/components/admin/CarConfigForm'
 import CarAllocatorPanel from '@/components/admin/CarAllocatorPanel'
 import ManualCarAssignmentList from '@/components/admin/ManualCarAssignmentList'
+import GasCostsCalculator from '@/components/admin/GasCostsCalculator'
+import { parseGasCosts } from '@/lib/gasCosts'
 import { ArrowLeft, Users, Download } from 'lucide-react'
 import { getDictionary, hasLocale } from '@/lib/i18n'
 import { EVENT_PATH } from '@/lib/eventPaths'
@@ -23,6 +25,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
         peoplePerCar: true,
         carsNeeded: true,
         maxParticipants: true,
+        gasCosts: true,
         participants: {
           where: { status: 'confirmed' },
           select: {
@@ -50,6 +53,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
   const drivers = hike.participants
     .filter(p => p.bringsCar && p.carSeats != null)
     .map(p => ({ id: p.id, name: pName(p), seats: p.carSeats!, carTrip: p.carTrip }))
+  const people = hike.participants.map(p => ({ id: p.id, name: pName(p) })).sort((a, b) => a.name.localeCompare(b.name, 'ro'))
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -110,6 +114,15 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
             />
           </div>
         )}
+
+        <GasCostsCalculator
+          hikeId={hike.id}
+          saved={parseGasCosts(hike.gasCosts)}
+          hikeDrivers={hike.participants.filter(p => p.bringsCar).map(p => ({ id: p.id, name: pName(p) }))}
+          participants={people}
+          confirmedCount={hike.participants.length}
+          dict={d.admin.gasCosts}
+        />
       </div>
     </div>
   )
