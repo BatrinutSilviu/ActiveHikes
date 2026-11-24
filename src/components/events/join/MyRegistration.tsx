@@ -132,6 +132,7 @@ export default function MyRegistration({
             onPickLocation={() => setShowLocationModal(true)}
             dict={dict}
             tripDict={tripDict}
+            driverLocked={registration.driverLocked}
           />
 
           {carChanged && (

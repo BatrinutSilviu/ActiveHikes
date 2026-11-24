@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { adminAssignCarDriver, adminSetGasPaid } from '@/app/actions/hikes'
+import { adminAllowDriving, adminAssignCarDriver, adminRevokeDriver, adminSetGasPaid } from '@/app/actions/hikes'
 import Dropdown from '@/components/Dropdown'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg } from '@/lib/carTrip'
 
@@ -29,6 +29,7 @@ type Participant = {
   carTrip: CarTrip
   carDriverParticipantId: string | null
   gasPaid: boolean
+  driverLocked: boolean
   user: { name: string | null } | null
 }
 
@@ -40,12 +41,15 @@ type Dict = {
   drivingOwnCar: string
   gasPaid: string
   gasPaidCount: string
+  revokeDriver: string
+  revokeDriverConfirm: string
+  allowDriving: string
 }
 
 export default function ManualCarAssignmentList({
   hikeId,
   participants: initialParticipants,
-  drivers,
+  drivers: initialDrivers,
   dict,
   tripDict,
 }: {
@@ -56,6 +60,8 @@ export default function ManualCarAssignmentList({
   tripDict: TripDict
 }) {
   const [participants, setParticipants] = useState(initialParticipants)
+  const [drivers, setDrivers] = useState(initialDrivers)
+  const [revokingId, setRevokingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savingGasId, setSavingGasId] = useState<string | null>(null)
   const [error, setError] = useState('')
@@ -75,6 +81,36 @@ export default function ManualCarAssignmentList({
         setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, carDriverParticipantId: driverId } : item))
       }
       setSavingId(null)
+    })
+  }
+
+  const handleRevokeDriver = (p: Participant) => {
+    if (!confirm(dict.revokeDriverConfirm.replace('{name}', p.user?.name ?? p.friendName ?? '?'))) return
+    setError('')
+    setRevokingId(p.id)
+    startTransition(async () => {
+      const result = await adminRevokeDriver(hikeId, p.id)
+      if ('error' in result) {
+        setError(result.error)
+      } else {
+        setDrivers(prev => prev.filter(d => d.id !== p.id))
+        setParticipants(prev => prev.map(item =>
+          item.id === p.id ? { ...item, bringsCar: false, driverLocked: true, carDriverParticipantId: null }
+          : item.carDriverParticipantId === p.id ? { ...item, carDriverParticipantId: null }
+          : item))
+      }
+      setRevokingId(null)
+    })
+  }
+
+  const handleAllowDriving = (p: Participant) => {
+    setError('')
+    setRevokingId(p.id)
+    startTransition(async () => {
+      const result = await adminAllowDriving(hikeId, p.id)
+      if ('error' in result) setError(result.error)
+      else setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, driverLocked: false } : item))
+      setRevokingId(null)
     })
   }
 
@@ -120,6 +156,16 @@ export default function ManualCarAssignmentList({
             {p.linkedFriend && <span className="text-stone-400 font-normal"> +{p.linkedFriend.name}</span>}
             {p.hostParticipantId && <span className="text-stone-400 font-normal text-xs"> ({dict.friendOf} {p.hostName ?? '?'})</span>}
             <TripTag trip={p.carTrip} dict={tripDict} />
+            {p.driverLocked && (
+              <button
+                type="button"
+                onClick={() => handleAllowDriving(p)}
+                disabled={revokingId === p.id}
+                className="ml-2 text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
+              >
+                {dict.allowDriving}
+              </button>
+            )}
           </span>
           <div className="flex items-center gap-3 shrink-0">
             <Dropdown
@@ -168,6 +214,14 @@ export default function ManualCarAssignmentList({
           </span>
           <div className="flex items-center gap-3 shrink-0">
             <span className="text-xs text-stone-400">{dict.drivingOwnCar}</span>
+            <button
+              type="button"
+              onClick={() => handleRevokeDriver(p)}
+              disabled={revokingId === p.id}
+              className="text-xs font-medium text-red-600 hover:text-red-700 hover:underline disabled:opacity-50"
+            >
+              {dict.revokeDriver}
+            </button>
             {gasCheckbox(p)}
           </div>
         </div>

@@ -3,7 +3,7 @@ import type { Registration } from './types'
 
 type RegistrationSource = Pick<
   HikeParticipant,
-  'status' | 'bringsCar' | 'carSeats' | 'carTrip' | 'pickupLat' | 'pickupLng' | 'paymentDeadline'
+  'status' | 'bringsCar' | 'driverLocked' | 'carSeats' | 'carTrip' | 'pickupLat' | 'pickupLng' | 'paymentDeadline'
 >
 
 /** Turns a participant row into the serializable props the JoinButton needs. */
@@ -12,6 +12,7 @@ export function toRegistration(participation: RegistrationSource | null | undefi
   return {
     status: participation.status,
     bringsCar: participation.bringsCar,
+    driverLocked: participation.driverLocked,
     carSeats: participation.carSeats,
     carTrip: participation.carTrip,
     pickupLat: participation.pickupLat,

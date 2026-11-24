@@ -257,6 +257,7 @@
     "termsLinkText": "Terms & Conditions",
     "carToggleLabel": "How are you getting there?",
     "carOptionDriver": "I'm driving",
+    "carDriverLocked": "The organiser has taken you off the drivers for this event. Ask them if you want to drive.",
     "carOptionPassenger": "I need a ride",
     "carSeatsLabel": "Available passenger seats",
     "loginToJoin": "Login to join",
@@ -709,6 +710,9 @@
       "drivingOwnCar": "Driving own car",
       "gasPaid": "Gas paid",
       "gasPaidCount": "Gas paid: {paid}/{total}",
+      "revokeDriver": "Not driving",
+      "allowDriving": "Allow driving",
+      "revokeDriverConfirm": "Remove {name} as a driver? Everyone riding in their car will be taken out of it and need a new car, and they won't be able to choose \"I'm driving\" again unless you allow it.",
       "error": "Could not save. Please try again."
     },
     "gasCosts": {

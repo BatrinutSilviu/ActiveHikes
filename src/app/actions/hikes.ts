@@ -186,9 +186,10 @@ export async function updateCarPreference(hikeId: string, bringsCar: boolean, ca
 
   const participation = await prisma.hikeParticipant.findUnique({
     where: { hikeId_userId: { hikeId, userId: session.user.id } },
-    select: { id: true, carDriverParticipantId: true, friend: { select: { id: true, carDriverParticipantId: true } } },
+    select: { id: true, driverLocked: true, carDriverParticipantId: true, friend: { select: { id: true, carDriverParticipantId: true } } },
   })
   if (!participation) throw new Error('Registration not found')
+  if (bringsCar && participation.driverLocked) throw new Error('The organiser has taken you off the drivers')
 
   // Friend only rides along automatically if they were already riding with
   // whichever driver the host had (or nobody) — i.e. not separately assigned.
@@ -345,6 +346,55 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
   await logged([participantId], { action: 'ride', actor: adminActor(session), details: { driver: await driverName(driverParticipantId) } },
     () => prisma.hikeParticipant.update({ where: { id: participantId }, data: { carDriverParticipantId: driverParticipantId } }))
 
+  revalidateParticipantCountPaths(hikeId)
+  return { success: true }
+}
+
+/**
+ * Take away a participant's "I'm driving" choice: they become a passenger without a car, everyone riding with them is
+ * taken out of their car, and they can't pick "I'm driving" again until an admin allows it (adminAllowDriving).
+ */
+export async function adminRevokeDriver(hikeId: string, participantId: string): Promise<{ error: string } | { success: true; releasedIds: string[] }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+
+  const participant = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: { hikeId: true, bringsCar: true, carPassengers: { select: { id: true } } },
+  })
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if (!participant.bringsCar) {
+    await prisma.hikeParticipant.update({ where: { id: participantId }, data: { driverLocked: true } })
+    return { success: true, releasedIds: [] }
+  }
+
+  const releasedIds = participant.carPassengers.map(p => p.id)
+  const [driverBefore, passengersBefore] = await Promise.all([
+    snapshotParticipants([participantId]),
+    snapshotParticipants(releasedIds),
+  ])
+
+  await prisma.$transaction([
+    prisma.hikeParticipant.update({ where: { id: participantId }, data: { bringsCar: false, carSeats: null, driverLocked: true } }),
+    prisma.hikeParticipant.updateMany({ where: { carDriverParticipantId: participantId }, data: { carDriverParticipantId: null } }),
+  ])
+
+  await writeParticipantLog(driverBefore, { action: 'car', actor: adminActor(session), details: { bringsCar: false } })
+  await writeParticipantLog(passengersBefore, { action: 'ride', actor: adminActor(session), details: { driver: null } })
+
+  revalidateParticipantCountPaths(hikeId)
+  return { success: true, releasedIds }
+}
+
+/** Let a participant removed as a driver pick "I'm driving" again (they turn it on themselves). */
+export async function adminAllowDriving(hikeId: string, participantId: string): Promise<{ error: string } | { success: true }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+
+  const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId }, select: { hikeId: true } })
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+
+  await prisma.hikeParticipant.update({ where: { id: participantId }, data: { driverLocked: false } })
   revalidateParticipantCountPaths(hikeId)
   return { success: true }
 }

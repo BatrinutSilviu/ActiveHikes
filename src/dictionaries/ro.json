@@ -257,6 +257,7 @@
     "termsLinkText": "Termenii și condițiile",
     "carToggleLabel": "Cum ajungi acolo?",
     "carOptionDriver": "Conduc eu",
+    "carDriverLocked": "Organizatorul te-a scos dintre șoferii acestui eveniment. Întreabă-l dacă vrei să conduci.",
     "carOptionPassenger": "Am nevoie de loc",
     "carSeatsLabel": "Locuri disponibile în mașină",
     "loginToJoin": "Autentifică-te pentru a te înscrie",
@@ -709,6 +710,9 @@
       "drivingOwnCar": "Conduce propria mașină",
       "gasPaid": "Benzină plătită",
       "gasPaidCount": "Benzină plătită: {paid}/{total}",
+      "revokeDriver": "Nu mai conduce",
+      "allowDriving": "Permite condusul",
+      "revokeDriverConfirm": "Scoți pe {name} ca șofer? Toți cei din mașina sa vor fi scoși și vor avea nevoie de altă mașină, iar persoana nu va mai putea alege \"Conduc eu\" până nu permiți.",
       "error": "Nu s-a putut salva. Încearcă din nou."
     },
     "gasCosts": {

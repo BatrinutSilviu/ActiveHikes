@@ -6,6 +6,7 @@ export type ParticipationStatus = 'pending' | 'confirmed' | 'rejected' | 'waitli
 export type Registration = {
   status: ParticipationStatus
   bringsCar: boolean
+  driverLocked: boolean
   carSeats: number | null
   carTrip: CarTrip
   pickupLat: number | null
@@ -33,6 +34,7 @@ export type JoinButtonDict = {
   termsLinkText: string
   carToggleLabel: string
   carOptionDriver: string
+  carDriverLocked: string
   carOptionPassenger: string
   carSeatsLabel: string
   saveCarPreference: string

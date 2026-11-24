@@ -48,16 +48,19 @@ export function CarPreferenceFields({
   onPickLocation,
   dict,
   tripDict,
+  driverLocked = false,
 }: {
   value: CarPreference
   onChange: (patch: Partial<CarPreference>) => void
   onPickLocation: () => void
   dict: JoinButtonDict
   tripDict: CarTripDict
+  /** An admin removed them as a driver: only "I need a ride" can be picked. */
+  driverLocked?: boolean
 }) {
   return (
     <>
-      <CarToggle value={value.bringsCar} onChange={bringsCar => onChange({ bringsCar })} dict={dict} />
+      <CarToggle value={value.bringsCar} onChange={bringsCar => onChange({ bringsCar })} dict={dict} driverLocked={driverLocked} />
 
       <TripToggle value={value.trip} onChange={trip => onChange({ trip })} dict={tripDict} />
 
@@ -120,10 +123,12 @@ function CarToggle({
   value,
   onChange,
   dict,
+  driverLocked,
 }: {
   value: boolean
   onChange: (value: boolean) => void
   dict: JoinButtonDict
+  driverLocked: boolean
 }) {
   return (
     <div>
@@ -136,7 +141,8 @@ function CarToggle({
           type="button"
           onClick={() => onChange(true)}
           aria-pressed={value}
-          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+          disabled={driverLocked && !value}
+          className={`flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
             value ? SEGMENT_ACTIVE : SEGMENT_INACTIVE
           }`}
         >
@@ -155,6 +161,7 @@ function CarToggle({
           {dict.carOptionPassenger}
         </button>
       </div>
+      {driverLocked && <p className="text-xs text-stone-500 mt-1.5">{dict.carDriverLocked}</p>}
     </div>
   )
 }

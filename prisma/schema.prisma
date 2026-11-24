@@ -230,6 +230,8 @@ model HikeParticipant {
   carSeats               Int?
   carTrip                CarTrip @default(both)
   carDriverParticipantId String?
+  // An admin removed them as a driver: they can't pick "I'm driving" again until an admin allows it.
+  driverLocked           Boolean @default(false)
   // When an admin ticked them off as having paid their share of the gas money (null = not yet).
   gasPaidAt              DateTime?
   pickupLat              Float?
