@@ -707,6 +707,8 @@
       "full": "plin",
       "friendOf": "prieten al lui",
       "drivingOwnCar": "Conduce propria mașină",
+      "gasPaid": "Benzină plătită",
+      "gasPaidCount": "Benzină plătită: {paid}/{total}",
       "error": "Nu s-a putut salva. Încearcă din nou."
     },
     "gasCosts": {
@@ -974,6 +976,8 @@
       "ride": "Loc în mașină: {driver}",
       "rideNone": "Scoatere din mașină",
       "rideAuto": "(alocare automată)",
+      "gasPaid": "A plătit partea de benzină",
+      "gasUnpaid": "Plata benzinei debifată",
       "room": "Cameră: {room}",
       "roomNone": "Scoatere din cameră",
       "docUploaded": "Document încărcat: {file}",

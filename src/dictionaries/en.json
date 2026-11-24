@@ -707,6 +707,8 @@
       "full": "full",
       "friendOf": "friend of",
       "drivingOwnCar": "Driving own car",
+      "gasPaid": "Gas paid",
+      "gasPaidCount": "Gas paid: {paid}/{total}",
       "error": "Could not save. Please try again."
     },
     "gasCosts": {
@@ -974,6 +976,8 @@
       "ride": "Seat in car: {driver}",
       "rideNone": "Taken out of a car",
       "rideAuto": "(automatic allocation)",
+      "gasPaid": "Paid their share of the gas",
+      "gasUnpaid": "Gas payment unticked",
       "room": "Room: {room}",
       "roomNone": "Taken out of a room",
       "docUploaded": "Document uploaded: {file}",

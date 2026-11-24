@@ -36,6 +36,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
             carSeats: true,
             carTrip: true,
             carDriverParticipantId: true,
+            gasPaidAt: true,
             user: { select: { name: true } },
             friend: { select: { id: true, friendName: true } },
             host: { select: { user: { select: { name: true } } } },
@@ -106,6 +107,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
                 bringsCar: p.bringsCar,
                 carTrip: p.carTrip,
                 carDriverParticipantId: p.carDriverParticipantId,
+                gasPaid: p.gasPaidAt !== null,
                 user: p.user,
               }))}
               drivers={drivers}

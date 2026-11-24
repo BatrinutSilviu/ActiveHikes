@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import {
-  BedDouble, Car, CheckCircle2, ChevronDown, CreditCard, FileText, FileX, LogOut, Search, Timer, UserMinus, UserPlus,
+  BedDouble, Car, CheckCircle2, Fuel, ChevronDown, CreditCard, FileText, FileX, LogOut, Search, Timer, UserMinus, UserPlus,
   ArrowRightLeft, type LucideIcon,
 } from 'lucide-react'
 import type { Dictionary } from '@/lib/i18n'
@@ -39,6 +39,7 @@ const ICON: Record<string, { Icon: LucideIcon; tone: string }> = {
   payment_expired: { Icon: Timer, tone: 'bg-amber-100 text-amber-700' },
   car: { Icon: Car, tone: 'bg-stone-100 text-stone-600' },
   ride: { Icon: Car, tone: 'bg-stone-100 text-stone-600' },
+  gas: { Icon: Fuel, tone: 'bg-emerald-100 text-emerald-700' },
   room: { Icon: BedDouble, tone: 'bg-violet-100 text-violet-700' },
   document_uploaded: { Icon: FileText, tone: 'bg-stone-100 text-stone-600' },
   document_deleted: { Icon: FileX, tone: 'bg-stone-100 text-stone-600' },
@@ -78,6 +79,7 @@ function describe(e: HistoryEntry, dict: Dict, status: Record<string, string>): 
       const text = d.driver ? fill(dict.ride, { driver: d.driver }) : dict.rideNone
       return d.automatic ? `${text} ${dict.rideAuto}` : text
     }
+    case 'gas': return d.paid ? dict.gasPaid : dict.gasUnpaid
     case 'room': return d.room ? fill(dict.room, { room: d.room }) : dict.roomNone
     case 'document_uploaded': return fill(dict.docUploaded, { file: d.file })
     case 'document_deleted': return fill(dict.docDeleted, { file: d.file })

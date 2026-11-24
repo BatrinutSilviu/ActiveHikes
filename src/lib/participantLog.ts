@@ -19,6 +19,7 @@ export type LogAction =
   | 'payment_expired' // didn't pay in time: moved to the waitlist
   | 'car' // their car details (driving, seats, direction)
   | 'ride' // which car they ride in
+  | 'gas' // an admin ticked (or unticked) their share of the gas money as paid
   | 'room' // which room they sleep in
   | 'document_uploaded'
   | 'document_deleted'

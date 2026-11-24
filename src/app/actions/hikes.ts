@@ -349,6 +349,22 @@ export async function adminAssignCarDriver(hikeId: string, participantId: string
   return { success: true }
 }
 
+/** Tick (or untick) a participant's share of the gas money as paid. */
+export async function adminSetGasPaid(hikeId: string, participantId: string, paid: boolean): Promise<{ error: string } | { success: true }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+
+  const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId }, select: { hikeId: true, gasPaidAt: true } })
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if ((participant.gasPaidAt !== null) === paid) return { success: true }
+
+  await logged([participantId], { action: 'gas', actor: adminActor(session), details: { paid } },
+    () => prisma.hikeParticipant.update({ where: { id: participantId }, data: { gasPaidAt: paid ? new Date() : null } }))
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}/cars`, revalidatePath)
+  return { success: true }
+}
+
 export async function assignRoom(hikeId: string, roomId: string | null) {
   const session = await getServerSession(authOptions)
   if (!session) throw new Error('Not authenticated')

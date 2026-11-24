@@ -230,6 +230,8 @@ model HikeParticipant {
   carSeats               Int?
   carTrip                CarTrip @default(both)
   carDriverParticipantId String?
+  // When an admin ticked them off as having paid their share of the gas money (null = not yet).
+  gasPaidAt              DateTime?
   pickupLat              Float?
   pickupLng              Float?
   roomId                 String?
