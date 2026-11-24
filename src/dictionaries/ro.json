@@ -715,6 +715,7 @@
       "revokeDriver": "Nu mai conduce",
       "allowDriving": "Permite condusul",
       "makeDriver": "Fă șofer",
+      "driverTripConfirm": "Setezi mașina pe \"{trip}\"? Acești pasageri au nevoie și de celălalt drum și vor fi scoși din mașină: {names}",
       "makeDriverSeats": "Câte locuri libere are {name} pentru pasageri? (1–8)",
       "revokeDriverConfirm": "Scoți pe {name} ca șofer? Toți cei din mașina sa vor fi scoși și vor avea nevoie de altă mașină, iar persoana nu va mai putea alege \"Conduc eu\" până nu permiți.",
       "error": "Nu s-a putut salva. Încearcă din nou."

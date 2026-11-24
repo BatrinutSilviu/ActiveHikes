@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { adminAllowDriving, adminAssignCarDriver, adminMakeDriver, adminRevokeDriver, adminSetGasExempt, adminSetGasPaid } from '@/app/actions/hikes'
+import { adminAllowDriving, adminAssignCarDriver, adminMakeDriver, adminRevokeDriver, adminSetDriverTrip, adminSetGasExempt, adminSetGasPaid } from '@/app/actions/hikes'
 import Dropdown from '@/components/Dropdown'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg } from '@/lib/carTrip'
 
-type TripDict = { both: string; there: string; back: string; seatsThere: string; seatsBack: string }
+type TripDict = { label: string; both: string; there: string; back: string; seatsThere: string; seatsBack: string }
 
 function TripTag({ trip, dict }: { trip: CarTrip; dict: TripDict }) {
   if (trip === 'both') return null
@@ -50,6 +50,7 @@ type Dict = {
   allowDriving: string
   makeDriver: string
   makeDriverSeats: string
+  driverTripConfirm: string
 }
 
 export default function ManualCarAssignmentList({
@@ -127,6 +128,32 @@ export default function ManualCarAssignmentList({
           ? { ...item, bringsCar: true, driverLocked: false, carDriverParticipantId: null }
           : item))
         setDrivers(prev => [...prev, { id: p.id, name, seats: result.seats, carTrip: p.carTrip }])
+      }
+      setRevokingId(null)
+    })
+  }
+
+  const handleDriverTrip = (p: Participant, trip: CarTrip) => {
+    if (trip === p.carTrip) return
+    const friendId = p.linkedFriend?.id ?? null
+    const friendInCar = participants.some(x => x.id === friendId && x.carDriverParticipantId === p.id)
+    const losing = participants.filter(x => x.carDriverParticipantId === p.id && x.id !== friendId && !tripCompatible(trip, x.carTrip))
+    if (losing.length && !confirm(dict.driverTripConfirm
+      .replace('{trip}', tripDict[trip])
+      .replace('{names}', losing.map(x => x.user?.name ?? x.friendName ?? '?').join(', ')))) return
+    setError('')
+    setRevokingId(p.id)
+    startTransition(async () => {
+      const result = await adminSetDriverTrip(hikeId, p.id, trip)
+      if ('error' in result) {
+        setError(result.error)
+      } else {
+        const released = new Set(result.releasedIds)
+        setParticipants(prev => prev.map(item =>
+          item.id === p.id || (friendInCar && item.id === friendId) ? { ...item, carTrip: trip }
+          : released.has(item.id) ? { ...item, carDriverParticipantId: null }
+          : item))
+        setDrivers(prev => prev.map(d => d.id === p.id ? { ...d, carTrip: trip } : d))
       }
       setRevokingId(null)
     })
@@ -280,10 +307,19 @@ export default function ManualCarAssignmentList({
         <div key={p.id} className="bg-stone-50 border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
           <span className="text-sm font-medium text-stone-500 truncate">
             {p.user?.name ?? p.friendName ?? '?'}
-            <TripTag trip={p.carTrip} dict={tripDict} />
           </span>
           <div className="flex items-center gap-3 shrink-0">
-            <span className="text-xs text-stone-400">{dict.drivingOwnCar}</span>
+            <span className="text-xs text-stone-400 hidden sm:inline">{dict.drivingOwnCar}</span>
+            <Dropdown
+              size="sm"
+              align="right"
+              className="w-32 shrink-0"
+              ariaLabel={tripDict.label}
+              value={p.carTrip}
+              disabled={revokingId === p.id}
+              onChange={v => handleDriverTrip(p, v as CarTrip)}
+              options={(['both', 'there', 'back'] as const).map(t => ({ value: t, label: tripDict[t] }))}
+            />
             <button
               type="button"
               onClick={() => handleRevokeDriver(p)}

@@ -386,6 +386,49 @@ export async function adminRevokeDriver(hikeId: string, participantId: string): 
   return { success: true, releasedIds }
 }
 
+/**
+ * Set which way a driver goes (e.g. "there" when they stay at the destination). A friend riding in their car travels
+ * the same way; passengers the car no longer covers (they need the other leg) are taken out of it.
+ */
+export async function adminSetDriverTrip(hikeId: string, participantId: string, trip: CarTrip): Promise<{ error: string } | { success: true; releasedIds: string[] }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+  if (!isCarTrip(trip)) return { error: 'Invalid direction' }
+
+  const driver = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: {
+      hikeId: true, bringsCar: true, carSeats: true, carTrip: true,
+      friend: { select: { id: true, carDriverParticipantId: true } },
+      carPassengers: { select: { id: true, carTrip: true } },
+    },
+  })
+  if (!driver || driver.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if (!driver.bringsCar) return { error: 'Not a driver' }
+  if (driver.carTrip === trip) return { success: true, releasedIds: [] }
+
+  const friendInCar = driver.friend && driver.friend.carDriverParticipantId === participantId ? driver.friend.id : null
+  const releasedIds = driver.carPassengers
+    .filter(p => p.id !== friendInCar && !tripCompatible(trip, p.carTrip))
+    .map(p => p.id)
+  const [driverBefore, releasedBefore] = await Promise.all([
+    snapshotParticipants([participantId]),
+    snapshotParticipants(releasedIds),
+  ])
+
+  await prisma.$transaction([
+    prisma.hikeParticipant.update({ where: { id: participantId }, data: { carTrip: trip } }),
+    ...(friendInCar ? [prisma.hikeParticipant.update({ where: { id: friendInCar }, data: { carTrip: trip } })] : []),
+    ...(releasedIds.length ? [prisma.hikeParticipant.updateMany({ where: { id: { in: releasedIds } }, data: { carDriverParticipantId: null } })] : []),
+  ])
+
+  await writeParticipantLog(driverBefore, { action: 'car', actor: adminActor(session), details: { bringsCar: true, carSeats: driver.carSeats, carTrip: trip } })
+  await writeParticipantLog(releasedBefore, { action: 'ride', actor: adminActor(session), details: { driver: null } })
+
+  revalidateParticipantCountPaths(hikeId)
+  return { success: true, releasedIds }
+}
+
 /** Make a passenger a driver with `seats` seats for passengers (1–8). They leave the car they were riding in. */
 export async function adminMakeDriver(hikeId: string, participantId: string, seats: number): Promise<{ error: string } | { success: true; seats: number }> {
   const session = await getServerSession(authOptions)

@@ -715,6 +715,7 @@
       "revokeDriver": "Not driving",
       "allowDriving": "Allow driving",
       "makeDriver": "Make driver",
+      "driverTripConfirm": "Set this car to \"{trip}\"? These passengers need the other way too and will be taken out of the car: {names}",
       "makeDriverSeats": "How many free seats does {name} have for passengers? (1–8)",
       "revokeDriverConfirm": "Remove {name} as a driver? Everyone riding in their car will be taken out of it and need a new car, and they won't be able to choose \"I'm driving\" again unless you allow it.",
       "error": "Could not save. Please try again."
