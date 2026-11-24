@@ -234,6 +234,8 @@ model HikeParticipant {
   driverLocked           Boolean @default(false)
   // When an admin ticked them off as having paid their share of the gas money (null = not yet).
   gasPaidAt              DateTime?
+  // Doesn't pay for gas (e.g. the organiser): left out of the gas split and the paid count.
+  gasExempt              Boolean @default(false)
   pickupLat              Float?
   pickupLng              Float?
   roomId                 String?

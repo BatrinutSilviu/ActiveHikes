@@ -79,7 +79,9 @@ function describe(e: HistoryEntry, dict: Dict, status: Record<string, string>): 
       const text = d.driver ? fill(dict.ride, { driver: d.driver }) : dict.rideNone
       return d.automatic ? `${text} ${dict.rideAuto}` : text
     }
-    case 'gas': return d.paid ? dict.gasPaid : dict.gasUnpaid
+    case 'gas':
+      if (typeof d.exempt === 'boolean') return d.exempt ? dict.gasExempt : dict.gasNotExempt
+      return d.paid ? dict.gasPaid : dict.gasUnpaid
     case 'room': return d.room ? fill(dict.room, { room: d.room }) : dict.roomNone
     case 'document_uploaded': return fill(dict.docUploaded, { file: d.file })
     case 'document_deleted': return fill(dict.docDeleted, { file: d.file })

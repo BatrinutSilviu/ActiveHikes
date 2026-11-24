@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { adminAllowDriving, adminAssignCarDriver, adminRevokeDriver, adminSetGasPaid } from '@/app/actions/hikes'
+import { useRouter } from 'next/navigation'
+import { adminAllowDriving, adminAssignCarDriver, adminMakeDriver, adminRevokeDriver, adminSetGasExempt, adminSetGasPaid } from '@/app/actions/hikes'
 import Dropdown from '@/components/Dropdown'
 import { type CarTrip, tripCompatible, fitsInCar, seatsLeftByLeg } from '@/lib/carTrip'
 
@@ -29,6 +30,7 @@ type Participant = {
   carTrip: CarTrip
   carDriverParticipantId: string | null
   gasPaid: boolean
+  gasExempt: boolean
   driverLocked: boolean
   user: { name: string | null } | null
 }
@@ -41,9 +43,13 @@ type Dict = {
   drivingOwnCar: string
   gasPaid: string
   gasPaidCount: string
+  gasExempt: string
+  gasExemptCount: string
   revokeDriver: string
   revokeDriverConfirm: string
   allowDriving: string
+  makeDriver: string
+  makeDriverSeats: string
 }
 
 export default function ManualCarAssignmentList({
@@ -59,6 +65,7 @@ export default function ManualCarAssignmentList({
   dict: Dict
   tripDict: TripDict
 }) {
+  const router = useRouter()
   const [participants, setParticipants] = useState(initialParticipants)
   const [drivers, setDrivers] = useState(initialDrivers)
   const [revokingId, setRevokingId] = useState<string | null>(null)
@@ -103,6 +110,28 @@ export default function ManualCarAssignmentList({
     })
   }
 
+  const handleMakeDriver = (p: Participant) => {
+    const name = p.user?.name ?? p.friendName ?? '?'
+    const answer = prompt(dict.makeDriverSeats.replace('{name}', name), '4')
+    if (answer === null) return
+    const seats = parseInt(answer, 10)
+    if (!(seats >= 1 && seats <= 8)) { setError(dict.makeDriverSeats.replace('{name}', name)); return }
+    setError('')
+    setRevokingId(p.id)
+    startTransition(async () => {
+      const result = await adminMakeDriver(hikeId, p.id, seats)
+      if ('error' in result) {
+        setError(result.error)
+      } else {
+        setParticipants(prev => prev.map(item => item.id === p.id
+          ? { ...item, bringsCar: true, driverLocked: false, carDriverParticipantId: null }
+          : item))
+        setDrivers(prev => [...prev, { id: p.id, name, seats: result.seats, carTrip: p.carTrip }])
+      }
+      setRevokingId(null)
+    })
+  }
+
   const handleAllowDriving = (p: Participant) => {
     setError('')
     setRevokingId(p.id)
@@ -128,26 +157,57 @@ export default function ManualCarAssignmentList({
     })
   }
 
+  const handleGasExempt = (p: Participant, exempt: boolean) => {
+    setError('')
+    setSavingGasId(p.id)
+    setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, gasExempt: exempt } : item))
+    startTransition(async () => {
+      const result = await adminSetGasExempt(hikeId, p.id, exempt)
+      if ('error' in result) {
+        setError(result.error)
+        setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, gasExempt: !exempt } : item))
+      } else {
+        router.refresh() // the gas calculator's head count leaves exempt people out
+      }
+      setSavingGasId(null)
+    })
+  }
+
   const gasCheckbox = (p: Participant) => (
-    <label className="flex items-center gap-1.5 text-xs text-stone-600 shrink-0 cursor-pointer select-none" title={dict.gasPaid}>
-      <input
-        type="checkbox"
-        checked={p.gasPaid}
-        disabled={savingGasId === p.id}
-        onChange={e => handleGasPaid(p, e.target.checked)}
-        className="w-4 h-4 accent-emerald-600 disabled:opacity-50"
-      />
-      <span className="hidden sm:inline">{dict.gasPaid}</span>
-    </label>
+    <div className="flex items-center gap-3 shrink-0">
+      <label className={`flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer select-none ${p.gasExempt ? 'opacity-40' : ''}`} title={dict.gasPaid}>
+        <input
+          type="checkbox"
+          checked={p.gasPaid && !p.gasExempt}
+          disabled={savingGasId === p.id || p.gasExempt}
+          onChange={e => handleGasPaid(p, e.target.checked)}
+          className="w-4 h-4 accent-emerald-600 disabled:opacity-50"
+        />
+        <span className="hidden sm:inline">{dict.gasPaid}</span>
+      </label>
+      <label className="flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer select-none" title={dict.gasExempt}>
+        <input
+          type="checkbox"
+          checked={p.gasExempt}
+          disabled={savingGasId === p.id}
+          onChange={e => handleGasExempt(p, e.target.checked)}
+          className="w-4 h-4 accent-amber-500 disabled:opacity-50"
+        />
+        <span className="hidden sm:inline">{dict.gasExempt}</span>
+      </label>
+    </div>
   )
 
-  const gasPaidCount = participants.filter(p => p.gasPaid).length
+  const payers = participants.filter(p => !p.gasExempt)
+  const gasPaidCount = payers.filter(p => p.gasPaid).length
+  const exemptCount = participants.length - payers.length
 
   return (
     <div className="space-y-2">
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      <p className={`text-sm font-medium ${gasPaidCount === participants.length ? 'text-emerald-700' : 'text-stone-500'}`}>
-        {dict.gasPaidCount.replace('{paid}', String(gasPaidCount)).replace('{total}', String(participants.length))}
+      <p className={`text-sm font-medium ${gasPaidCount === payers.length ? 'text-emerald-700' : 'text-stone-500'}`}>
+        {dict.gasPaidCount.replace('{paid}', String(gasPaidCount)).replace('{total}', String(payers.length))}
+        {exemptCount > 0 && <span className="text-stone-400 font-normal"> · {dict.gasExemptCount.replace('{count}', String(exemptCount))}</span>}
       </p>
       {participants.filter(p => !p.bringsCar).map(p => (
         <div key={p.id} className="bg-white border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
@@ -164,6 +224,16 @@ export default function ManualCarAssignmentList({
                 className="ml-2 text-xs font-medium text-emerald-700 hover:underline disabled:opacity-50"
               >
                 {dict.allowDriving}
+              </button>
+            )}
+            {!p.hostParticipantId && (
+              <button
+                type="button"
+                onClick={() => handleMakeDriver(p)}
+                disabled={revokingId === p.id}
+                className="ml-2 text-xs font-medium text-sky-700 hover:underline disabled:opacity-50"
+              >
+                {dict.makeDriver}
               </button>
             )}
           </span>

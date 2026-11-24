@@ -386,6 +386,31 @@ export async function adminRevokeDriver(hikeId: string, participantId: string): 
   return { success: true, releasedIds }
 }
 
+/** Make a passenger a driver with `seats` seats for passengers (1–8). They leave the car they were riding in. */
+export async function adminMakeDriver(hikeId: string, participantId: string, seats: number): Promise<{ error: string } | { success: true; seats: number }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+
+  const carSeats = sanitizeSeats(seats)
+  if (!carSeats) return { error: 'Seats must be between 1 and 8' }
+
+  const participant = await prisma.hikeParticipant.findUnique({
+    where: { id: participantId },
+    select: { hikeId: true, bringsCar: true, hostParticipantId: true },
+  })
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if (participant.hostParticipantId !== null) return { error: "A friend someone brought can't be a driver" }
+
+  await logged([participantId], { action: 'car', actor: adminActor(session), details: { bringsCar: true, carSeats } },
+    () => prisma.hikeParticipant.update({
+      where: { id: participantId },
+      data: { bringsCar: true, carSeats, driverLocked: false, carDriverParticipantId: null },
+    }))
+
+  revalidateParticipantCountPaths(hikeId)
+  return { success: true, seats: carSeats }
+}
+
 /** Let a participant removed as a driver pick "I'm driving" again (they turn it on themselves). */
 export async function adminAllowDriving(hikeId: string, participantId: string): Promise<{ error: string } | { success: true }> {
   const session = await getServerSession(authOptions)
@@ -396,6 +421,22 @@ export async function adminAllowDriving(hikeId: string, participantId: string): 
 
   await prisma.hikeParticipant.update({ where: { id: participantId }, data: { driverLocked: false } })
   revalidateParticipantCountPaths(hikeId)
+  return { success: true }
+}
+
+/** Mark a participant as not paying for gas (or paying again). Exempt people are left out of the gas split. */
+export async function adminSetGasExempt(hikeId: string, participantId: string, exempt: boolean): Promise<{ error: string } | { success: true }> {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'admin') return { error: 'Unauthorized' }
+
+  const participant = await prisma.hikeParticipant.findUnique({ where: { id: participantId }, select: { hikeId: true, gasExempt: true } })
+  if (!participant || participant.hikeId !== hikeId) return { error: 'Invalid participant' }
+  if (participant.gasExempt === exempt) return { success: true }
+
+  await logged([participantId], { action: 'gas', actor: adminActor(session), details: { exempt } },
+    () => prisma.hikeParticipant.update({ where: { id: participantId }, data: { gasExempt: exempt } }))
+
+  revalidateLocalePaths(`/admin/hikes/${hikeId}/cars`, revalidatePath)
   return { success: true }
 }
 

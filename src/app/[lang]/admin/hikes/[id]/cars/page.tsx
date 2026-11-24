@@ -37,6 +37,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
             carTrip: true,
             carDriverParticipantId: true,
             gasPaidAt: true,
+            gasExempt: true,
             driverLocked: true,
             user: { select: { name: true } },
             friend: { select: { id: true, friendName: true } },
@@ -109,6 +110,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
                 carTrip: p.carTrip,
                 carDriverParticipantId: p.carDriverParticipantId,
                 gasPaid: p.gasPaidAt !== null,
+                gasExempt: p.gasExempt,
                 driverLocked: p.driverLocked,
                 user: p.user,
               }))}
@@ -124,7 +126,7 @@ export default async function AdminHikeCarsPage({ params }: { params: Promise<{ 
           saved={parseGasCosts(hike.gasCosts)}
           hikeDrivers={hike.participants.filter(p => p.bringsCar).map(p => ({ id: p.id, name: pName(p) }))}
           participants={people}
-          confirmedCount={hike.participants.length}
+          confirmedCount={hike.participants.filter(p => !p.gasExempt).length}
           dict={d.admin.gasCosts}
         />
       </div>
