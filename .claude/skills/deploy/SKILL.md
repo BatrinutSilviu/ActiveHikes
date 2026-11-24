@@ -16,7 +16,10 @@ to do), not in CI jargon.
 ## Steps
 
 1. **Commit.** `git fetch -q`, then `git status -sb`.
-   - If there are uncommitted changes, stage them and commit with a message that says what changed for
+   - If there are uncommitted code changes, first run the two passes from CLAUDE.md ("Before every
+     commit"): the `simplify` skill, then the `code-review` skill with args `high --fix`. Let them
+     apply their fixes.
+   - Then stage the changes and commit with a message that says what changed for
      the people using the app (the style of `git log`: one long sentence, no prefix), ending with the
      attribution lines from the system reminder.
    - Never commit `.env` or other secrets.

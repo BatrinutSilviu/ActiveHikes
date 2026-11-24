@@ -16,6 +16,21 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **Member events**: any signed-in member can create their own general event (a kind such as Running or Football) at `/events/new`, like the padel app's open matches: they say how many people they need, they're signed up themselves (and can only cancel, not leave), it's always free and goes live immediately (`Hike.byMember = true`), and sign-ups are confirmed straight away while there are spots (then waitlist; the waitlist moves up when someone drops out, and anyone else can drop out). At most 3 upcoming per member, up to 60 days ahead. The creator manages it at `/events/[id]/manage` (participants, details, cancel/reopen, chat as organiser — no emails/phones shown); admins keep full control
 - No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional emails are the sign-up confirmation link and the password reset link.
 
+## Before every commit: clean up, then review
+
+Every commit Claude makes in this repo goes through two passes over the uncommitted changes first,
+in this order, without asking:
+
+1. `/simplify`: reuse existing helpers, remove duplication and dead code, make it efficient (no
+   extra queries or re-renders). It applies its own fixes.
+2. `/code-review high --fix`: finds bugs (wrong logic, missing auth checks on server actions,
+   broken edge cases like friends linked to a host, waitlists, one-way cars) and applies the fixes.
+
+Then commit. In the final message, list what the two passes changed or found (one line each, plain
+words). If a finding needs the user's decision, ask instead of guessing. Skip both only for commits
+with no code (an empty redeploy commit, docs or skill files only). These are code passes, not the
+verification the user asked to skip: still no `tsc`, builds, dev server or test scripts.
+
 ## Tech stack
 
 - **Next.js 16** (App Router, TypeScript, Tailwind CSS)
