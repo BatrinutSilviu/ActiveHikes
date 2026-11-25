@@ -18,8 +18,9 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 
 ## Push automatically
 
-When a change is finished (and committed after the passes below), push it and watch the deploy
-with the `deploy` skill, without asking: the user wants every finished change live.
+When a change is finished (and committed after the passes below), push it with the `deploy` skill and
+say it's deploying, without asking: the user wants every finished change live. Don't watch
+the deploy run unless the user says the site isn't live.
 
 ## Before every commit: clean up, then review
 

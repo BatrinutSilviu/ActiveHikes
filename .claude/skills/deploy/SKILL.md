@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Push the current work to main and watch the GitHub Actions deploy to the VPS until it finishes; retry once with an empty commit if the server step fails. Use when the user says "push", "deploy", "ship it" or "put it live" in this project.
+description: Push the current work to main and let the GitHub Actions deploy put it on the VPS (Claude doesn't watch it). Only if the user says it isn't live: check the run, and retry once with an empty commit if the server step fails. Use when the user says "push", "deploy", "ship it" or "put it live" in this project.
 ---
 
 # Deploy ActiveHikes
@@ -16,9 +16,10 @@ to do), not in CI jargon.
 ## Steps
 
 1. **Commit.** `git fetch -q`, then `git status -sb`.
-   - If there are uncommitted code changes, first run the two passes from CLAUDE.md ("Before every
-     commit"): the `simplify` skill, then the `code-review` skill with args `high --fix`. Let them
-     apply their fixes.
+   - If there are uncommitted code changes, first run the passes from CLAUDE.md ("Before every
+     commit"): the `simplify` skill, the `code-review` skill with args `high --fix`, then the
+     `security-review` skill (skipped for purely visual changes). Let them apply their fixes. A hook
+     runs the tests / type check / lint on `git commit` and blocks it if they fail: fix and commit again.
    - Then stage the changes and commit with a message that says what changed for
      the people using the app (the style of `git log`: one long sentence, no prefix), ending with the
      attribution lines from the system reminder.
@@ -34,30 +35,32 @@ to do), not in CI jargon.
    fetch again and check `git status -sb`: usually the push was rejected because origin moved; go back
    to step 2.
 
-4. **Watch the deploy** in the background (`run_in_background: true`) so the user isn't blocked, and
-   tell them it's running. The repo is public, so the API needs no login:
+4. **Tell the user it's deploying, and stop.** Say it'll be live in a few
+   minutes and to reload the page then. Don't watch the GitHub Actions run or poll its API, not even in
+   the background: the user asked not to (it was slow, noisy and hit GitHub's rate limit).
 
-   ```bash
-   sleep 20; sha=$(git rev-parse HEAD); for i in $(seq 1 55); do
-     r=$(curl -s "https://api.github.com/repos/BatrinutSilviu/ActiveHikes/actions/runs?head_sha=$sha" \
-       | python3 -c "import sys,json;w=json.load(sys.stdin)['workflow_runs'];print(w[0]['status'],w[0]['conclusion'],w[0]['html_url']) if w else print('none')" 2>/dev/null)
-     case "$r" in completed*) echo "$r"; exit 0;; esac; sleep 30
-   done; echo "still: $r"
-   ```
+## Only if the user says it isn't live (or asks how the deploy went)
 
-5. **Report.**
-   - `completed success`: tell the user it's live and to reload the page they were looking at.
-   - `completed failure`: the failing step is almost always "Deploy over SSH" (on the server).
-     The step's log needs a GitHub login, so you can't read it. Retry **once** without asking (the user
-     already asked to deploy) by pushing an empty commit:
-     `git commit --allow-empty -m "Redeploy (previous deploy failed on the server)"` (plus the
-     attribution lines), push, and watch again.
-   - Failed twice: stop. Give the user the run link and ask them to open the **Deploy over SSH**
-     step and paste the red lines at the end of its log.
+Look at the run once (the repo is public, so the API needs no login):
+
+```bash
+curl -s "https://api.github.com/repos/BatrinutSilviu/ActiveHikes/actions/runs?head_sha=$(git rev-parse HEAD)" \
+  | python3 -c "import sys,json;w=json.load(sys.stdin)['workflow_runs'];print(w[0]['status'],w[0]['conclusion'],w[0]['id'],w[0]['html_url']) if w else print('none')"
+```
+
+Which step failed: `curl -s https://api.github.com/repos/BatrinutSilviu/ActiveHikes/actions/runs/<id>/jobs | python3 -c "import sys,json;[print(s['name'],s['conclusion']) for j in json.load(sys.stdin)['jobs'] for s in j['steps']]"`
+
+- `completed failure`: the failing step is almost always "Deploy over SSH" (on the server).
+  The step's log needs a GitHub login, so you can't read it. Retry **once** without asking (the user
+  already asked to deploy) by pushing an empty commit:
+  `git commit --allow-empty -m "Redeploy (previous deploy failed on the server)"` (plus the
+  attribution lines), push, and tell the user it's deploying again.
+- Failed twice: stop. Give the user the run link and ask them to open the **Deploy over SSH**
+  step and paste the red lines at the end of its log.
 
 ## Don't
 
-- Don't run `tsc`, `npm run build`, the dev server or other checks as part of deploying: the user has
-  asked for no verification steps in this project.
+- Don't run `npm run build`, the dev server or other checks yourself as part of deploying: the user has
+  asked for no verification steps in this project (the commit hook's type check and lint are the exception).
 - Don't force-push, and never rewrite commits that are already on `origin/main`.
 - Don't retry more than once on your own; a repeated failure needs someone to look at the server.
