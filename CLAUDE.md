@@ -16,6 +16,11 @@ Group hike management app for a hiking community. Silviu is the sole admin/organ
 - **Member events**: any signed-in member can create their own general event (a kind such as Running or Football) at `/events/new`, like the padel app's open matches: they say how many people they need, they're signed up themselves (and can only cancel, not leave), it's always free and goes live immediately (`Hike.byMember = true`), and sign-ups are confirmed straight away while there are spots (then waitlist; the waitlist moves up when someone drops out, and anyone else can drop out). At most 3 upcoming per member, up to 60 days ahead. The creator manages it at `/events/[id]/manage` (participants, details, cancel/reopen, chat as organiser — no emails/phones shown); admins keep full control
 - No email notifications for hike activity (registrations, confirmations, etc.) — everything is checked manually through the app. The only transactional emails are the sign-up confirmation link and the password reset link.
 
+## Push automatically
+
+When a change is finished (and committed after the two passes below), push it and watch the deploy
+with the `deploy` skill, without asking: the user wants every finished change live.
+
 ## Before every commit: clean up, then review
 
 Every commit Claude makes in this repo goes through two passes over the uncommitted changes first,
