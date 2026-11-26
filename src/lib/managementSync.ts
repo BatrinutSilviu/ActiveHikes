@@ -1,9 +1,12 @@
 import { prisma } from '@/lib/db'
 import { logger } from '@/lib/logger'
 import { EVENT_PATH } from './eventPaths'
+import { participantName } from './whatsappGroup'
 
-// Pushes hikes and via ferratas to the community's management app (management.activetimisoara.ro),
-// which keeps a matching event with its date, price, place and confirmed participants.
+const DAY = 86_400_000
+
+// Pushes hikes, via ferratas and general events to the community's management app (management.activetimisoara.ro),
+// which keeps a matching event with its date, price, place, confirmed participants and sign-up list.
 // Configured with MANAGEMENT_SYNC_URL (e.g. https://management.activetimisoara.ro/api/integrations/events)
 // and MANAGEMENT_SYNC_TOKEN (the same secret as the management app's INTEGRATION_TOKEN); does nothing
 // without them. The management app decides what to do with each push (drafts are synced too),
@@ -23,9 +26,16 @@ export function notifyManagement(hikeId: string) {
   }, 1500))
 }
 
+// Only what the management app uses (its server/sync.js): never links or details meant for participants.
+const SENT = {
+  id: true, type: true, title: true, status: true, date: true, endDate: true, category: true, byMember: true,
+  entryFee: true, hasAccommodation: true, accommodationPrice: true,
+  destination: true, mountainRange: true, meetingPoint: true, meetingTime: true, endTime: true,
+} as const
+
 /** Sends one hike/event as it is now (or that it was deleted). Also used by the nightly resync. */
 export async function pushHike(hikeId: string) {
-  const hike = await prisma.hike.findUnique({ where: { id: hikeId } })
+  const hike = await prisma.hike.findUnique({ where: { id: hikeId }, select: SENT })
   const base = (process.env.NEXTAUTH_URL || '').replace(/\/$/, '')
   const body = hike
     ? {
@@ -33,7 +43,7 @@ export async function pushHike(hikeId: string) {
         id: hike.id,
         record: {
           ...hike,
-          confirmedCount: await prisma.hikeParticipant.count({ where: { hikeId, status: 'confirmed' } }),
+          ...(await signUps(hikeId)),
           url: base ? `${base}/ro/${EVENT_PATH[hike.type]}/${hike.id}` : null,
         },
       }
@@ -49,12 +59,46 @@ export async function pushHike(hikeId: string) {
 }
 
 /**
- * Sends every hike and event from yesterday on again, so a change whose push was lost (the management
- * app was down or restarting) is caught up. Called nightly by the server (api/integrations/resync).
+ * The confirmed count, the sign-up list (everyone signed up but rejected, friends too; paid = confirmed) and who
+ * pulled out: the latest
+ * cancellation, removal or rejection of each person not on the list now (from the sign-up history), with when,
+ * whether an admin/organiser did it and whether they'd been confirmed.
+ */
+async function signUps(hikeId: string) {
+  const [list, logs] = await Promise.all([
+    prisma.hikeParticipant.findMany({
+      where: { hikeId, status: { not: 'rejected' } },
+      select: { id: true, status: true, friendName: true, user: { select: { id: true, name: true } } },
+      orderBy: { joinedAt: 'asc' },
+    }),
+    prisma.participantLog.findMany({
+      where: { hikeId, OR: [{ action: { in: ['cancelled', 'removed'] } }, { action: 'status', toStatus: 'rejected' }] },
+      select: { personName: true, participantId: true, actor: true, fromStatus: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
+  const confirmedCount = list.filter((p) => p.status === 'confirmed').length
+  // ref: the sign-up's id, so someone who renames their account stays the same attendee there.
+  const players = list.map((p) => ({ name: participantName(p), ref: p.id, paid: p.status === 'confirmed' })).filter((p) => p.name !== '?')
+  const onList = new Set(players.flatMap((p) => [p.name.toLowerCase(), p.ref]))
+  const seen = new Set<string>()
+  const withdrawals = logs.flatMap((l) => {
+    const key = l.personName.toLowerCase()
+    if (l.personName === '?' || onList.has(key) || (l.participantId && onList.has(l.participantId)) || seen.has(key)) return []
+    seen.add(key)
+    return [{ name: l.personName, ref: l.participantId, at: l.createdAt.toISOString(), byAdmin: l.actor === 'admin' || l.actor === 'organizer', paid: l.fromStatus === 'confirmed' }]
+  })
+  return { confirmedCount, players, withdrawals }
+}
+
+/**
+ * Sends every hike and event from 7 days ago on, and every one still running, again, so a change whose push was lost (the management
+ * app was down or restarting) is caught up. Called nightly by the server (api/integrations/resync). Unlike padel, no
+ * list of known ids is sent: events can't be deleted here (only cancelled, which is pushed like any change).
  */
 export async function resyncUpcoming(): Promise<{ sent: number; failed: string[] }> {
   const hikes = await prisma.hike.findMany({
-    where: { date: { gte: new Date(Date.now() - 86_400_000) } },
+    where: { OR: [{ date: { gte: new Date(Date.now() - 7 * DAY) } }, { endDate: { gte: new Date(Date.now() - DAY) } }] },
     select: { id: true },
   })
   const failed: string[] = []
