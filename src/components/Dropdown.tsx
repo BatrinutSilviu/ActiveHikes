@@ -93,7 +93,7 @@ export default function Dropdown({
           ${pad} ${open ? 'border-emerald-400 ring-2 ring-emerald-100' : 'border-stone-200 hover:border-stone-300'}
           focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed`}
       >
-        <span className={`truncate ${current ? 'text-stone-800 font-medium' : 'text-stone-400'}`}>{current?.label ?? placeholder}</span>
+        <span className={`min-w-0 [overflow-wrap:anywhere] ${current ? 'text-stone-800 font-medium' : 'text-stone-400'}`}>{current?.label ?? placeholder}</span>
         <ChevronDown size={16} className={`shrink-0 text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (

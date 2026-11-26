@@ -10,7 +10,7 @@ type TripDict = { label: string; both: string; there: string; back: string; seat
 
 function TripTag({ trip, dict }: { trip: CarTrip; dict: TripDict }) {
   if (trip === 'both') return null
-  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">{dict[trip]}</span>
+  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">{dict[trip]}</span>
 }
 
 type Driver = {
@@ -305,7 +305,7 @@ export default function ManualCarAssignmentList({
       ))}
       {participants.filter(p => p.bringsCar).map(p => (
         <div key={p.id} className="bg-stone-50 border border-stone-100 rounded-xl p-3 flex items-center justify-between gap-3">
-          <span className="text-sm font-medium text-stone-500 truncate">
+          <span className="text-sm font-medium text-stone-500 min-w-0 [overflow-wrap:anywhere]">
             {p.user?.name ?? p.friendName ?? '?'}
           </span>
           <div className="flex items-center gap-3 shrink-0">

@@ -10,7 +10,7 @@ type TripDict = { both: string; there: string; back: string }
 
 function TripTag({ trip, dict }: { trip: CarTrip; dict: TripDict }) {
   if (trip === 'both') return null
-  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">{dict[trip]}</span>
+  return <span className="ml-1.5 text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">{dict[trip]}</span>
 }
 
 type Dict = {
@@ -127,9 +127,9 @@ export default function CarAllocatorPanel({
             if (driver.passengers.length === 0) return null
             return (
               <div key={driver.driverId} className="border border-stone-200 rounded-xl p-3 sm:p-4">
-                <div className="flex items-center gap-2 font-semibold text-stone-800 mb-2">
-                  <Car size={15} className="text-emerald-600 shrink-0" />
-                  <span className="truncate">
+                <div className="flex items-start gap-2 font-semibold text-stone-800 mb-2">
+                  <Car size={15} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">
                     {driver.driverName}
                     {driver.friendName && <span className="font-normal text-stone-500"> + {driver.friendName} ({dict.friendLabel})</span>}
                     <TripTag trip={driver.carTrip} dict={tripDict} />
@@ -161,7 +161,7 @@ export default function CarAllocatorPanel({
               <p className="text-xs text-red-500 font-medium uppercase tracking-wide mb-2">{dict.unassignedTitle}</p>
               <div className="flex flex-wrap gap-1.5">
                 {preview.unassigned.map(p => (
-                  <span key={p.id} className="text-xs bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full">
+                  <span key={p.id} className="max-w-full text-xs bg-red-50 border border-red-200 text-red-700 px-2.5 py-1 rounded-full [overflow-wrap:anywhere]">
                     {p.name}{p.friendName && ` + ${p.friendName} (${dict.friendLabel})`}
                     {p.carTrip !== 'both' && ` · ${tripDict[p.carTrip]}`}
                   </span>
